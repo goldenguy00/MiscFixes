@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Dolso.RiskofOptions\**" />
+	  <Compile Remove="Dolso\**" />
+	  <Compile Remove="ItemBlacklist\**" />
+	  <Compile Remove="Properties\**" />
+	  <EmbeddedResource Remove="Dolso.RiskofOptions\**" />
+	  <EmbeddedResource Remove="Dolso\**" />
+	  <EmbeddedResource Remove="ItemBlacklist\**" />
+	  <EmbeddedResource Remove="Properties\**" />
+	  <None Remove="Dolso.RiskofOptions\**" />
+	  <None Remove="Dolso\**" />
+	  <None Remove="ItemBlacklist\**" />
+	  <None Remove="Properties\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Hooks.cs" />
+	  <Compile Remove="PluginConfig.cs" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="BepInEx.Analyzers" Version="1.0.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
+		<PackageReference Include="R2API" Version="5.0.5" />
+		<PackageReference Include="Rune580.Mods.RiskOfRain2.RiskOfOptions" Version="2.8.2" />
+		<PackageReference Include="UnityEngine.Modules" Version="2021.3.33" IncludeAssets="compile" />
+		<PackageReference Include="RiskOfRain2.GameLibs" Version="1.3.5-r.2" />
+		<PackageReference Include="MMHOOK.RoR2" Version="2024.11.4" NoWarn="NU1701" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Reference Include="Facepunch.Steamworks">
+	    <HintPath>..\..\SharedRef\Facepunch.Steamworks.dll</HintPath>
+	  </Reference>
+	  <Reference Include="HunkMod">
+	    <HintPath>..\..\SharedRef\HunkMod.dll</HintPath>
+	  </Reference>
+	  <Reference Include="TanksMod">
+	    <HintPath>..\..\SharedRef\TanksMod.dll</HintPath>
+	  </Reference>
+	  <Reference Include="Tyranitar">
+	    <HintPath>..\..\SharedRef\Tyranitar.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="copy /Y &quot;$(TargetDir)$(TargetName).dll&quot; &quot;$(SolutionDir)Release\$(TargetName).dll&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(SolutionDir)Release\$(TargetName).pdb&quot;&#xD;&#xA;if exist $(SolutionDir)Release\Release.zip ( Del $(SolutionDir)Release\Release.zip)&#xD;&#xA;powershell Compress-Archive -Path '$(SolutionDir)Release\*.*' -DestinationPath '$(SolutionDir)Release\Release.zip' -Force" />
+	</Target>
+	
+</Project>
