@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine.AddressableAssets;
 using RoR2;
 using System;
+using UnityEngine;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -31,7 +32,7 @@ namespace MiscFixes
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError(e);
+                Debug.LogError(e);
             }
 
             var harm = new Harmony(PluginGUID);
@@ -61,7 +62,7 @@ namespace MiscFixes
                             var newCard = Addressables.LoadAssetAsync<InteractableSpawnCard>(newName).WaitForCompletion();
                             if (newCard)
                             {
-                                Log.Message($"Replacing {card.spawnCard.name} with {newCard.name}");
+                                Debug.Log($"Replacing {card.spawnCard.name} with {newCard.name}");
 
                                 card.spawnCard = newCard;
                             }
