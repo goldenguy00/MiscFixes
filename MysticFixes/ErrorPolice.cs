@@ -6,6 +6,7 @@ using MonoMod.Cil;
 using RoR2;
 using EntityStates.LunarExploderMonster;
 using UnityEngine;
+using RoR2.PostProcessing;
 using System;
 using UnityEngine.EventSystems;
 using Tyranitar.Modules.Components;
@@ -16,13 +17,39 @@ using TanksMod.Modules.Components.BasicTank;
 using RoR2.UI;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(DamageIndicator), nameof(DamageIndicator.Awake))]
+        [HarmonyILManipulator]
+        public static void FixDmgIndicator(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(MoveType.After,
+                x => x.MatchLdfld<DamageIndicator>(nameof(DamageIndicator.mat))))
+            {
+                var stlocLabel = c.DefineLabel();
+                var instantiateLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brtrue, instantiateLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Ldnull);
+                c.Emit(OpCodes.Br, stlocLabel);
+
+                c.MarkLabel(instantiateLabel);
+                c.Index++;
+
+                c.MarkLabel(stlocLabel);
+            }
+            else Debug.LogError($"IL hook failed for DamageIndicator.Awake");
+        }
+
         [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.Update))]
         [HarmonyPrefix]
         public static bool FixFlicker(FlickerLight __instance) => __instance.light;
@@ -33,9 +60,7 @@ namespace MiscFixes
         {
             var c = new ILCursor(il);
 
-            if (c.TryGotoNext(
-                    x => x.MatchCallOrCallvirt<Renderer>("set_enabled")
-                ))
+            if (c.TryGotoNext(x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(Renderer), nameof(Renderer.enabled)))))
             {
                 c.Remove();
                 c.EmitDelegate<Action<Renderer, bool>>((renderer, newVisible) =>
@@ -44,6 +69,7 @@ namespace MiscFixes
                         renderer.enabled = newVisible;
                 });
             }
+            else Debug.LogError($"IL hook failed for Indicator.SetVisibleInternal");
         }
 
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
@@ -72,6 +98,7 @@ namespace MiscFixes
                         self.modelLocator.modelTransform.gameObject.SetActive(false);
                 });
             }
+            else Debug.LogError($"IL hook failed for DeathState.FixedUpdate");
         }
 
         [HarmonyPatch(typeof(MPEventSystem), nameof(MPEventSystem.Update))]
@@ -86,6 +113,7 @@ namespace MiscFixes
                 c[0].Remove();
                 c[1].Remove();
             }
+            else Debug.LogError($"IL hook failed for MPEventSystem.Update");
         }
 
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
@@ -104,6 +132,7 @@ namespace MiscFixes
                 c.Remove();
                 c.Emit(OpCodes.Call, AccessTools.DeclaredMethod(typeof(FixVanilla), nameof(FixVanilla.GetRealCount)));
             }
+            else Debug.LogError($"IL hook failed for EntityStates.VoidCamp.Idle");
         }
 
         [HarmonyPatch(typeof(Interactor), nameof(Interactor.FindBestInteractableObject))]
@@ -126,6 +155,7 @@ namespace MiscFixes
                 c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
                 c.Emit(OpCodes.Brfalse, label);
             }
+            else Debug.LogError($"IL hook failed for Interactor.FindBestInteractableObject");
         }
 
         public static int GetRealCount(ReadOnlyCollection<TeamComponent> teamMembers)
@@ -158,6 +188,7 @@ namespace MiscFixes
                 c.Remove();
                 c.Emit(OpCodes.Ldc_I4_0);
             }
+            else Debug.LogError($"IL hook failed for Hunk.TVirusDeathDefied");
         }
 
         [HarmonyPatch(typeof(UroLunge), "OnEnter")]
@@ -170,6 +201,7 @@ namespace MiscFixes
             {
                 c.Next.Operand = "Slide";
             }
+            else Debug.LogError($"IL hook failed for UroLunge.OnEnter");
         }
     }
 
@@ -253,6 +285,7 @@ namespace MiscFixes
                     }
                 }
             }
+            else Debug.LogError($"IL hook failed for CheesePlayerHandler.ExecuteInMenu");
         }
 
         [HarmonyPatch(typeof(CheesePlayerHandler), "Update")]
@@ -291,6 +324,7 @@ namespace MiscFixes
 
                 c.MarkLabel(stlocLabel);
             }
+            else Debug.LogError($"IL hook failed for CheesePlayerHandler.Update");
         }
     }
 }
