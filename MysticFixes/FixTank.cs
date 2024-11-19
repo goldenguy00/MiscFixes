@@ -8,12 +8,71 @@ using TanksMod.Modules.Components;
 using UnityEngine;
 using RoR2.UI;
 using Mono.Cecil.Cil;
+using RoR2;
+using TanksMod.Modules.Survivors;
+using TanksMod.Modules;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
     public class FixTank
     {
+        [HarmonyPatch(typeof(BasicTank), nameof(BasicTank.InitializeSkills))]
+        [HarmonyPostfix]
+        public static void Post()
+        {
+            foreach (var skill in ContentPacks.skillDefs)
+            {
+                skill.skillName = skill.skillName.Trim().Replace(" ", "_");
+                skill.skillNameToken = skill.skillNameToken.Trim().Replace(" ", "_");
+                (skill as UnityEngine.Object).name = skill.skillName;
+            }
+        }
+
+        [HarmonyPatch(typeof(StaticModels), nameof(StaticModels.CreateBodyModelFamily))]
+        [HarmonyPostfix]
+        public static void CreateBodyModelFamily(GenericSkill __result)
+        {
+            __result.skillName = "BodyModel";
+            (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "BodyModelFamily";
+
+            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
+            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+        }
+
+        [HarmonyPatch(typeof(StaticModels), nameof(StaticModels.CreateTurretModelFamily))]
+        [HarmonyPostfix]
+        public static void CreateTurretModelFamily(GenericSkill __result)
+        {
+            __result.skillName = "TurretModel";
+            (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "TurretModelFamily";
+
+            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
+            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+        }
+
+        [HarmonyPatch(typeof(StaticColors), nameof(StaticColors.CreateGlowColorFamily))]
+        [HarmonyPostfix]
+        public static void CreateGlowColorFamily(GenericSkill __result)
+        {
+            __result.skillName = "GlowColor";
+            (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "GlowColorFamily";
+
+            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
+            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+        }
+
+        [HarmonyPatch(typeof(StaticColors), nameof(StaticColors.CreateBodyColorFamily))]
+        [HarmonyPostfix]
+        public static void CreateBodyColorFamily(GenericSkill __result)
+        {
+            __result.skillName = "BodyColor";
+            (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "BodyColorFamily";
+
+            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
+            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+        }
+
         [HarmonyPatch(typeof(TankCrosshair), "Start")]
         [HarmonyPrefix]
         public static void IHateUI(TankCrosshair __instance)

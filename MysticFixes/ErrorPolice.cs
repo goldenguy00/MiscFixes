@@ -1,23 +1,27 @@
-﻿using HarmonyLib;
+﻿using System;
+using System.Collections.ObjectModel;
+using EntityStates.LunarExploderMonster;
+using Facepunch.Steamworks;
+using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
-using EntityStates.LunarExploderMonster;
-using UnityEngine;
 using RoR2.PostProcessing;
-using System;
-using UnityEngine.EventSystems;
-using Facepunch.Steamworks;
 using RoR2.UI;
-using System.Collections.ObjectModel;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(SurvivorIconController), nameof(SurvivorIconController.GetLocalUser))]
         [HarmonyPatch(typeof(DamageIndicator), nameof(DamageIndicator.Awake))]
-        [HarmonyILManipulator]
+        [HarmonyPatch(typeof(DamageIndicator), nameof(DamageIndicator.OnRenderImage))]
+        [HarmonyFinalizer]
+        public static Exception IconEventSystem() => null;
+
         public static void FixDmgIndicator(ILContext il)
         {
             var c = new ILCursor(il);

@@ -18,32 +18,25 @@ namespace MiscFixes
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class MiscFixesPlugin : BaseUnityPlugin
     {
-        public const string PluginGUID = "com." + PluginAuthor + "." + PluginName;
+        public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.0.9";
+        public const string PluginVersion = "1.1.0";
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Awake()
         {
-            try
-            {
-                ReplaceDCCS();
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-            }
-
             var harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
 
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rob.Hunk"))
+            //if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rob.Hunk"))
                 Hunk(harm);
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rob.Tyranitar"))
+            //if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rob.Tyranitar"))
                 Tyr(harm);
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.cheesewithholes.TanksMod"))
+            //if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.cheesewithholes.TanksMod"))
                 Tank(harm);
+
+            ReplaceDCCS();
         }
 
         private void ReplaceDCCS()
