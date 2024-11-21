@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using UnityEngine.AddressableAssets;
 using RoR2;
 using System;
-using UnityEngine;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -26,17 +25,14 @@ namespace MiscFixes
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Awake()
         {
+            ReplaceDCCS();
+
             var harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
 
-            //if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rob.Hunk"))
-                Hunk(harm);
-            //if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rob.Tyranitar"))
-                Tyr(harm);
-            //if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.cheesewithholes.TanksMod"))
-                Tank(harm);
-
-            ReplaceDCCS();
+            Hunk(harm);
+            Tyr(harm);
+            Tank(harm);
         }
 
         private void ReplaceDCCS()
@@ -55,7 +51,7 @@ namespace MiscFixes
                             var newCard = Addressables.LoadAssetAsync<InteractableSpawnCard>(newName).WaitForCompletion();
                             if (newCard)
                             {
-                                Debug.Log($"Replacing {card.spawnCard.name} with {newCard.name}");
+                                Logger.LogDebug($"Replacing {card.spawnCard.name} with {newCard.name}");
 
                                 card.spawnCard = newCard;
                             }
@@ -68,17 +64,38 @@ namespace MiscFixes
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Hunk(Harmony harm)
         {
-            harm.CreateClassProcessor(typeof(FixHunk)).Patch();
+            try
+            {
+                harm.CreateClassProcessor(typeof(FixHunk)).Patch();
+            }
+            catch (Exception e)
+            {
+                Logger.LogDebug(e);
+            }
         }
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Tyr(Harmony harm)
         {
-            harm.CreateClassProcessor(typeof(FixRocks)).Patch();
+            try
+            {
+                harm.CreateClassProcessor(typeof(FixRocks)).Patch();
+            }
+            catch (Exception e)
+            {
+                Logger.LogDebug(e);
+            }
         }
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Tank(Harmony harm)
         {
-            harm.CreateClassProcessor(typeof(FixTank)).Patch();
+            try
+            {
+                harm.CreateClassProcessor(typeof(FixTank)).Patch();
+            }
+            catch (Exception e)
+            {
+                Logger.LogDebug(e);
+            }
         }
     }
 }

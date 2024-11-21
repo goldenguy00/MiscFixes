@@ -16,39 +16,6 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
-        [HarmonyPatch(typeof(SurvivorIconController), nameof(SurvivorIconController.GetLocalUser))]
-        [HarmonyPatch(typeof(DamageIndicator), nameof(DamageIndicator.Awake))]
-        [HarmonyPatch(typeof(DamageIndicator), nameof(DamageIndicator.OnRenderImage))]
-        [HarmonyFinalizer]
-        public static Exception IconEventSystem() => null;
-
-        public static void FixDmgIndicator(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdfld<DamageIndicator>(nameof(DamageIndicator.mat))
-                ))
-            {
-                var stlocLabel = c.DefineLabel();
-                var instantiateLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
-                c.Emit(OpCodes.Brtrue, instantiateLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Ldnull);
-                c.Emit(OpCodes.Br, stlocLabel);
-
-                c.MarkLabel(instantiateLabel);
-                c.Index++;
-
-                c.MarkLabel(stlocLabel);
-            }
-            else Debug.LogError($"IL hook failed for DamageIndicator.Awake");
-        }
-
         [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.Update))]
         [HarmonyPrefix]
         public static bool FixFlicker(FlickerLight __instance) => __instance.light;

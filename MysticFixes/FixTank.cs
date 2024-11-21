@@ -19,8 +19,9 @@ namespace MiscFixes
     {
         [HarmonyPatch(typeof(BasicTank), nameof(BasicTank.InitializeSkills))]
         [HarmonyPostfix]
-        public static void Post()
+        public static void InitializeSkills()
         {
+            // remove spaces, trim ends
             foreach (var skill in ContentPacks.skillDefs)
             {
                 skill.skillName = skill.skillName.Trim().Replace(" ", "_");
@@ -33,50 +34,51 @@ namespace MiscFixes
         [HarmonyPostfix]
         public static void CreateBodyModelFamily(GenericSkill __result)
         {
+            // add family to content pack, give it a name
             __result.skillName = "BodyModel";
             (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "BodyModelFamily";
 
-            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
-            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+            Content.AddSkillFamily(__result._skillFamily);
         }
 
         [HarmonyPatch(typeof(StaticModels), nameof(StaticModels.CreateTurretModelFamily))]
         [HarmonyPostfix]
         public static void CreateTurretModelFamily(GenericSkill __result)
         {
+            // add family to content pack, give it a name
             __result.skillName = "TurretModel";
             (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "TurretModelFamily";
 
-            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
-            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+            Content.AddSkillFamily(__result._skillFamily);
         }
 
         [HarmonyPatch(typeof(StaticColors), nameof(StaticColors.CreateGlowColorFamily))]
         [HarmonyPostfix]
         public static void CreateGlowColorFamily(GenericSkill __result)
         {
+            // add family to content pack, give it a name
             __result.skillName = "GlowColor";
             (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "GlowColorFamily";
 
-            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
-            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+            Content.AddSkillFamily(__result._skillFamily);
         }
 
         [HarmonyPatch(typeof(StaticColors), nameof(StaticColors.CreateBodyColorFamily))]
         [HarmonyPostfix]
         public static void CreateBodyColorFamily(GenericSkill __result)
         {
+            // add family to content pack, give it a name
             __result.skillName = "BodyColor";
             (__result._skillFamily as UnityEngine.Object).name = __result.gameObject.name + "BodyColorFamily";
 
-            TanksMod.Modules.Content.AddSkillFamily(__result._skillFamily);
-            Debug.LogError((__result._skillFamily as UnityEngine.Object).name);
+            Content.AddSkillFamily(__result._skillFamily);
         }
 
         [HarmonyPatch(typeof(TankCrosshair), "Start")]
         [HarmonyPrefix]
         public static void IHateUI(TankCrosshair __instance)
         {
+            // destroy old crosshair
             var controller = __instance.GetComponentInParent<HUD>().targetBodyObject.GetComponent<TankController>();
             if (controller.crosshair != null && controller.crosshair != __instance)
                 GameObject.Destroy(controller.crosshair.gameObject);
@@ -84,9 +86,48 @@ namespace MiscFixes
 
         [HarmonyPatch(typeof(CheesePlayerHandler), "ExecuteInMenu")]
         [HarmonyILManipulator]
-        public static void FuckThisCode2(ILContext il)
+        public static void FuckUICode2(ILContext il)
         {
+            //this is the most disgusting way to add index checking but it works
+            /*
+            int bodyRowId = StaticLoadouts.bodyRowId;
+            int turretRowId = StaticLoadouts.turretRowId;
+            int glowRowId = StaticLoadouts.glowRowId;
+            int paintRowId = StaticLoadouts.paintRowId;
+
+            if (panel.rows.Count > bodyRowId && panel.rows[bodyRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text != "Body")
+            {
+                panel.rows[bodyRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text = "Body";
+            }
+
+            if (panel.rows.Count > turretRowId && panel.rows[turretRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text != "Turret")
+            {
+                panel.rows[turretRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text = "Turret";
+            }
+
+            if (panel.rows.Count > glowRowId && panel.rows[glowRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text != "Glow")
+            {
+                panel.rows[glowRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text = "Glow";
+            }
+
+            if (panel.rows.Count > paintRowId && panel.rows[paintRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text != "Paint")
+            {
+                panel.rows[paintRowId].rowPanelTransform.GetComponentInChildren<HGTextMeshProUGUI>().text = "Paint";
+            }
+
+            if (panel.rows.Count > bodyRowId)
+            {
+                bodyTips = panel.rows[bodyRowId].buttonContainerTransform.GetComponentsInChildren<TooltipProvider>();
+            }
+
+            if (panel.rows.Count > turretRowId)
+            {
+                turretTips = panel.rows[turretRowId].buttonContainerTransform.GetComponentsInChildren<TooltipProvider>();
+            }
+            
+             */
             ILCursor[] cs = null;
+            
             if (new ILCursor(il).TryFindNext(out cs,
                     x => x.MatchLdsfld(AccessTools.DeclaredField(typeof(StaticLoadouts), nameof(StaticLoadouts.bodyRowId))),
                     x => x.MatchLdsfld(AccessTools.DeclaredField(typeof(StaticLoadouts), nameof(StaticLoadouts.turretRowId))),
@@ -132,8 +173,13 @@ namespace MiscFixes
 
         [HarmonyPatch(typeof(CheesePlayerHandler), "Update")]
         [HarmonyILManipulator]
-        public static void FuckThisCode(ILContext il)
+        public static void FuckUICode(ILContext il)
         {
+            //
+            // if (mannequinSlots[i] and mannequinSlots[i].mannequinInstanceTransform)
+            //    currentDisplayBody = mannequinSlots[i].mannequinInstanceTransform.gameObject : null;
+            //
+
             var c = new ILCursor(il);
 
             if (c.TryGotoNext(MoveType.After, x => x.MatchLdelemRef()))
