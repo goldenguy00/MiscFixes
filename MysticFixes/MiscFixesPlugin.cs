@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine.AddressableAssets;
 using RoR2;
 using System;
+using BepInEx.Configuration;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -20,11 +21,14 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.1.0";
+        public const string PluginVersion = "1.1.1";
+
+        public ConfigEntry<bool> extraFixTank;
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Awake()
         {
+            extraFixTank = Config.Bind("Experimental", "Optimize Tank", false, "Enables extremely effective optimization with no (known) drawbacks for Celestial War Tank. Report bugs to mod's github page. Does nothing if the mod is not installed.");
             ReplaceDCCS();
 
             var harm = new Harmony(PluginGUID);
@@ -33,6 +37,7 @@ namespace MiscFixes
             Hunk(harm);
             Tyr(harm);
             Tank(harm);
+            //SS2(harm);
         }
 
         private void ReplaceDCCS()
@@ -91,6 +96,24 @@ namespace MiscFixes
             try
             {
                 harm.CreateClassProcessor(typeof(FixTank)).Patch();
+                if (extraFixTank.Value)
+                {
+                    harm.CreateClassProcessor(typeof(ReplaceRuntime)).Patch();
+                    harm.CreateClassProcessor(typeof(ReplaceColorRuntime)).Patch();
+                    harm.CreateClassProcessor(typeof(ReplaceVisualRuntime)).Patch();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogDebug(e);
+            }
+        }
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        public void SS2(Harmony harm)
+        {
+            try
+            {
+                //harm.CreateClassProcessor(typeof(FixSS2)).Patch();
             }
             catch (Exception e)
             {

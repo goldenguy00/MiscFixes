@@ -11,6 +11,8 @@ using Mono.Cecil.Cil;
 using RoR2;
 using TanksMod.Modules.Survivors;
 using TanksMod.Modules;
+using TanksMod.States;
+using System.Linq;
 
 namespace MiscFixes
 {
@@ -82,6 +84,44 @@ namespace MiscFixes
             var controller = __instance.GetComponentInParent<HUD>().targetBodyObject.GetComponent<TankController>();
             if (controller.crosshair != null && controller.crosshair != __instance)
                 GameObject.Destroy(controller.crosshair.gameObject);
+        }
+
+        [HarmonyPatch(typeof(GenericTankMain), "ApplyFuelBaseAmount")]
+        [HarmonyILManipulator]
+        public static void FixFuel(ILContext il)
+        {
+            ILCursor[] cs = null;
+            string[] s = new string[3];
+
+            if (new ILCursor(il).TryFindNext(out cs,
+                    x => x.MatchLdstr(out s[0]),
+                    x => x.MatchLdstr(out s[1]),
+                    x => x.MatchLdstr(out s[2])
+                ))
+            {
+                for (int i = 0; i < cs.Length; i++)
+                {
+                    cs[i].Next.Operand = s[i].Trim().Replace(" ", "_");
+                }
+            }
+            else Debug.LogError($"IL hook failed for GenericTankMain.ApplyFuelBaseAmount");
+        }
+        [HarmonyPatch(typeof(CheesePlayerHandler), "ExecuteInGameplay")]
+        [HarmonyILManipulator]
+        public static void BetterGameplay(ILContext il)
+        {
+            var c = new ILCursor(il)
+            {
+                Index = il.Instrs.Count - 1
+            };
+
+            if (c.TryGotoPrev(MoveType.AfterLabel,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdfld<CheesePlayerHandler>(nameof(CheesePlayerHandler.myUser))
+                ))
+            {
+                c.Emit(OpCodes.Ret);
+            }
         }
 
         [HarmonyPatch(typeof(CheesePlayerHandler), "ExecuteInMenu")]

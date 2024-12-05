@@ -16,6 +16,90 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
+        [HarmonyILManipulator]
+        public static void FixFog(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            int locTC = 0, locBody = 0;
+            ILLabel label = null;
+            if (c.TryGotoNext(
+                    x => x.MatchLdloc(out locTC),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(TeamComponent), nameof(TeamComponent.body))),
+                    x => x.MatchStloc(out locBody)) &&
+                c.TryFindPrev(out _,
+                    x => x.MatchBr(out label)
+                ))
+            {
+                c.Emit(OpCodes.Ldloc, locTC);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brfalse, label);
+
+                c.GotoNext(MoveType.After, x => x.MatchStloc(locBody));
+
+                c.Emit(OpCodes.Ldloc, locBody);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brfalse, label);
+            }
+            else Debug.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
+        }
+
+        [HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.TrueKill), [typeof(GameObject), typeof(GameObject), typeof(DamageTypeCombo)])]
+        [HarmonyILManipulator]
+        public static void FixKill(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel label = null, label2 = null;
+            if (c.TryGotoNext(
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)),
+                    x => x.MatchLdsfld(out _),
+                    x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.HasBuff))) &&
+                c.TryFindNext(out _,
+                    x => x.MatchBrfalse(out label)
+                ))
+            {
+                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)));
+
+                var bodyLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brtrue, bodyLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, label);
+
+                c.MarkLabel(bodyLabel);
+            }
+            else Debug.LogError($"IL hook failed for CharacterMaster.TrueKill 1");
+
+            if (c.TryGotoNext(
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.equipmentSlot)))) &&
+                c.TryFindNext(out _,
+                    x => x.MatchBrfalse(out label2)
+                ))
+            {
+                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)));
+
+                var bodyLabel2 = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brtrue, bodyLabel2);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, label2);
+
+                c.MarkLabel(bodyLabel2);
+            }
+            else Debug.LogError($"IL hook failed for CharacterMaster.TrueKill 2");
+        }
+
         [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.Update))]
         [HarmonyPrefix]
         public static bool FixFlicker(FlickerLight __instance) => __instance.light;

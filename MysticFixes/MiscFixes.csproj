@@ -5,29 +5,15 @@
 		<LangVersion>preview</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-
+    
 	<ItemGroup>
-	  <Compile Remove="Dolso.RiskofOptions\**" />
-	  <Compile Remove="Dolso\**" />
-	  <Compile Remove="ItemBlacklist\**" />
-	  <Compile Remove="Properties\**" />
-	  <EmbeddedResource Remove="Dolso.RiskofOptions\**" />
-	  <EmbeddedResource Remove="Dolso\**" />
-	  <EmbeddedResource Remove="ItemBlacklist\**" />
-	  <EmbeddedResource Remove="Properties\**" />
-	  <None Remove="Dolso.RiskofOptions\**" />
-	  <None Remove="Dolso\**" />
-	  <None Remove="ItemBlacklist\**" />
-	  <None Remove="Properties\**" />
-	</ItemGroup>
-
-	<ItemGroup>
+	  <Compile Remove="FixSS2.cs" />
 	  <Compile Remove="Hooks.cs" />
 	  <Compile Remove="PluginConfig.cs" />
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="BepInEx.Analyzers" Version="1.0.*">
+		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -41,16 +27,16 @@
 	
 	<ItemGroup>
 	  <Reference Include="Facepunch.Steamworks">
-	    <HintPath>..\..\SharedRef\Facepunch.Steamworks.dll</HintPath>
+	    <HintPath>..\..\..\..\SharedRef\Facepunch.Steamworks.dll</HintPath>
 	  </Reference>
 	  <Reference Include="HunkMod">
-	    <HintPath>..\..\SharedRef\HunkMod.dll</HintPath>
+	    <HintPath>..\..\..\..\SharedRef\HunkMod.dll</HintPath>
 	  </Reference>
 	  <Reference Include="TanksMod">
-	    <HintPath>..\..\SharedRef\TanksMod.dll</HintPath>
+	    <HintPath>..\..\..\..\SharedRef\TanksMod.dll</HintPath>
 	  </Reference>
 	  <Reference Include="Tyranitar">
-	    <HintPath>..\..\SharedRef\Tyranitar.dll</HintPath>
+	    <HintPath>..\..\..\..\SharedRef\Tyranitar.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 
