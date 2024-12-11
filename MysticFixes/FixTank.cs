@@ -13,6 +13,8 @@ using TanksMod.Modules.Survivors;
 using TanksMod.Modules;
 using TanksMod.States;
 using System.Linq;
+using HG;
+using UnityEngine.Rendering.VirtualTexturing;
 
 namespace MiscFixes
 {
@@ -84,6 +86,55 @@ namespace MiscFixes
             var controller = __instance.GetComponentInParent<HUD>().targetBodyObject.GetComponent<TankController>();
             if (controller.crosshair != null && controller.crosshair != __instance)
                 GameObject.Destroy(controller.crosshair.gameObject);
+        }
+
+        public static void BaseVagrantNovaItemState_OnEnter(On.EntityStates.VagrantNovaItem.BaseVagrantNovaItemState.orig_OnEnter orig, EntityStates.VagrantNovaItem.BaseVagrantNovaItemState self)
+        {
+            orig(self);
+
+            if (self.chargeSparks && self.characterBody && self.characterBody.name == "BasicTankBody(Clone)")
+            {
+                self.chargeSparks.startSize = 0.02f;
+            }
+        }
+
+        public static BurnEffectControllerHelper BurnEffectController_AddFireParticles(On.RoR2.BurnEffectController.orig_AddFireParticles orig, BurnEffectController self, Renderer modelRenderer, Transform targetParentTransform)
+        {
+            var helper = orig(self, modelRenderer, targetParentTransform);
+            if (targetParentTransform && targetParentTransform.parent && targetParentTransform.parent.name == "mdlBasicTank")
+            {
+                if (helper.TryGetComponent<NormalizeParticleScale>(out var scale))
+                    MonoBehaviour.DestroyImmediate(scale);
+
+                var max = Mathf.Max(1f, modelRenderer.transform.localScale.ComponentMax());
+                foreach (var system in helper.GetComponentsInChildren<ParticleSystem>(true))
+                {
+                    ParticleSystem.MainModule main = system.main;
+                    ParticleSystem.MinMaxCurve startSize = main.startSize;
+
+                    startSize.constantMin /= max;
+                    startSize.constantMax /= max;
+                    main.startSize = startSize;
+                }
+            }
+            return helper;
+        }
+
+        [HarmonyPatch(typeof(VisualRuntime), "Start")]
+        [HarmonyPostfix]
+        public static void UpdateInfos(VisualRuntime __instance)
+        {
+            var colors = __instance.GetComponent<ColorRuntime>();
+            var modelLoc = __instance.GetComponent<ModelLocator>();
+            var model = modelLoc.modelTransform.GetComponent<CharacterModel>();
+
+            for (int i = 0; i < model.baseRendererInfos.Length; i++)
+            {
+                ref var info = ref model.baseRendererInfos[i];
+                var ignore = !info.renderer.gameObject.activeSelf || !info.renderer.gameObject.activeInHierarchy || !colors.bodyOnlyRenderers.Contains(info.renderer);
+
+                info.ignoreOverlays = ignore;
+            }
         }
 
         [HarmonyPatch(typeof(GenericTankMain), "ApplyFuelBaseAmount")]

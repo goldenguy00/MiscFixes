@@ -21,23 +21,57 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.1.1";
+        public const string PluginVersion = "1.1.3";
 
         public ConfigEntry<bool> extraFixTank;
+        public ConfigEntry<bool> fixTank;
+        public ConfigEntry<bool> fixRift;
+        public ConfigEntry<bool> fixHunk;
+        public ConfigEntry<bool> fixTyr;
+        public Harmony harm;
 
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Awake()
         {
-            extraFixTank = Config.Bind("Experimental", "Optimize Tank", false, "Enables extremely effective optimization with no (known) drawbacks for Celestial War Tank. Report bugs to mod's github page. Does nothing if the mod is not installed.");
+            fixHunk = Config.Bind("Main",
+                "Fix Hunk",
+                true,
+                "Enables fixes for Hunk");
+
+            fixRift = Config.Bind("Main",
+                "Fix Rifter",
+                true,
+                "Enables fixes for Rifter");
+
+            fixTyr = Config.Bind("Main",
+                "Fix Tyranitar",
+                true,
+                "Enables fixes for Tyranitar");
+
+            fixTank = Config.Bind("Main",
+                "Fix CelestialWarTank",
+                true,
+                "Enables fixes for CelestialWarTank");
+
+            extraFixTank = Config.Bind("Experimental",
+                "Optimize Tank",
+                true,
+                "Enables extremely effective optimization with no (known) drawbacks for Celestial War Tank.");
+
             ReplaceDCCS();
 
-            var harm = new Harmony(PluginGUID);
+            harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
 
-            Hunk(harm);
-            Tyr(harm);
-            Tank(harm);
-            //SS2(harm);
+            if (fixHunk.Value)
+                Hunk(harm);
+
+            if (fixTyr.Value)
+                Tyr(harm);
+
+            if (fixTank.Value)
+                Tank(harm);
+
+            RoR2Application.onLoad += Rift;
         }
 
         private void ReplaceDCCS()
@@ -66,36 +100,31 @@ namespace MiscFixes
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public void Hunk(Harmony harm)
         {
             try
             {
                 harm.CreateClassProcessor(typeof(FixHunk)).Patch();
             }
-            catch (Exception e)
-            {
-                Logger.LogDebug(e);
-            }
+            catch (Exception) { }
         }
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+
         public void Tyr(Harmony harm)
         {
             try
             {
                 harm.CreateClassProcessor(typeof(FixRocks)).Patch();
-            }
-            catch (Exception e)
-            {
-                Logger.LogDebug(e);
-            }
+            } 
+            catch (Exception) { }
         }
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+
         public void Tank(Harmony harm)
         {
             try
             {
                 harm.CreateClassProcessor(typeof(FixTank)).Patch();
+                On.RoR2.BurnEffectController.AddFireParticles += FixTank.BurnEffectController_AddFireParticles;
+                On.EntityStates.VagrantNovaItem.BaseVagrantNovaItemState.OnEnter += FixTank.BaseVagrantNovaItemState_OnEnter;
                 if (extraFixTank.Value)
                 {
                     harm.CreateClassProcessor(typeof(ReplaceRuntime)).Patch();
@@ -103,22 +132,17 @@ namespace MiscFixes
                     harm.CreateClassProcessor(typeof(ReplaceVisualRuntime)).Patch();
                 }
             }
-            catch (Exception e)
-            {
-                Logger.LogDebug(e);
-            }
+            catch (Exception) { }
         }
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public void SS2(Harmony harm)
+
+
+        public void Rift()
         {
             try
             {
-                //harm.CreateClassProcessor(typeof(FixSS2)).Patch();
+                harm.CreateClassProcessor(typeof(FixRift)).Patch();
             }
-            catch (Exception e)
-            {
-                Logger.LogDebug(e);
-            }
+            catch (Exception) { }
         }
     }
 }

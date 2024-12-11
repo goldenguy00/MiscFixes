@@ -45,6 +45,37 @@ namespace MiscFixes
             else Debug.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
         }
 
+        [HarmonyPatch(typeof(TetherVfxOrigin), nameof(TetherVfxOrigin.AddTether))]
+        [HarmonyILManipulator]
+        public static void FixTether(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdfld<TetherVfxOrigin>(nameof(TetherVfxOrigin.onTetherAdded)),
+                    x => x.MatchLdloc(0),
+                    x => x.MatchLdarg(1),
+                    x => x.MatchCallOrCallvirt<TetherVfxOrigin.TetherAddDelegate>(nameof(TetherVfxOrigin.TetherAddDelegate.Invoke))
+                ))
+            {
+                var retLabel = c.MarkLabel();
+
+                c.GotoPrev(MoveType.After, x => x.MatchLdfld<TetherVfxOrigin>(nameof(TetherVfxOrigin.onTetherAdded)));
+
+                var callLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, retLabel);
+
+                c.MarkLabel(callLabel);
+            }
+            else Debug.LogError($"IL hook failed for TetherVfxOrigin.AddTether");
+        }
+
         [HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.TrueKill), [typeof(GameObject), typeof(GameObject), typeof(DamageTypeCombo)])]
         [HarmonyILManipulator]
         public static void FixKill(ILContext il)

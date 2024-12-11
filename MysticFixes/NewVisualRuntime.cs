@@ -70,53 +70,8 @@ namespace MiscFixes
 
             jumpSystems = new ParticleSystem[4][];
             thrusterSystems = new ParticleSystem[4][];
-            On.RoR2.BurnEffectController.AddFireParticles += this.BurnEffectController_AddFireParticles;
-            Invoke(nameof(UpdateInfos), 0.5f);
         }
 
-        private BurnEffectControllerHelper BurnEffectController_AddFireParticles(On.RoR2.BurnEffectController.orig_AddFireParticles orig, BurnEffectController self, Renderer modelRenderer, Transform targetParentTransform)
-        { 
-            var helper = orig(self, modelRenderer, targetParentTransform);
-            if (this.characterBody && this.characterBody.coreTransform == targetParentTransform)
-            {
-                if (helper.TryGetComponent<NormalizeParticleScale>(out var scale))
-                    MonoBehaviour.DestroyImmediate(scale);
-
-                var max = Mathf.Max(1f, modelRenderer.transform.localScale.ComponentMax());
-                foreach (var system in helper.GetComponentsInChildren<ParticleSystem>(true))
-                {
-                    ParticleSystem.MainModule main = system.main;
-                    ParticleSystem.MinMaxCurve startSize = main.startSize;
-
-                    startSize.constantMin /= max;
-                    startSize.constantMax /= max;
-                    main.startSize = startSize;
-                }
-            }
-            return helper;
-        }
-
-        public void UpdateInfos()
-        {
-            var colors = this.GetComponent<ColorRuntime>();
-            int j = 0;
-            for (int i = 0; i < model.baseRendererInfos.Length; i++)
-            {
-                ref var info = ref model.baseRendererInfos[i];
-                var ignore = !info.renderer.gameObject.activeSelf || !info.renderer.gameObject.activeInHierarchy || !colors.bodyOnlyRenderers.Contains(info.renderer);
-                if (!ignore)
-                    Debug.LogError(j++ + " | "  + info.renderer.name);
-                info.ignoreOverlays = ignore;
-            }
-
-            var wheels = modelLoc.modelTransform.GetComponentsInChildren<VisualWheelsRuntime>(includeInactive: true);
-            foreach (VisualWheelsRuntime visualWheelsRuntime in wheels)
-            {
-                visualWheelsRuntime.tank = tank;
-                visualWheelsRuntime.runtime = visualRuntime;
-                visualWheelsRuntime.root = childLoc.FindChild("ROOT");
-            }
-        }
 
         public void OnTakeDamageServer(DamageReport damageReport)
         {
