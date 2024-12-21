@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using EntityStates;
 using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -11,12 +7,11 @@ using RifterMod.Survivors.Rifter;
 using RifterMod.Survivors.Rifter.SkillStates;
 using RoR2;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
-    public class FixRift
+    public class FixRiftNames
     {
         [HarmonyPatch(typeof(RifterSurvivor), "AddPrimarySkills")]
         [HarmonyPatch(typeof(RifterSurvivor), "AddSecondarySkills")]
@@ -33,48 +28,11 @@ namespace MiscFixes
                 var news = str.Trim().Replace(" ", "_");
                 if (news != str)
                 {
-                    Debug.LogError(news);
                     c.Next.Operand = news;
                 }
             }
         }
 
-        [HarmonyPatch(typeof(ModifiedTeleport), "CalculateSnapDestination")]
-        [HarmonyILManipulator]
-        public static void FixSnap(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(
-                x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(CharacterDirection), nameof(CharacterDirection.forward)))
-            ))
-            {
-                c.Remove();
-                c.Emit(OpCodes.Ldarg_0);
-                c.EmitDelegate<Action<CharacterDirection, Vector3, ModifiedTeleport>>((cd, targetFootPosition, self) =>
-                {
-                    if (cd)
-                        cd.forward = targetFootPosition;
-                    else
-                        self.transform.rotation = Util.QuaternionSafeLookRotation(targetFootPosition);
-                });
-            }
-            else Debug.LogError($"IL hook failed for ModifiedTeleport.CalculateSnapDestination");
-        }
-
-        [HarmonyPatch(typeof(RiftBase), nameof(RiftBase.Blast))]
-        [HarmonyILManipulator]
-        public static void FixProc(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(x => x.MatchLdcR4(0.8f)))
-            {
-                c.Next.Operand = 1f;
-            }
-            else Debug.LogError($"IL hook failed for RiftBase.Blast");
-        }
-        
         [HarmonyPatch(typeof(RifterTracker), "<FixedUpdate>g__SearchForTarget|19_0")]
         [HarmonyPrefix]
         public static bool FixList(RifterTracker __instance, ref Ray aimRay, ref Vector3 position, ref TeamComponent ___teamComponent, ref GameObject ___trackingTarget, ref BullseyeSearch ___search)
@@ -101,7 +59,7 @@ namespace MiscFixes
             foreach (var hitbox in ___search.GetResults())
             {
                 var other = (hitbox.transform.position - position).sqrMagnitude;
-                if (distance < other)
+                if (distance > other)
                 {
                     result = hitbox;
                     distance = other;
@@ -110,6 +68,69 @@ namespace MiscFixes
             ___trackingTarget = result ? result.gameObject : null;
 
             return false;
+        }
+    }
+    [HarmonyPatch]
+    public class FixRift
+    {
+        [HarmonyPatch(typeof(ModifiedTeleport), "CalculateSnapDestination")]
+        [HarmonyILManipulator]
+        public static void FixSnap(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(
+                x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(CharacterDirection), nameof(CharacterDirection.forward)))
+            ))
+            {
+                c.Remove();
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Action<CharacterDirection, Vector3, ModifiedTeleport>>((cd, targetFootPosition, self) =>
+                {
+                    if (cd)
+                        cd.forward = targetFootPosition;
+                    else
+                        self.transform.rotation = Util.QuaternionSafeLookRotation(targetFootPosition);
+                });
+            }
+            else Debug.LogError($"IL hook failed for ModifiedTeleport.CalculateSnapDestination");
+        }
+
+        [HarmonyPatch(typeof(RiftBuckshot), "FixedUpdate")]
+        [HarmonyILManipulator]
+        public static void FixBuck(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(MoveType.After,
+                x => x.MatchCallOrCallvirt<RiftBase>(nameof(RiftBase.FixedUpdate))
+            ))
+            {
+                var callLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit<RiftBuckshot>(OpCodes.Ldfld, nameof(RiftBuckshot.durations));
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Ret);
+
+                c.MarkLabel(callLabel);
+            }
+            else Debug.LogError($"IL hook failed for ModifiedTeleport.CalculateSnapDestination");
+        }
+
+        [HarmonyPatch(typeof(RiftBase), nameof(RiftBase.Blast))]
+        [HarmonyILManipulator]
+        public static void FixProc(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(x => x.MatchLdcR4(0.8f)))
+            {
+                c.Next.Operand = 1f;
+            }
+            else Debug.LogError($"IL hook failed for RiftBase.Blast");
         }
     }
 }

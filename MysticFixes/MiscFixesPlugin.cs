@@ -2,7 +2,6 @@ using System.Security.Permissions;
 using System.Security;
 using BepInEx;
 using HarmonyLib;
-using System.Runtime.CompilerServices;
 using UnityEngine.AddressableAssets;
 using RoR2;
 using System;
@@ -21,7 +20,7 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.1.3";
+        public const string PluginVersion = "1.1.5";
 
         public ConfigEntry<bool> extraFixTank;
         public ConfigEntry<bool> fixTank;
@@ -71,7 +70,8 @@ namespace MiscFixes
             if (fixTank.Value)
                 Tank(harm);
 
-            RoR2Application.onLoad += Rift;
+            if (fixRift.Value)
+                Rift(harm);
         }
 
         private void ReplaceDCCS()
@@ -136,11 +136,19 @@ namespace MiscFixes
         }
 
 
-        public void Rift()
+        public void Rift(Harmony harm)
         {
             try
             {
-                harm.CreateClassProcessor(typeof(FixRift)).Patch();
+                harm.CreateClassProcessor(typeof(FixRiftNames)).Patch();
+                RoR2Application.onLoad += () =>
+                {
+                    try
+                    {
+                        harm.CreateClassProcessor(typeof(FixRift)).Patch();
+                    }
+                    catch (Exception) { }
+                };
             }
             catch (Exception) { }
         }

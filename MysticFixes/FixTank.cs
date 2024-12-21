@@ -12,9 +12,7 @@ using RoR2;
 using TanksMod.Modules.Survivors;
 using TanksMod.Modules;
 using TanksMod.States;
-using System.Linq;
 using HG;
-using UnityEngine.Rendering.VirtualTexturing;
 
 namespace MiscFixes
 {

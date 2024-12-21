@@ -6,16 +6,103 @@ using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
-using RoR2.PostProcessing;
 using RoR2.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Networking;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.Start))]
+        [HarmonyILManipulator]
+        private static void FixAntlerStart(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel retLabel = null;
+            if (new ILCursor(il).TryGotoNext(x => x.MatchBrfalse(out retLabel)) &&
+                c.TryGotoNext(MoveType.After, x => x.MatchLdfld<ElusiveAntlersPickup>(nameof(ElusiveAntlersPickup.ownerBody))))
+            {
+                var callLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, retLabel);
+
+                c.MarkLabel(callLabel);
+            }
+            else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.Start");
+        }
+
+        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.CallRpcOnShardDestroyedClient))]
+        [HarmonyILManipulator]
+        private static void FixRpcShardDestroy(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(NetworkIdentity), nameof(NetworkIdentity.netId))),
+                    x => x.MatchCallOrCallvirt<NetworkWriter>(nameof(NetworkWriter.Write))
+                ))
+            {
+                var callLabel = c.DefineLabel();
+                var netIdLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brtrue, netIdLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit<NetworkInstanceId>(OpCodes.Ldsfld, nameof(NetworkInstanceId.Zero));
+                c.Emit(OpCodes.Br, callLabel);
+
+                c.MarkLabel(netIdLabel);
+                c.Index++;
+
+                c.MarkLabel(callLabel);
+            }
+            else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
+        }
+        [HarmonyILManipulator, HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
+        private static void ElusiveAntlersPickup_FixedUpdate(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(
+                    x => x.MatchLdfld<ElusiveAntlersPickup>(nameof(ElusiveAntlersPickup.ownerBody)),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.transform))),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position))),
+                    x => x.MatchStloc(out _)
+                ))
+            {
+                c.Index++;
+
+                var stLocLabel = c.DefineLabel();
+                var getGameObjectLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit(OpCodes.Brtrue, getGameObjectLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit<Vector3>(OpCodes.Ldsfld, nameof(Vector3.zeroVector));
+                c.Emit(OpCodes.Br, stLocLabel);
+
+                c.MarkLabel(getGameObjectLabel);
+
+                c.GotoNext(x => x.MatchStloc(out _));
+
+                c.MarkLabel(stLocLabel);
+            }
+            else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
+        }
+
         [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
         [HarmonyILManipulator]
         public static void FixFog(ILContext il)
@@ -131,10 +218,6 @@ namespace MiscFixes
             else Debug.LogError($"IL hook failed for CharacterMaster.TrueKill 2");
         }
 
-        [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.Update))]
-        [HarmonyPrefix]
-        public static bool FixFlicker(FlickerLight __instance) => __instance.light;
-
         [HarmonyPatch(typeof(Indicator), nameof(Indicator.SetVisibleInternal))]
         [HarmonyILManipulator]
         public static void FixIndicator(ILContext il)
@@ -196,6 +279,36 @@ namespace MiscFixes
             {
                 c[0].Remove();
                 c[1].Remove();
+            }
+            else Debug.LogError($"IL hook failed for MPEventSystem.Update");
+        }
+
+        [HarmonyPatch(typeof(RouletteChestController.Idle), nameof(RouletteChestController.Idle.OnEnter))]
+        [HarmonyILManipulator]
+        public static void Spinny(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(RouletteChestController.RouletteChestControllerBaseState),
+                                                                          nameof(RouletteChestController.RouletteChestControllerBaseState.rouletteChestController))),
+                    x => x.MatchLdfld<RouletteChestController>(nameof(RouletteChestController.purchaseInteraction)),
+                    x => x.MatchLdcI4(out _),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(PurchaseInteraction), nameof(PurchaseInteraction.Networkavailable)))
+                ))
+            {
+                var retLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Br, retLabel);
+                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(PurchaseInteraction), nameof(PurchaseInteraction.Networkavailable))));
+                c.MarkLabel(retLabel);
+                
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Action<RouletteChestController.RouletteChestControllerBaseState>>((ctrl) =>
+                {
+                    if (ctrl.rouletteChestController && ctrl.rouletteChestController.purchaseInteraction)
+                        ctrl.rouletteChestController.purchaseInteraction.Networkavailable = true;
+                });
             }
             else Debug.LogError($"IL hook failed for MPEventSystem.Update");
         }
