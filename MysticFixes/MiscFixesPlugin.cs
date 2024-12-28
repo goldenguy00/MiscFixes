@@ -20,7 +20,7 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.1.5";
+        public const string PluginVersion = "1.2.0";
 
         public ConfigEntry<bool> extraFixTank;
         public ConfigEntry<bool> fixTank;
@@ -60,6 +60,7 @@ namespace MiscFixes
 
             harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
+            GameFixes.Init();
 
             if (fixHunk.Value)
                 Hunk(harm);

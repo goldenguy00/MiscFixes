@@ -6,16 +6,64 @@ using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using RoR2.Items;
 using RoR2.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Networking;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
+        [HarmonyILManipulator]
+        private static void MinionLeash(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (new ILCursor(il).TryGotoNext(
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(SceneInfo), nameof(SceneInfo.instance))),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(SceneInfo), nameof(SceneInfo.sceneDef))),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(SceneDef), nameof(SceneDef.cachedName)))
+                ))
+            {
+                c.Index++;
+
+                var compareLabel = c.DefineLabel();
+                var getSceneDefLabel = c.DefineLabel();
+                var getCachedNameLabel = c.DefineLabel();
+
+                // prev = SceneInfo.instance
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue, getSceneDefLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit<string>(OpCodes.Ldsfld, nameof(string.Empty));
+                c.Emit(OpCodes.Br, compareLabel);
+
+                c.MarkLabel(getSceneDefLabel);
+                c.Index++;
+
+                // prev = SceneInfo.instance?.sceneDef
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue, getCachedNameLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit<string>(OpCodes.Ldsfld, nameof(string.Empty));
+                c.Emit(OpCodes.Br, compareLabel);
+
+                c.MarkLabel(getCachedNameLabel);
+                c.Index++;
+
+                // prev = SceneInfo.instance?.sceneDef?.cachedName
+                c.MarkLabel(compareLabel);
+            }
+            else Debug.LogError($"IL hook failed for MinionLeashBodyBehavior.OnDisable");
+        }
+
         [HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.Start))]
         [HarmonyILManipulator]
         private static void FixAntlerStart(ILContext il)
@@ -29,7 +77,7 @@ namespace MiscFixes
                 var callLabel = c.DefineLabel();
 
                 c.Emit(OpCodes.Dup);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brtrue, callLabel);
 
                 c.Emit(OpCodes.Pop);
@@ -40,35 +88,30 @@ namespace MiscFixes
             else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.Start");
         }
 
-        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.CallRpcOnShardDestroyedClient))]
+        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.OnShardDestroyed))]
         [HarmonyILManipulator]
         private static void FixRpcShardDestroy(ILContext il)
         {
             var c = new ILCursor(il);
 
             if (c.TryGotoNext(
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(NetworkIdentity), nameof(NetworkIdentity.netId))),
-                    x => x.MatchCallOrCallvirt<NetworkWriter>(nameof(NetworkWriter.Write))
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdarg(1),
+                    x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.CallRpcOnShardDestroyedClient))
                 ))
             {
-                var callLabel = c.DefineLabel();
-                var netIdLabel = c.DefineLabel();
+                var retLabel = c.DefineLabel();
 
-                c.Emit(OpCodes.Dup);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
-                c.Emit(OpCodes.Brtrue, netIdLabel);
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brfalse, retLabel);
 
-                c.Emit(OpCodes.Pop);
-                c.Emit<NetworkInstanceId>(OpCodes.Ldsfld, nameof(NetworkInstanceId.Zero));
-                c.Emit(OpCodes.Br, callLabel);
-
-                c.MarkLabel(netIdLabel);
-                c.Index++;
-
-                c.MarkLabel(callLabel);
+                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.CallRpcOnShardDestroyedClient)));
+                c.MarkLabel(retLabel);
             }
-            else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
+            else Debug.LogError($"IL hook failed for CharacterBody.OnShardDestroyed");
         }
+
         [HarmonyILManipulator, HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
         private static void ElusiveAntlersPickup_FixedUpdate(ILContext il)
         {
@@ -87,7 +130,7 @@ namespace MiscFixes
                 var getGameObjectLabel = c.DefineLabel();
 
                 c.Emit(OpCodes.Dup);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brtrue, getGameObjectLabel);
 
                 c.Emit(OpCodes.Pop);
@@ -120,13 +163,13 @@ namespace MiscFixes
                 ))
             {
                 c.Emit(OpCodes.Ldloc, locTC);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
 
                 c.GotoNext(MoveType.After, x => x.MatchStloc(locBody));
 
                 c.Emit(OpCodes.Ldloc, locBody);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
             else Debug.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
@@ -184,7 +227,7 @@ namespace MiscFixes
                 var bodyLabel = c.DefineLabel();
 
                 c.Emit(OpCodes.Dup);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brtrue, bodyLabel);
 
                 c.Emit(OpCodes.Pop);
@@ -207,7 +250,7 @@ namespace MiscFixes
                 var bodyLabel2 = c.DefineLabel();
 
                 c.Emit(OpCodes.Dup);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brtrue, bodyLabel2);
 
                 c.Emit(OpCodes.Pop);
@@ -216,26 +259,6 @@ namespace MiscFixes
                 c.MarkLabel(bodyLabel2);
             }
             else Debug.LogError($"IL hook failed for CharacterMaster.TrueKill 2");
-        }
-
-        [HarmonyPatch(typeof(Indicator), nameof(Indicator.SetVisibleInternal))]
-        [HarmonyILManipulator]
-        public static void FixIndicator(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(Renderer), nameof(Renderer.enabled)))
-                ))
-            {
-                c.Remove();
-                c.EmitDelegate<Action<Renderer, bool>>((renderer, newVisible) =>
-                {
-                    if (renderer)
-                        renderer.enabled = newVisible;
-                });
-            }
-            else Debug.LogError($"IL hook failed for Indicator.SetVisibleInternal");
         }
 
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
@@ -342,20 +365,33 @@ namespace MiscFixes
 
             int loc = 0;
             ILLabel label = null;
-            if (c.TryGotoNext(
-                    x => x.MatchLdfld<EntityLocator>(nameof(EntityLocator.entity))) &&
-                c.TryGotoNext(MoveType.After,
-                    x => x.MatchBrfalse(out label),
-                    x => x.MatchLdloc(out _),
-                    x => x.MatchLdfld<EntityLocator>(nameof(EntityLocator.entity)),
-                    x => x.MatchStloc(out loc)
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdloca(out loc),
+                    x => x.MatchCall<EntityLocator>(nameof(EntityLocator.HasEntityLocator)),
+                    x => x.MatchBrfalse(out label)
                 ))
             {
                 c.Emit(OpCodes.Ldloc, loc);
-                c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+                c.Emit<EntityLocator>(OpCodes.Ldfld, nameof(EntityLocator.entity));
+                c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
             else Debug.LogError($"IL hook failed for Interactor.FindBestInteractableObject");
+
+            int loc2 = 0;
+            ILLabel label2 = null;
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdloca(out loc2),
+                    x => x.MatchCall<EntityLocator>(nameof(EntityLocator.HasEntityLocator)),
+                    x => x.MatchBrfalse(out label2)
+                ))
+            {
+                c.Emit(OpCodes.Ldloc, loc2);
+                c.Emit<EntityLocator>(OpCodes.Ldfld, nameof(EntityLocator.entity));
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brfalse, label2);
+            }
+            else Debug.LogError($"IL hook failed for Interactor.FindBestInteractableObject2");
         }
 
         public static int GetRealCount(ReadOnlyCollection<TeamComponent> teamMembers)
