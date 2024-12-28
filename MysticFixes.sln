@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Release\CHANGELOG.md = Release\CHANGELOG.md
 		Release\manifest.json = Release\manifest.json
 		Release\README.md = Release\README.md
+		todo.txt = todo.txt
 	EndProjectSection
 EndProject
 Global
