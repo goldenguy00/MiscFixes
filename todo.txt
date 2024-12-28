@@ -1,0 +1,122 @@
+Unknown cause, possibly vanilla
+
+    [20:40:48.5225470] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+    Stack trace:
+    (wrapper dynamic-method) RoR2.Projectile.ProjectileController.DMD<RoR2.Projectile.ProjectileController::Start>(RoR2.Projectile.ProjectileController)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Trampoline<RoR2.Projectile.ProjectileController::Start>?-311899568(RoR2.Projectile.ProjectileController)
+    SivsContentPack.Items.ProjectileBoost.ProjectileController_Start (On.RoR2.Projectile.ProjectileController+orig_Start orig, RoR2.Projectile.ProjectileController self) (at <cc1a598ae54247dd8b56c297bfe9e0d2>:IL_0001)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Hook<RoR2.Projectile.ProjectileController::Start>?-1019684560(RoR2.Projectile.ProjectileController)
+
+
+
+
+
+Temp overlay old
+
+    [20:55:14.1390009] [Error  : Unity Log] ArgumentNullException: Value cannot be null.
+    Parameter name: source
+    Stack trace:
+    UnityEngine.Material..ctor (UnityEngine.Material source) (at <a20b3695b7ce4017b7981f9d06962bd1>:IL_0008)
+    RoR2.TemporaryOverlayInstance.SetupMaterial () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_000D)
+    RoR2.TemporaryOverlayInstance.AddToCharacterModel (RoR2.CharacterModel characterModel) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0000)
+    RoR2.TemporaryOverlay.AddToCharacerModel (RoR2.CharacterModel characterModel) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+
+
+    [20:55:14.1443470] [Error  : Unity Log] ArgumentNullException: Value cannot be null.
+    Parameter name: source
+    Stack trace:
+    UnityEngine.Material..ctor (UnityEngine.Material source) (at <a20b3695b7ce4017b7981f9d06962bd1>:IL_0008)
+    RoR2.TemporaryOverlayInstance.SetupMaterial () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_000D)
+    RoR2.TemporaryOverlayInstance.Start () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0009)
+    RoR2.TemporaryOverlay.Start () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+
+
+
+
+
+vanilla?
+
+    [20:56:11.9445196] [Error  : Unity Log] NullReferenceException
+    Stack trace:
+    UnityEngine.Component.GetComponent[T] () (at <a20b3695b7ce4017b7981f9d06962bd1>:IL_0021)
+    RoR2.Stats.StatManager.ProcessGoldEvents () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0017)
+    RoR2.Stats.StatManager.ProcessEvents () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_000F)
+    RoR2.RoR2Application.FixedUpdate () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0024)
+
+
+
+
+
+HealthComponent takeDamage-> doesnt matter how it gets there, probably some mod being dumb (lookin at you, mystics)
+
+    [21:16:21.6485497] [Error  : Unity Log] IndexOutOfRangeException: Index was outside the bounds of the array.
+    Stack trace:
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Hook<RoR2.DotController::GetDotDef>?1351520448(RoR2.DotController/DotIndex)
+    RoR2.CharacterBody.TriggerEnemyDebuffs (RoR2.DamageReport damageReport) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_009E)
+    RoR2.CharacterBody.OnKilledOtherServer (RoR2.DamageReport damageReport) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0013)
+    (wrapper dynamic-method) RoR2.HealthComponent.DMD<RoR2.HealthComponent::TakeDamageProcess>(RoR2.HealthComponent,RoR2.DamageInfo)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Trampoline<RoR2.HealthComponent::TakeDamageProcess>?-340661926(RoR2.HealthComponent,RoR2.DamageInfo)
+    EliteReworks.SharedHooks.TakeDamage.HealthComponent_TakeDamage (On.RoR2.HealthComponent+orig_TakeDamageProcess orig, RoR2.HealthComponent self, RoR2.DamageInfo damageInfo) (at <401e76d447914500a70e401ba1ea2db0>:IL_013B)
+    ...
+    SS2.AttackerOverrideManager.OverrideTakeDamage (On.RoR2.HealthComponent+orig_TakeDamage orig, RoR2.HealthComponent self, RoR2.DamageInfo damageInfo) (at C:/Users/natep/Documents/GitHub/Starstorm2/SS2-Project/Assets/Starstorm2/Components/AttackerOverrideManager.cs:68)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Hook<RoR2.HealthComponent::TakeDamage>?1621805384(RoR2.HealthComponent,RoR2.DamageInfo)
+    (wrapper dynamic-method) RoR2.DotController.DMD<RoR2.DotController::EvaluateDotStacksForType>(RoR2.DotController,RoR2.DotController/DotIndex,single,int&)
+    (wrapper dynamic-method) RoR2.DotController.DMD<RoR2.DotController::FixedUpdate>(RoR2.DotController)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Trampoline<RoR2.DotController::FixedUpdate>?-31223624(RoR2.DotController)
+    R2API.DotAPI.FixedUpdate (On.RoR2.DotController+orig_FixedUpdate orig, RoR2.DotController self) (at <a7c79dc937e64cd39f8b2240b0f27583>:IL_0000)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Hook<RoR2.DotController::FixedUpdate>?-547152268(RoR2.DotController)
+
+
+
+sulfur pod
+
+    [20:41:01.2610461] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+    Stack trace:
+    RoR2.CharacterBody.OnKilledOtherServer (RoR2.DamageReport damageReport) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+    (wrapper dynamic-method) RoR2.HealthComponent.DMD<RoR2.HealthComponent::TakeDamageProcess>(RoR2.HealthComponent,RoR2.DamageInfo)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Trampoline<RoR2.HealthComponent::TakeDamageProcess>?-340661926(RoR2.HealthComponent,RoR2.DamageInfo)
+    EliteReworks.SharedHooks.TakeDamage.HealthComponent_TakeDamage (On.RoR2.HealthComponent+orig_TakeDamageProcess orig, RoR2.HealthComponent self, RoR2.DamageInfo damageInfo) (at <401e76d447914500a70e401ba1ea2db0>:IL_013B)
+    ...
+    EntityStates.Destructible.SulfurPodDeath.Explode () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_00D8)
+    EntityStates.Destructible.SulfurPodDeath.FixedUpdate () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0013)
+    RoR2.EntityStateMachine.ManagedFixedUpdate (System.Single deltaTime) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_001D)
+    RoR2.EntityStateMachine.FixedUpdate () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+
+
+
+
+vanilla? 
+
+    [21:17:22.4227309] [Error  : Unity Log] NullReferenceException
+    Stack trace:
+    RoR2.Orbs.VineOrb.OnArrival () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0067)
+    RoR2.Orbs.OrbManager.FixedUpdate () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_00A3)
+
+
+
+
+
+Buffward
+
+    [21:23:53.3123085] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+    Stack trace:
+    (wrapper dynamic-method) RoR2.CharacterBody.DMD<RoR2.CharacterBody::AddBuff>(RoR2.CharacterBody,RoR2.BuffIndex)
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Trampoline<RoR2.CharacterBody::AddBuff>?729628342(RoR2.CharacterBody,RoR2.BuffIndex)
+    EliteReworks.Tweaks.T2.AffixPoison+<>c.<SetupDebuff>b__10_1 (On.RoR2.CharacterBody+orig_AddBuff_BuffIndex orig, RoR2.CharacterBody self, RoR2.BuffIndex buffIndex) (at <401e76d447914500a70e401ba1ea2db0>:IL_0001)
+    ...
+    (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Hook<RoR2.CharacterBody::AddTimedBuff>?-1958817184(RoR2.CharacterBody,RoR2.BuffDef,single)
+    RoR2.BuffWard.BuffTeam (System.Collections.Generic.IEnumerable`1[T] recipients, System.Single radiusSqr, UnityEngine.Vector3 currentPosition) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0097)
+    RoR2.BuffWard.FixedUpdate () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0070)
+
+
+
+vanilla?
+
+    [Error  : Unity Log] InvalidOperationException: Nullable object must have a value.
+    Stack trace:
+    System.Nullable`1[T].get_Value () (at <7e05db41a20b45108859fa03b97088d4>:IL_0008)
+    EntityStates.FalseSonBoss.FalseSonBossStateHelper.CheckPlayerOrMinionsForProximity (RoR2.PlayerCharacterMasterController playerController, UnityEngine.Vector3 playerPosition, UnityEngine.Vector3 aimDirection, UnityEngine.Vector3 bossPosition) (at <27330203fcdc4b869a152bade767814c>:IL_008F)
+    EntityStates.FalseSonBoss.FalseSonBossStateHelper.TrySwitchToMeleeSwing (System.Boolean& stateAborted, UnityEngine.Transform bossTransform, UnityEngine.Vector3 aimDirection, RoR2.GenericSkill previousSkill, RoR2.EntityStateMachine outer) (at <27330203fcdc4b869a152bade767814c>:IL_0067)
+    EntityStates.FalseSonBoss.FalseSonBossGenericStateWithSwing.Update () (at <27330203fcdc4b869a152bade767814c>:IL_006D)
+    RoR2.EntityStateMachine.ManagedUpdate () (at <27330203fcdc4b869a152bade767814c>:IL_0006)
+    RoR2.EntityStateMachine.Update () (at <27330203fcdc4b869a152bade767814c>:IL_0000)
