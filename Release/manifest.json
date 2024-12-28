@@ -1,0 +1,10 @@
+﻿{
+	"name": "MiscFixes",
+	"version_number": "1.2.0",
+	"author": "score",
+	"website_url": "https://github.com/goldenguy00/MiscFixes",
+	"description": "Fixes some bugs",
+	"dependencies": [
+		"bbepis-BepInExPack-5.4.2117"
+	]
+}
