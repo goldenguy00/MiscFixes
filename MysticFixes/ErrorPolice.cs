@@ -39,6 +39,7 @@ namespace MiscFixes
                     x => x.MatchBrfalse(out _)
                 ))
             {
+                c.Emit(OpCodes.Ldarg_0);
                 c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(ProjectileController), nameof(ProjectileController.ghost)));
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
