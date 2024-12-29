@@ -10,6 +10,7 @@ using MonoMod.Cil;
 using RoR2;
 using RoR2.Items;
 using RoR2.Navigation;
+using RoR2.Orbs;
 using RoR2.Projectile;
 using RoR2.Stats;
 using RoR2.UI;
@@ -21,6 +22,87 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
+        [HarmonyILManipulator]
+        public static void FreeFortniteCard(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel retLabel = null;
+            if (c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory)))) &&
+                c.TryFindNext(out _,
+                    x => x.MatchBle(out retLabel)
+                ))
+            {
+                var callLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, retLabel);
+
+                c.MarkLabel(callLabel);
+            }
+            else Debug.LogError($"IL hook failed for CharacterBody.TryGiveFreeUnlockWhenLevelUp");
+        }
+
+        [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
+        [HarmonyILManipulator]
+        public static void VineOrbArrival(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            int bodyLoc = 0;
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.body)),
+                    x => x.MatchStloc(out bodyLoc)) &&
+                c.TryFindNext(out _, 
+                    x => x.MatchLdstr("Play_item_proc_triggerEnemyDebuffs")
+                ))
+            {
+                var label = c.DefineLabel();
+                c.Emit(OpCodes.Ldloc, bodyLoc);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brfalse, label);
+
+                c.GotoNext(x => x.MatchLdstr("Play_item_proc_triggerEnemyDebuffs"));
+                c.MarkLabel(label);
+            }
+            else Debug.LogError($"IL hook failed for VineOrb.OnArrival");
+        }
+
+        [HarmonyPatch(typeof(BossGroup), nameof(BossGroup.OnDefeatedServer))]
+        [HarmonyILManipulator]
+        public static void BossGroupEvent(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Run), nameof(Run.instance))),
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt<Run>(nameof(Run.OnServerBossDefeated))
+                ))
+            {
+                var callLabel = c.DefineLabel();
+                var retLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, retLabel);
+
+                c.MarkLabel(callLabel);
+                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<Run>(nameof(Run.OnServerBossDefeated)));
+                c.MarkLabel(retLabel);
+            }
+            else Debug.LogError($"IL hook failed for BossGroup.OnDefeatedServer");
+        }
+
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
         [HarmonyILManipulator]
         public static void ProjectileStart(ILContext il)
