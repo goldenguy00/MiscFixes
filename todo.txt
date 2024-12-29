@@ -56,6 +56,32 @@
 
 
 
+bossgroup
+
+    [22:27:36.6117876] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+    Stack trace:
+    RoR2.BossGroup.OnDefeatedServer () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_000B)
+    RoR2.CombatSquad.TriggerDefeat () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0011)
+    RoR2.CombatSquad.FixedUpdate () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0097)
+
+
+
+lobby quit
+
+    [22:27:58.6820951] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+    Stack trace:
+    RoR2.CharacterMasterNotificationQueue.GetCurrentNotificationT () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0020)
+    RoR2.UI.NotificationUIController.Update () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0043)
+
+
+free item level
+
+    [22:30:59.1848270] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+    Stack trace:
+    RoR2.CharacterBody.TryGiveFreeUnlockWhenLevelUp () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+    RoR2.CharacterBody.OnLevelUp () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+    RoR2.CharacterBody.OnCalculatedLevelChanged (System.Single oldLevel, System.Single newLevel) (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0017)
+
 
 
 HealthComponent takeDamage-> doesnt matter how it gets there, probably some mod being dumb (lookin at you, mystics)

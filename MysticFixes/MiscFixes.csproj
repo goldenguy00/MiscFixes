@@ -5,6 +5,11 @@
 		<LangVersion>latestMajor</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="FixBelmont.cs" />
+	  <Compile Remove="MaterialHolyCrossIcon.cs" />
+	</ItemGroup>
 	
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">

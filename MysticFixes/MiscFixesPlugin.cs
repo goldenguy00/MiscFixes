@@ -22,12 +22,11 @@ namespace MiscFixes
         public const string PluginName = "MiscFixes";
         public const string PluginVersion = "1.2.0";
 
-        public ConfigEntry<bool> extraFixTank;
         public ConfigEntry<bool> fixTank;
         public ConfigEntry<bool> fixRift;
         public ConfigEntry<bool> fixHunk;
         public ConfigEntry<bool> fixTyr;
-        public Harmony harm;
+        public ConfigEntry<bool> extraFixTank;
 
         public void Awake()
         {
@@ -58,7 +57,7 @@ namespace MiscFixes
 
             ReplaceDCCS();
 
-            harm = new Harmony(PluginGUID);
+            var harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
             GameFixes.Init();
 
@@ -106,6 +105,15 @@ namespace MiscFixes
             try
             {
                 harm.CreateClassProcessor(typeof(FixHunk)).Patch();
+            }
+            catch (Exception) { }
+        }
+
+        public void Belmont(Harmony harm)
+        {
+            try
+            {
+                //harm.CreateClassProcessor(typeof(FixBelmont)).Patch();
             }
             catch (Exception) { }
         }

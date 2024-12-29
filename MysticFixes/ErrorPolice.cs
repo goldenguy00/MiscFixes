@@ -98,16 +98,16 @@ namespace MiscFixes
             FieldReference bodyField = null;
             if (c.TryGotoNext(
                     x => x.MatchLdloc(out _),
-                    x => x.MatchCallOrCallvirt<List<NodeGraph.NodeIndex>>("get_Count"),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(List<NodeGraph.NodeIndex>), nameof(List<NodeGraph.NodeIndex>.Count))),
                     x => x.MatchBrfalse(out _),
                     x => x.MatchBr(out nextLoopLabel)) &&
-                c.TryGotoPrev(MoveType.AfterLabel,
+                c.TryGotoPrev(
                     x => x.MatchLdarg(0),
                     x => x.MatchLdfld(out _),
                     x => x.MatchLdarg(0),
                     x => x.MatchLdfld(out bodyField),
-                    x => x.MatchCallvirt(AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
-                    x => x.MatchCallvirt(AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position)))
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position)))
                 ))
             {
                 c.Emit(OpCodes.Ldarg_0);
