@@ -1,4 +1,15 @@
-Unknown cause, possibly vanilla
+
+**FIXED devotion
+
+    [Error  : Unity Log] NullReferenceException
+    Stack trace:
+    DevotedLemurianController+<TryTeleport>d__18.MoveNext () (at <a43009bc6a5f4aee99e5521ef176a18d>:IL_0105)
+    UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) (at <a20b3695b7ce4017b7981f9d06962bd1>:IL_0026)
+    
+    
+    
+    
+** MAYBE FIXED Unknown cause, possibly vanilla
 
     [20:40:48.5225470] [Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
     Stack trace:
@@ -11,7 +22,7 @@ Unknown cause, possibly vanilla
 
 
 
-Temp overlay old
+** MAYBE FIXED Temp overlay old
 
     [20:55:14.1390009] [Error  : Unity Log] ArgumentNullException: Value cannot be null.
     Parameter name: source
@@ -34,7 +45,7 @@ Temp overlay old
 
 
 
-vanilla?
+**FIXED vanilla?
 
     [20:56:11.9445196] [Error  : Unity Log] NullReferenceException
     Stack trace:

@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using EntityStates.LunarExploderMonster;
 using Facepunch.Steamworks;
 using HarmonyLib;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.Items;
+using RoR2.Navigation;
+using RoR2.Projectile;
+using RoR2.Stats;
 using RoR2.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -16,6 +21,102 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
+        [HarmonyILManipulator]
+        public static void ProjectileStart(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel label = null;
+            if (c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(ProjectileController), nameof(ProjectileController.shouldPlaySounds))),
+                    x => x.MatchLdloc(out _),
+                    x => x.MatchOpImplicit(),
+                    x => x.MatchBrfalse(out label)) &&
+                c.TryGotoNext(MoveType.AfterLabel,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(ProjectileController), nameof(ProjectileController.isPrediction))),
+                    x => x.MatchBrfalse(out _)
+                ))
+            {
+                c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(ProjectileController), nameof(ProjectileController.ghost)));
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brfalse, label);
+            }
+            else Debug.LogError($"IL hook failed for ProjectileController.Start");
+        }
+
+        [HarmonyPatch(typeof(TemporaryOverlayInstance), nameof(TemporaryOverlayInstance.SetupMaterial))]
+        [HarmonyPrefix]
+        public static void SetupMaterial(TemporaryOverlayInstance __instance)
+        {
+            if (!__instance.originalMaterial && __instance.ValidateOverlay())
+            {
+                __instance.componentReference.CopyDataFromPrefabToInstance();
+            }
+        }
+
+        [HarmonyPatch(typeof(StatManager), nameof(StatManager.ProcessGoldEvents))]
+        [HarmonyILManipulator]
+        public static void ProcessGold(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(
+                    x => x.MatchLdfld<StatManager.GoldEvent>(nameof(StatManager.GoldEvent.characterMaster)),
+                    x => x.MatchDup(),
+                    x => x.MatchBrtrue(out _)
+                ))
+            {
+                c.GotoNext(MoveType.After, x => x.MatchDup());
+
+                c.EmitOpImplicit();
+            }
+            else Debug.LogError($"IL hook failed for StatManager.ProcessGoldEvents 1");
+
+            if (c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent)),
+                    x => x.MatchDup(),
+                    x => x.MatchBrtrue(out _)
+                ))
+            {
+                c.GotoNext(MoveType.After, x => x.MatchDup());
+
+                c.EmitOpImplicit();
+            }
+            else Debug.LogError($"IL hook failed for StatManager.ProcessGoldEvents 2");
+        }
+
+        [HarmonyPatch(typeof(DevotedLemurianController), nameof(DevotedLemurianController.TryTeleport), MethodType.Enumerator)]
+        [HarmonyILManipulator]
+        private static void DevotionTele(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel nextLoopLabel = null;
+            FieldReference bodyField = null;
+            if (c.TryGotoNext(
+                    x => x.MatchLdloc(out _),
+                    x => x.MatchCallOrCallvirt<List<NodeGraph.NodeIndex>>("get_Count"),
+                    x => x.MatchBrfalse(out _),
+                    x => x.MatchBr(out nextLoopLabel)) &&
+                c.TryGotoPrev(MoveType.AfterLabel,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdfld(out _),
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdfld(out bodyField),
+                    x => x.MatchCallvirt(AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
+                    x => x.MatchCallvirt(AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position)))
+                ))
+            {
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Ldfld, bodyField);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brfalse, nextLoopLabel);
+            }
+            else Debug.LogError($"IL hook failed for DevotedLemurianController.TryTeleport");
+        }
+
         [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
         [HarmonyILManipulator]
         private static void MinionLeash(ILContext il)
