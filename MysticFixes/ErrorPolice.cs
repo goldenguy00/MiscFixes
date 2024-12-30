@@ -86,12 +86,13 @@ namespace MiscFixes
                     x => x.MatchCallOrCallvirt<Run>(nameof(Run.OnServerBossDefeated))
                 ))
             {
-                var callLabel = c.DefineLabel();
                 var retLabel = c.DefineLabel();
+                var callLabel = c.DefineLabel();
+                c.Index++;
 
                 c.Emit(OpCodes.Dup);
                 c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, callLabel);
+                c.Emit(OpCodes.Brfalse, callLabel);
 
                 c.Emit(OpCodes.Pop);
                 c.Emit(OpCodes.Br, retLabel);
