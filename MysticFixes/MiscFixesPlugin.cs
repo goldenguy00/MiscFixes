@@ -6,6 +6,9 @@ using UnityEngine.AddressableAssets;
 using RoR2;
 using System;
 using BepInEx.Configuration;
+using UnityEngine.SceneManagement;
+using UnityEngine;
+using RoR2.UI.MainMenu;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -27,6 +30,8 @@ namespace MiscFixes
         public ConfigEntry<bool> fixHunk;
         public ConfigEntry<bool> fixTyr;
         public ConfigEntry<bool> extraFixTank;
+
+        private Harmony harm;
 
         public void Awake()
         {
@@ -57,7 +62,7 @@ namespace MiscFixes
 
             ReplaceDCCS();
 
-            var harm = new Harmony(PluginGUID);
+            harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
             GameFixes.Init();
 
@@ -72,6 +77,8 @@ namespace MiscFixes
 
             if (fixRift.Value)
                 Rift(harm);
+
+            MainMenuController.OnPreMainMenuInitialized += SS2;
         }
 
         private void ReplaceDCCS()
@@ -108,7 +115,7 @@ namespace MiscFixes
             }
             catch (Exception) { }
         }
-
+        
         public void Belmont(Harmony harm)
         {
             try
@@ -116,6 +123,23 @@ namespace MiscFixes
                 //harm.CreateClassProcessor(typeof(FixBelmont)).Patch();
             }
             catch (Exception) { }
+        }
+
+        public void SS2()
+        {
+            bool hasChristmasMenuEffect = false;
+            var sceneObj = SceneManager.GetActiveScene().GetRootGameObjects();
+            for (int i = sceneObj.Length - 1; i >= 0; i--)
+            {
+                var obj = sceneObj[i];
+                if (obj && obj.name.StartsWith("ChristmasMenuEffect"))
+                {
+                    if (!hasChristmasMenuEffect)
+                        hasChristmasMenuEffect = true;
+                    else
+                        GameObject.Destroy(obj);
+                }
+            }
         }
 
         public void Tyr(Harmony harm)
