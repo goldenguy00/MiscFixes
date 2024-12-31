@@ -23,10 +23,9 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.2.0";
+        public const string PluginVersion = "1.2.3";
 
         public ConfigEntry<bool> fixTank;
-        public ConfigEntry<bool> fixRift;
         public ConfigEntry<bool> fixHunk;
         public ConfigEntry<bool> fixTyr;
         public ConfigEntry<bool> extraFixTank;
@@ -39,11 +38,6 @@ namespace MiscFixes
                 "Fix Hunk",
                 true,
                 "Enables fixes for Hunk");
-
-            fixRift = Config.Bind("Main",
-                "Fix Rifter",
-                true,
-                "Enables fixes for Rifter");
 
             fixTyr = Config.Bind("Main",
                 "Fix Tyranitar",
@@ -74,9 +68,6 @@ namespace MiscFixes
 
             if (fixTank.Value)
                 Tank(harm);
-
-            if (fixRift.Value)
-                Rift(harm);
 
             MainMenuController.OnPreMainMenuInitialized += SS2;
         }
@@ -164,24 +155,6 @@ namespace MiscFixes
                     harm.CreateClassProcessor(typeof(ReplaceColorRuntime)).Patch();
                     harm.CreateClassProcessor(typeof(ReplaceVisualRuntime)).Patch();
                 }
-            }
-            catch (Exception) { }
-        }
-
-
-        public void Rift(Harmony harm)
-        {
-            try
-            {
-                harm.CreateClassProcessor(typeof(FixRiftNames)).Patch();
-                RoR2Application.onLoad += () =>
-                {
-                    try
-                    {
-                        harm.CreateClassProcessor(typeof(FixRift)).Patch();
-                    }
-                    catch (Exception) { }
-                };
             }
             catch (Exception) { }
         }

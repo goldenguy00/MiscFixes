@@ -7,6 +7,7 @@ using HarmonyLib;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using R2API;
 using RoR2;
 using RoR2.Items;
 using RoR2.Navigation;
@@ -22,6 +23,26 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TriggerEnemyDebuffs))]
+        [HarmonyILManipulator]
+        public static void WhatTheFuck(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(
+                    x => x.MatchLdloc(out _),
+                    x => x.MatchCallOrCallvirt<DotController>(nameof(DotController.GetDotDef)),
+                    x => x.MatchPop()
+                ))
+            {
+                var label = c.DefineLabel();
+                c.Emit(OpCodes.Br, label);
+                c.GotoNext(MoveType.After, x => x.MatchPop());
+                c.MarkLabel(label);
+            }
+            else Debug.LogError($"IL hook failed for CharacterBody.TriggerEnemyDebuffs");
+        }
+
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
         [HarmonyILManipulator]
         public static void FreeFortniteCard(ILContext il)
@@ -29,7 +50,7 @@ namespace MiscFixes
             var c = new ILCursor(il);
 
             ILLabel retLabel = null;
-            if (c.TryGotoNext(
+            if (c.TryGotoNext(MoveType.After,
                     x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory)))) &&
                 c.TryFindNext(out _,
                     x => x.MatchBle(out retLabel)

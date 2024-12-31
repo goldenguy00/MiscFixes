@@ -1,3 +1,17 @@
+## 1.2.3
+
+- Goodbye rifter, no longer need fixing
+
+## 1.2.2
+
+- Skip call to DotController.GetDotDef from new Noxious Thorns that existed for the sole purpose of throwing index out of bounds exceptions...
+- This was vanilla, probably some partially commented out code or something idk
+
+## 1.2.1
+
+- Fixed FreeItemOnLevelup hook
+- Updated changelog for previous patch
+
 ## 1.2.0
 
 ### **Added a big group of changes, thanks to Chinchi**
@@ -29,12 +43,20 @@
     - Fixes sale star collider being incorrectly configured
 ---
 ### Now onto my own fixes...
+- Mods using the old TemporaryOverlay component will now properly initialize the new TempOverlayInstance
 - Antler NREs are all gone now, sheesh
     - ElusiveAntlersPickup.Start, CharacterBody.OnShardDestroyed, ElusiveAntlersPickup.FixedUpdate
 - Mysterious RouletteChestController.Idle NRE
-- Minionleash OnDisable NRE (todo: fix the teleport coroutine)
+- Minionleash OnDisable NRE
+- ProjectileController.Start nre without ghost
+- ProcessGoldEvent nre
+- FreeItemOnLevelUp called on obj with null inventory
+- Vineorb onArrival
+- BossGroup Ondefeated calling event with no run instance
+
 - Remove light flicker thing cuz ss2 is good now.
     - I still earn my keep by fixing the TetherVfxOrigin calling a null event.
+    - Also fixed the flashbang menu scene
     - Thanks for continuing to boost my download count ily ss2 devs <3
 - Made the Rifter fix actually fix Rifter
 
