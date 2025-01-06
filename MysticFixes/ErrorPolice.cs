@@ -7,7 +7,6 @@ using HarmonyLib;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using R2API;
 using RoR2;
 using RoR2.Items;
 using RoR2.Navigation;

@@ -28,17 +28,11 @@
 	  <Reference Include="Facepunch.Steamworks">
 	    <HintPath>..\..\..\..\SharedRef\Facepunch.Steamworks.dll</HintPath>
 	  </Reference>
-	  <Reference Include="HunkMod">
-	    <HintPath>..\..\..\..\SharedRef\HunkMod.dll</HintPath>
-	  </Reference>
 	  <Reference Include="RiskUI">
 	    <HintPath>..\..\..\..\..\..\AppData\Roaming\com.kesomannen.gale\riskofrain2\profiles\Good1\BepInEx\plugins\Bubbet-RiskUI\RiskUI.dll</HintPath>
 	  </Reference>
 	  <Reference Include="TanksMod">
 	    <HintPath>..\..\..\..\SharedRef\TanksMod.dll</HintPath>
-	  </Reference>
-	  <Reference Include="Tyranitar">
-	    <HintPath>..\..\..\..\SharedRef\Tyranitar.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

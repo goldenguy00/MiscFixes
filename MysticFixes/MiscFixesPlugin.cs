@@ -23,27 +23,15 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.2.3";
+        public const string PluginVersion = "1.2.5";
 
         public ConfigEntry<bool> fixTank;
-        public ConfigEntry<bool> fixHunk;
-        public ConfigEntry<bool> fixTyr;
         public ConfigEntry<bool> extraFixTank;
 
         private Harmony harm;
 
         public void Awake()
         {
-            fixHunk = Config.Bind("Main",
-                "Fix Hunk",
-                true,
-                "Enables fixes for Hunk");
-
-            fixTyr = Config.Bind("Main",
-                "Fix Tyranitar",
-                true,
-                "Enables fixes for Tyranitar");
-
             fixTank = Config.Bind("Main",
                 "Fix CelestialWarTank",
                 true,
@@ -59,12 +47,6 @@ namespace MiscFixes
             harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
             GameFixes.Init();
-
-            if (fixHunk.Value)
-                Hunk(harm);
-
-            if (fixTyr.Value)
-                Tyr(harm);
 
             if (fixTank.Value)
                 Tank(harm);
@@ -98,24 +80,6 @@ namespace MiscFixes
             }
         }
 
-        public void Hunk(Harmony harm)
-        {
-            try
-            {
-                harm.CreateClassProcessor(typeof(FixHunk)).Patch();
-            }
-            catch (Exception) { }
-        }
-        
-        public void Belmont(Harmony harm)
-        {
-            try
-            {
-                //harm.CreateClassProcessor(typeof(FixBelmont)).Patch();
-            }
-            catch (Exception) { }
-        }
-
         public void SS2()
         {
             bool hasChristmasMenuEffect = false;
@@ -131,15 +95,6 @@ namespace MiscFixes
                         GameObject.Destroy(obj);
                 }
             }
-        }
-
-        public void Tyr(Harmony harm)
-        {
-            try
-            {
-                harm.CreateClassProcessor(typeof(FixRocks)).Patch();
-            } 
-            catch (Exception) { }
         }
 
         public void Tank(Harmony harm)

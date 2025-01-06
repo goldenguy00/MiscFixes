@@ -15,11 +15,6 @@
 
 ### Mod Specific stuff
 
-- Hunk TVirus death error
-- Hunk Urostep error
-- Tyranitar King Rock error
-- GoldenCoast chest interaction error
 - Multiple CelestialWarTank errors
     - Some "minor" optimizations
     - Added optimization cfg setting, try it out!
-- Rifter errors

@@ -1,3 +1,11 @@
+## 1.2.5
+
+- Goodbye tyranitar, no longer need fixing
+
+## 1.2.4
+
+- Goodbye hunk, no longer need fixing
+
 ## 1.2.3
 
 - Goodbye rifter, no longer need fixing
