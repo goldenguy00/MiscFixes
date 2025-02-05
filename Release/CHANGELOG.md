@@ -1,3 +1,12 @@
+## ugh
+
+- ugh
+
+## 1.2.6
+
+- Goodbye tank, no longer need fixing
+- Thats the last of the mod compats yay!
+
 ## 1.2.5
 
 - Goodbye tyranitar, no longer need fixing

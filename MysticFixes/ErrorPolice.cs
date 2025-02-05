@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using EntityStates.LightningStorm;
 using EntityStates.LunarExploderMonster;
 using Facepunch.Steamworks;
 using HarmonyLib;
@@ -22,6 +23,10 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
+        [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.Update))]
+        [HarmonyPrefix]
+        public static bool Ugh(FlickerLight __instance) => __instance.light;
+
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TriggerEnemyDebuffs))]
         [HarmonyILManipulator]
         public static void WhatTheFuck(ILContext il)
@@ -470,16 +475,13 @@ namespace MiscFixes
         [HarmonyILManipulator]
         public static void FixExplode(ILContext il)
         {
-            var c = new ILCursor(il);
-
-            ILCursor[] cList = [];
-            if (c.TryFindNext(out cList, 
+            if (new ILCursor(il).TryFindNext(out var c, 
                     x => x.MatchCallOrCallvirt<DeathState>(nameof(DeathState.FireExplosion)),
                     x => x.MatchCallOrCallvirt<GameObject>(nameof(GameObject.SetActive))
                 ))
             {
-                var c0 = cList[0];
-                var c1 = cList[1];
+                var c0 = c[0];
+                var c1 = c[1];
                 c0.Index++;
                 c0.MoveAfterLabels();
                 c1.Index++;

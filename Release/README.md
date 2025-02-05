@@ -13,8 +13,4 @@
 - CharacterMaster TrueKill error
 - FogDamageController nre
 
-### Mod Specific stuff
-
-- Multiple CelestialWarTank errors
-    - Some "minor" optimizations
-    - Added optimization cfg setting, try it out!
+- A lot more stuff but i hate writing these so just check the changelog

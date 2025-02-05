@@ -8,7 +8,11 @@
 
 	<ItemGroup>
 	  <Compile Remove="FixBelmont.cs" />
+	  <Compile Remove="FixTank.cs" />
 	  <Compile Remove="MaterialHolyCrossIcon.cs" />
+	  <Compile Remove="NewColorRuntime.cs" />
+	  <Compile Remove="NewVisualRuntime.cs" />
+	  <Compile Remove="ReplaceVisualRuntime.cs" />
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -27,12 +31,6 @@
 	<ItemGroup>
 	  <Reference Include="Facepunch.Steamworks">
 	    <HintPath>..\..\..\..\SharedRef\Facepunch.Steamworks.dll</HintPath>
-	  </Reference>
-	  <Reference Include="RiskUI">
-	    <HintPath>..\..\..\..\..\..\AppData\Roaming\com.kesomannen.gale\riskofrain2\profiles\Good1\BepInEx\plugins\Bubbet-RiskUI\RiskUI.dll</HintPath>
-	  </Reference>
-	  <Reference Include="TanksMod">
-	    <HintPath>..\..\..\..\SharedRef\TanksMod.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 
