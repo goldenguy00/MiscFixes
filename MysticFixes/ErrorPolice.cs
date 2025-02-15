@@ -117,7 +117,7 @@ namespace MiscFixes
 
                 c.Emit(OpCodes.Dup);
                 c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, callLabel);
+                c.Emit(OpCodes.Brtrue, callLabel);
 
                 c.Emit(OpCodes.Pop);
                 c.Emit(OpCodes.Br, retLabel);

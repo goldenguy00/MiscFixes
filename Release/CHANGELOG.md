@@ -1,3 +1,7 @@
+## 1.2.8
+
+- Changed false to true in OnBossGroupDefeated
+
 ## ugh
 
 - ugh
