@@ -749,6 +749,10 @@ namespace MiscFixes
                 esm.initialStateType = new SerializableEntityStateType(typeof(Uninitialized));
                 esm.enabled = false;
             }
+            else
+            {
+                LogError("Failed to modify meridian test state");
+            }
             orig(self);
         }
 
@@ -757,6 +761,10 @@ namespace MiscFixes
             if (self.mat == null)
             {
                 self.mat = Addressables.LoadAssetAsync<Material>("RoR2/Base/Core/matDamageIndicator.mat").WaitForCompletion();
+            }
+            else
+            {
+                LogError("Failed to modify main menu damage indicator");
             }
             orig(self);
         }

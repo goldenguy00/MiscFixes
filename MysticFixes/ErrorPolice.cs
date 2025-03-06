@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using EntityStates.LightningStorm;
 using EntityStates.LunarExploderMonster;
 using Facepunch.Steamworks;
 using HarmonyLib;
-using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.Items;
-using RoR2.Navigation;
 using RoR2.Orbs;
 using RoR2.Projectile;
 using RoR2.Stats;
@@ -99,36 +95,6 @@ namespace MiscFixes
             else Debug.LogError($"IL hook failed for VineOrb.OnArrival");
         }
 
-        [HarmonyPatch(typeof(BossGroup), nameof(BossGroup.OnDefeatedServer))]
-        [HarmonyILManipulator]
-        public static void BossGroupEvent(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Run), nameof(Run.instance))),
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<Run>(nameof(Run.OnServerBossDefeated))
-                ))
-            {
-                var retLabel = c.DefineLabel();
-                var callLabel = c.DefineLabel();
-                c.Index++;
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, callLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, retLabel);
-
-                c.MarkLabel(callLabel);
-                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<Run>(nameof(Run.OnServerBossDefeated)));
-                c.MarkLabel(retLabel);
-            }
-            else Debug.LogError($"IL hook failed for BossGroup.OnDefeatedServer");
-        }
-
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
         [HarmonyILManipulator]
         public static void ProjectileStart(ILContext il)
@@ -196,36 +162,6 @@ namespace MiscFixes
             else Debug.LogError($"IL hook failed for StatManager.ProcessGoldEvents 2");
         }
 
-        [HarmonyPatch(typeof(DevotedLemurianController), nameof(DevotedLemurianController.TryTeleport), MethodType.Enumerator)]
-        [HarmonyILManipulator]
-        private static void DevotionTele(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            ILLabel nextLoopLabel = null;
-            FieldReference bodyField = null;
-            if (c.TryGotoNext(
-                    x => x.MatchLdloc(out _),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(List<NodeGraph.NodeIndex>), nameof(List<NodeGraph.NodeIndex>.Count))),
-                    x => x.MatchBrfalse(out _),
-                    x => x.MatchBr(out nextLoopLabel)) &&
-                c.TryGotoPrev(
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdfld(out _),
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdfld(out bodyField),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position)))
-                ))
-            {
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit(OpCodes.Ldfld, bodyField);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, nextLoopLabel);
-            }
-            else Debug.LogError($"IL hook failed for DevotedLemurianController.TryTeleport");
-        }
-
         [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
         [HarmonyILManipulator]
         private static void MinionLeash(ILContext il)
@@ -272,54 +208,6 @@ namespace MiscFixes
                 c.MarkLabel(compareLabel);
             }
             else Debug.LogError($"IL hook failed for MinionLeashBodyBehavior.OnDisable");
-        }
-
-        [HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.Start))]
-        [HarmonyILManipulator]
-        private static void FixAntlerStart(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            ILLabel retLabel = null;
-            if (new ILCursor(il).TryGotoNext(x => x.MatchBrfalse(out retLabel)) &&
-                c.TryGotoNext(MoveType.After, x => x.MatchLdfld<ElusiveAntlersPickup>(nameof(ElusiveAntlersPickup.ownerBody))))
-            {
-                var callLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, callLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, retLabel);
-
-                c.MarkLabel(callLabel);
-            }
-            else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.Start");
-        }
-
-        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.OnShardDestroyed))]
-        [HarmonyILManipulator]
-        private static void FixRpcShardDestroy(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdarg(1),
-                    x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.CallRpcOnShardDestroyedClient))
-                ))
-            {
-                var retLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Ldarg_0);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, retLabel);
-
-                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.CallRpcOnShardDestroyedClient)));
-                c.MarkLabel(retLabel);
-            }
-            else Debug.LogError($"IL hook failed for CharacterBody.OnShardDestroyed");
         }
 
         [HarmonyILManipulator, HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
@@ -383,92 +271,6 @@ namespace MiscFixes
                 c.Emit(OpCodes.Brfalse, label);
             }
             else Debug.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
-        }
-
-        [HarmonyPatch(typeof(TetherVfxOrigin), nameof(TetherVfxOrigin.AddTether))]
-        [HarmonyILManipulator]
-        public static void FixTether(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdfld<TetherVfxOrigin>(nameof(TetherVfxOrigin.onTetherAdded)),
-                    x => x.MatchLdloc(0),
-                    x => x.MatchLdarg(1),
-                    x => x.MatchCallOrCallvirt<TetherVfxOrigin.TetherAddDelegate>(nameof(TetherVfxOrigin.TetherAddDelegate.Invoke))
-                ))
-            {
-                var retLabel = c.MarkLabel();
-
-                c.GotoPrev(MoveType.After, x => x.MatchLdfld<TetherVfxOrigin>(nameof(TetherVfxOrigin.onTetherAdded)));
-
-                var callLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.Emit(OpCodes.Brtrue, callLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, retLabel);
-
-                c.MarkLabel(callLabel);
-            }
-            else Debug.LogError($"IL hook failed for TetherVfxOrigin.AddTether");
-        }
-
-        [HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.TrueKill), [typeof(GameObject), typeof(GameObject), typeof(DamageTypeCombo)])]
-        [HarmonyILManipulator]
-        public static void FixKill(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            ILLabel label = null, label2 = null;
-            if (c.TryGotoNext(
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)),
-                    x => x.MatchLdsfld(out _),
-                    x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.HasBuff))) &&
-                c.TryFindNext(out _,
-                    x => x.MatchBrfalse(out label)
-                ))
-            {
-                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)));
-
-                var bodyLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, bodyLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, label);
-
-                c.MarkLabel(bodyLabel);
-            }
-            else Debug.LogError($"IL hook failed for CharacterMaster.TrueKill 1");
-
-            if (c.TryGotoNext(
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.equipmentSlot)))) &&
-                c.TryFindNext(out _,
-                    x => x.MatchBrfalse(out label2)
-                ))
-            {
-                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)));
-
-                var bodyLabel2 = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, bodyLabel2);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, label2);
-
-                c.MarkLabel(bodyLabel2);
-            }
-            else Debug.LogError($"IL hook failed for CharacterMaster.TrueKill 2");
         }
 
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
