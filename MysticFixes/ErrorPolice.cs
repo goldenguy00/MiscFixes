@@ -76,6 +76,13 @@ namespace MiscFixes
         {
             var c = new ILCursor(il);
 
+            var nextInstr = c.Next;
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit<Orb>(OpCodes.Ldfld, nameof(Orb.target));
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brtrue_S, nextInstr);
+            c.Emit(OpCodes.Ret);
+
             int bodyLoc = 0;
             if (c.TryGotoNext(MoveType.After,
                     x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.body)),
