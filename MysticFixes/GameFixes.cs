@@ -695,9 +695,28 @@ namespace MiscFixes
         #region SotS Fixes
         internal static void SotsFixes()
         {
+            IL.EntityStates.MeridianEvent.FSBFPhaseBaseState.OnBossGroupDefeated += FixFalseSonBossGroupDefeatedEvent;
             IL.EntityStates.ChildMonster.Frolic.TeleportAroundPlayer += FixFrolicTeleportWithoutAvailableNodes;
             On.RoR2.MeridianEventTriggerInteraction.Awake += FixMeridianTestStateSpam;
             FixSaleStarCollider();
+        }
+
+        private static void FixFalseSonBossGroupDefeatedEvent(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction skipInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchCallOrCallvirt<MeridianEventTriggerInteraction>("ResetPMHeadState"),
+                x => x.MatchAny(out skipInstr)))
+            {
+                LogError(il.Method.Name);
+                return;
+            }
+            var continueInstr = c.Next;
+            c.Emit(OpCodes.Dup);
+            c.Emit(OpCodes.Brtrue_S, continueInstr);
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Br, skipInstr);
         }
 
         private static void FixFrolicTeleportWithoutAvailableNodes(ILContext il)
