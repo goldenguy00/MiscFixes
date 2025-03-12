@@ -696,9 +696,7 @@ namespace MiscFixes
         internal static void SotsFixes()
         {
             IL.EntityStates.ChildMonster.Frolic.TeleportAroundPlayer += FixFrolicTeleportWithoutAvailableNodes;
-            IL.RoR2.BurnEffectController.HandleDestroy += FixBurnControllerDestroyDoT;
             On.RoR2.MeridianEventTriggerInteraction.Awake += FixMeridianTestStateSpam;
-            On.RoR2.PostProcessing.DamageIndicator.Awake += FixMainMenuCameraDamageIndicator;
             FixSaleStarCollider();
         }
 
@@ -722,25 +720,6 @@ namespace MiscFixes
             c.Emit(OpCodes.Ret);
         }
 
-        private static void FixBurnControllerDestroyDoT(ILContext il)
-        {
-            var c = new ILCursor(il);
-            Instruction destroyInstr = null;
-            if (!c.TryGotoNext(
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<Component>("get_gameObject"),
-                    x => x.MatchAny(out destroyInstr)
-                ))
-            {
-                LogError(il);
-                return;
-            }
-
-            c.Emit(OpCodes.Ldarg_0);
-            c.EmitOpImplicit();
-            c.Emit(OpCodes.Brfalse, destroyInstr);
-        }
-
         private static void FixMeridianTestStateSpam(On.RoR2.MeridianEventTriggerInteraction.orig_Awake orig, MeridianEventTriggerInteraction self)
         {
             var esm = EntityStateMachine.FindByCustomName(self.gameObject, "");
@@ -752,19 +731,6 @@ namespace MiscFixes
             else
             {
                 LogError("Failed to modify meridian test state");
-            }
-            orig(self);
-        }
-
-        private static void FixMainMenuCameraDamageIndicator(On.RoR2.PostProcessing.DamageIndicator.orig_Awake orig, RoR2.PostProcessing.DamageIndicator self)
-        {
-            if (self.mat == null)
-            {
-                self.mat = Addressables.LoadAssetAsync<Material>("RoR2/Base/Core/matDamageIndicator.mat").WaitForCompletion();
-            }
-            else
-            {
-                LogError("Failed to modify main menu damage indicator");
             }
             orig(self);
         }
