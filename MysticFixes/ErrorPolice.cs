@@ -40,7 +40,7 @@ namespace MiscFixes
                 c.GotoNext(MoveType.After, x => x.MatchPop());
                 c.MarkLabel(label);
             }
-            else Debug.LogError($"IL hook failed for CharacterBody.TriggerEnemyDebuffs");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for CharacterBody.TriggerEnemyDebuffs");
         }
 
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
@@ -67,7 +67,7 @@ namespace MiscFixes
 
                 c.MarkLabel(callLabel);
             }
-            else Debug.LogError($"IL hook failed for CharacterBody.TryGiveFreeUnlockWhenLevelUp");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for CharacterBody.TryGiveFreeUnlockWhenLevelUp");
         }
 
         [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
@@ -92,7 +92,7 @@ namespace MiscFixes
                 c.GotoNext(x => x.MatchLdstr("Play_item_proc_triggerEnemyDebuffs"));
                 c.MarkLabel(label);
             }
-            else Debug.LogError($"IL hook failed for VineOrb.OnArrival");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for VineOrb.OnArrival");
         }
 
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
@@ -118,7 +118,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
-            else Debug.LogError($"IL hook failed for ProjectileController.Start");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for ProjectileController.Start");
         }
 
         [HarmonyPatch(typeof(TemporaryOverlayInstance), nameof(TemporaryOverlayInstance.SetupMaterial))]
@@ -147,7 +147,7 @@ namespace MiscFixes
 
                 c.EmitOpImplicit();
             }
-            else Debug.LogError($"IL hook failed for StatManager.ProcessGoldEvents 1");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for StatManager.ProcessGoldEvents 1");
 
             if (c.TryGotoNext(
                     x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent)),
@@ -159,7 +159,7 @@ namespace MiscFixes
 
                 c.EmitOpImplicit();
             }
-            else Debug.LogError($"IL hook failed for StatManager.ProcessGoldEvents 2");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for StatManager.ProcessGoldEvents 2");
         }
 
         [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
@@ -207,7 +207,7 @@ namespace MiscFixes
                 // prev = SceneInfo.instance?.sceneDef?.cachedName
                 c.MarkLabel(compareLabel);
             }
-            else Debug.LogError($"IL hook failed for MinionLeashBodyBehavior.OnDisable");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MinionLeashBodyBehavior.OnDisable");
         }
 
         [HarmonyILManipulator, HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
@@ -241,7 +241,7 @@ namespace MiscFixes
 
                 c.MarkLabel(stLocLabel);
             }
-            else Debug.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
         }
 
         [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
@@ -270,7 +270,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
-            else Debug.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
         }
 
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
@@ -296,7 +296,7 @@ namespace MiscFixes
                         self.modelLocator.modelTransform.gameObject.SetActive(false);
                 });
             }
-            else Debug.LogError($"IL hook failed for DeathState.FixedUpdate");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for DeathState.FixedUpdate");
         }
 
         [HarmonyPatch(typeof(MPEventSystem), nameof(MPEventSystem.Update))]
@@ -312,7 +312,7 @@ namespace MiscFixes
                 c[0].Remove();
                 c[1].Remove();
             }
-            else Debug.LogError($"IL hook failed for MPEventSystem.Update");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MPEventSystem.Update");
         }
 
         [HarmonyPatch(typeof(RouletteChestController.Idle), nameof(RouletteChestController.Idle.OnEnter))]
@@ -342,7 +342,7 @@ namespace MiscFixes
                         ctrl.rouletteChestController.purchaseInteraction.Networkavailable = true;
                 });
             }
-            else Debug.LogError($"IL hook failed for MPEventSystem.Update");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MPEventSystem.Update");
         }
 
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
@@ -363,7 +363,7 @@ namespace MiscFixes
                 c.Remove();
                 c.Emit(OpCodes.Call, AccessTools.DeclaredMethod(typeof(FixVanilla), nameof(FixVanilla.GetRealCount)));
             }
-            else Debug.LogError($"IL hook failed for EntityStates.VoidCamp.Idle");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for EntityStates.VoidCamp.Idle");
         }
 
         [HarmonyPatch(typeof(Interactor), nameof(Interactor.FindBestInteractableObject))]
@@ -385,7 +385,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
-            else Debug.LogError($"IL hook failed for Interactor.FindBestInteractableObject");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for Interactor.FindBestInteractableObject");
 
             int loc2 = 0;
             ILLabel label2 = null;
@@ -400,7 +400,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label2);
             }
-            else Debug.LogError($"IL hook failed for Interactor.FindBestInteractableObject2");
+            else MiscFixesPlugin.Logger.LogError($"IL hook failed for Interactor.FindBestInteractableObject2");
         }
 
         public static int GetRealCount(ReadOnlyCollection<TeamComponent> teamMembers)

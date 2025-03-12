@@ -40,7 +40,7 @@ namespace MiscFixes
 
         private static void LogError(string method)
         {
-            Debug.LogError("Failed to patch " + method);
+            MiscFixesPlugin.Logger.LogError("Failed to patch " + method);
         }
 
         private static void LogError(ILContext il)
