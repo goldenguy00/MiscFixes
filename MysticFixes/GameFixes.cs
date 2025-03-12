@@ -53,6 +53,7 @@ namespace MiscFixes
             IL.EntityStates.Merc.EvisDash.FixedUpdate += FixMercEvisAllyTargetting;
             IL.EntityStates.Duplicator.Duplicating.DropDroplet += FixPrinterDropEffect;
             IL.RoR2.DetachParticleOnDestroyAndEndEmission.OnDisable += FixParticleDetachOnDestroy;
+            IL.RoR2.CharacterModel.Awake += FixCharacterModelNullHurtBoxes;
             IL.RoR2.PositionIndicator.UpdatePositions += FixPositionIndicatorWithHiddenHud;
             IL.RoR2.Indicator.SetVisibleInternal += FixIndicatorSetVisibleNRE;
             IL.RoR2.UI.CrosshairUtils.CrosshairOverrideBehavior.OnDestroy += FixCrosshairOverrideOnDestroy;
@@ -148,6 +149,31 @@ namespace MiscFixes
             c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject)));
             c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeInHierarchy)));
             c.Emit(OpCodes.Brfalse, returnLabel);
+        }
+
+        private static void FixCharacterModelNullHurtBoxes(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdfld<HurtBoxGroup>(nameof(HurtBoxGroup.hurtBoxes))))
+            {
+                LogError(il.Method.Name);
+                return;
+            }
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<HurtBox[], CharacterModel, HurtBox[]>>((hurtBoxes, model) =>
+            {
+                var filteredHurtBoxes = new List<HurtBox>();
+                foreach (var hurtBox in hurtBoxes)
+                {
+                    if (hurtBox && hurtBox.transform != null)
+                    {
+                        filteredHurtBoxes.Add(hurtBox);
+                    }
+                }
+                return filteredHurtBoxes.Count == hurtBoxes.Length ? hurtBoxes : [.. filteredHurtBoxes];
+            });
         }
 
         private static void FixPositionIndicatorWithHiddenHud(ILContext il)
