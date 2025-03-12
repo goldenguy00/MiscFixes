@@ -5,6 +5,7 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using Rewired;
 using RoR2;
+using RoR2.CharacterAI;
 using RoR2.Navigation;
 using RoR2.UI;
 using System;
@@ -54,6 +55,7 @@ namespace MiscFixes
             IL.EntityStates.Duplicator.Duplicating.DropDroplet += FixPrinterDropEffect;
             IL.RoR2.DetachParticleOnDestroyAndEndEmission.OnDisable += FixParticleDetachOnDestroy;
             IL.RoR2.CharacterModel.Awake += FixCharacterModelNullHurtBoxes;
+            IL.RoR2.OutsideInteractableLocker.LockLemurianEgg += FixReapplingEggLockVFX;
             IL.RoR2.PositionIndicator.UpdatePositions += FixPositionIndicatorWithHiddenHud;
             IL.RoR2.Indicator.SetVisibleInternal += FixIndicatorSetVisibleNRE;
             IL.RoR2.UI.CrosshairUtils.CrosshairOverrideBehavior.OnDestroy += FixCrosshairOverrideOnDestroy;
@@ -174,6 +176,19 @@ namespace MiscFixes
                 }
                 return filteredHurtBoxes.Count == hurtBoxes.Length ? hurtBoxes : [.. filteredHurtBoxes];
             });
+        }
+
+        private static void FixReapplingEggLockVFX(ILContext il)
+        {
+            var c = new ILCursor(il);
+            var nextInstr = c.Next;
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit<OutsideInteractableLocker>(OpCodes.Ldfld, nameof(OutsideInteractableLocker.eggLockInfoMap));
+            c.Emit(OpCodes.Ldarg_1);
+            c.Emit<Dictionary<LemurianEggController, OutsideInteractableLocker.LockInfo>>(OpCodes.Callvirt, "get_Item");
+            c.Emit<OutsideInteractableLocker.LockInfo>(OpCodes.Callvirt, nameof(OutsideInteractableLocker.LockInfo.IsLocked));
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+            c.Emit(OpCodes.Ret);
         }
 
         private static void FixPositionIndicatorWithHiddenHud(ILContext il)
