@@ -27,6 +27,7 @@ namespace MiscFixes
         {
             Logger = base.Logger;
             harm = new Harmony(PluginGUID);
+            harm.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
             GameFixes.Init();
         }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using EntityStates.LunarExploderMonster;
-using Facepunch.Steamworks;
 using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -10,19 +8,17 @@ using RoR2.Items;
 using RoR2.Orbs;
 using RoR2.Projectile;
 using RoR2.Stats;
-using RoR2.UI;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace MiscFixes
 {
     [HarmonyPatch]
     public class FixVanilla
     {
-        [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.Update))]
-        [HarmonyPrefix]
-        public static bool Ugh(FlickerLight __instance) => __instance.light;
-
+        /// <summary>
+        /// call to DotController.GetDotDef(dotDefIndex); and pops the result. useless call, probably leftover code. functions fine without it.
+        /// DotController.GetDotDef doesn't use ArrayUtils.GetSafe so DotDefIndex.None throws
+        /// </summary>
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TriggerEnemyDebuffs))]
         [HarmonyILManipulator]
         public static void WhatTheFuck(ILContext il)
@@ -43,6 +39,13 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for CharacterBody.TriggerEnemyDebuffs");
         }
 
+        /// <summary>
+        /// NullReferenceException: 
+        /// 
+        /// RoR2.CharacterBody.TryGiveFreeUnlockWhenLevelUp() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+        /// RoR2.CharacterBody.OnLevelUp() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+        /// RoR2.CharacterBody.OnCalculatedLevelChanged(System.Single oldLevel, System.Single newLevel) (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0017)
+        /// </summary>
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
         [HarmonyILManipulator]
         public static void FreeFortniteCard(ILContext il)
@@ -70,6 +73,15 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for CharacterBody.TryGiveFreeUnlockWhenLevelUp");
         }
 
+        /// <summary>
+        /// orb calling target.healthComponent.body OnArrival and never null checking it.
+        /// probably shouldn't match the sound string, it should just jump right over the foreach loop
+        /// 
+        /// NullReferenceException:
+        /// 
+        /// RoR2.Orbs.VineOrb.OnArrival() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0067)
+        /// RoR2.Orbs.OrbManager.FixedUpdate() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_00A3)
+        /// </summary>
         [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
         [HarmonyILManipulator]
         public static void VineOrbArrival(ILContext il)
@@ -102,6 +114,19 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for VineOrb.OnArrival");
         }
 
+        /// <summary>
+        /// Unknown cause, possibly vanilla. highly likely the ghost is null, but this never gets caught by the catalog.
+        /// Skipping the following section removes the error
+        /// 
+        /// if (isPrediction)
+        ///      ghost.predictionTransform = transform;
+        ///  else
+        ///     ghost.authorityTransform = transform;
+        /// ghost.enabled = true;
+        /// 
+        /// NullReferenceException:
+        /// (wrapper dynamic-method) RoR2.Projectile.ProjectileController.DMD<RoR2.Projectile.ProjectileController::Start>(RoR2.Projectile.ProjectileController)
+        /// </summary>
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
         [HarmonyILManipulator]
         public static void ProjectileStart(ILContext il)
@@ -128,6 +153,22 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for ProjectileController.Start");
         }
 
+        /// <summary>
+        /// Checks if the component exists, which should be the case for pre-sots overlay code
+        /// If true, it creates a temporary overlay instance from the component for backwards compatibility 
+        /// 
+        /// ArgumentNullException: Parameter name: source
+        /// 
+        /// UnityEngine.Material..ctor(UnityEngine.Material source) (at<a20b3695b7ce4017b7981f9d06962bd1>:IL_0008)
+        /// RoR2.TemporaryOverlayInstance.SetupMaterial() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_000D)
+        /// RoR2.TemporaryOverlayInstance.AddToCharacterModel(RoR2.CharacterModel characterModel) (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0000)
+        /// RoR2.TemporaryOverlay.AddToCharacerModel(RoR2.CharacterModel characterModel) (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+        /// 
+        /// UnityEngine.Material..ctor(UnityEngine.Material source) (at<a20b3695b7ce4017b7981f9d06962bd1>:IL_0008)
+        /// RoR2.TemporaryOverlayInstance.SetupMaterial() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_000D)
+        /// RoR2.TemporaryOverlayInstance.Start() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0009)
+        /// RoR2.TemporaryOverlay.Start() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+        /// </summary>
         [HarmonyPatch(typeof(TemporaryOverlayInstance), nameof(TemporaryOverlayInstance.SetupMaterial))]
         [HarmonyPrefix]
         public static void SetupMaterial(TemporaryOverlayInstance __instance)
@@ -138,6 +179,14 @@ namespace MiscFixes
             }
         }
 
+        /// <summary>
+        /// NullReferenceException:
+        /// 
+        /// UnityEngine.Component.GetComponent[T] () (at<a20b3695b7ce4017b7981f9d06962bd1>:IL_0021)
+        /// RoR2.Stats.StatManager.ProcessGoldEvents() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0017)
+        /// RoR2.Stats.StatManager.ProcessEvents() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_000F)
+        /// RoR2.RoR2Application.FixedUpdate() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0024)
+        /// </summary>
         [HarmonyPatch(typeof(StatManager), nameof(StatManager.ProcessGoldEvents))]
         [HarmonyILManipulator]
         public static void ProcessGold(ILContext il)
@@ -169,6 +218,9 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for StatManager.ProcessGoldEvents 2");
         }
 
+        /// <summary>
+        /// SceneInfo.instance.sceneDef.cachedName getting called from OnDisable is just never gonna be error proof
+        /// </summary>
         [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
         [HarmonyILManipulator]
         private static void MinionLeash(ILContext il)
@@ -217,6 +269,11 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for MinionLeashBodyBehavior.OnDisable");
         }
 
+        /// <summary>
+        /// ownerbody is null, also gameObject.transform sucks
+        /// 
+        /// Vector3 position = ownerBody.gameObject.transform.position;
+        /// </summary>
         [HarmonyILManipulator, HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
         private static void ElusiveAntlersPickup_FixedUpdate(ILContext il)
         {
@@ -251,6 +308,9 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
         }
 
+        /// <summary>
+        /// seen most often when the fog is attacking enemies
+        /// </summary>
         [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
         [HarmonyILManipulator]
         public static void FixFog(ILContext il)
@@ -280,6 +340,10 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
         }
 
+        /// <summary>
+        /// nullchecking modelLocator and subsequent transforms with ?. is bad don't do it
+        /// only ok for prefabs
+        /// </summary>
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
         [HarmonyILManipulator]
         public static void FixExplode(ILContext il)
@@ -306,22 +370,9 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for DeathState.FixedUpdate");
         }
 
-        [HarmonyPatch(typeof(MPEventSystem), nameof(MPEventSystem.Update))]
-        [HarmonyILManipulator]
-        public static void FixThisFuckingBullshitGearbox(ILContext il)
-        {
-            ILCursor[] c = null;
-            if (new ILCursor(il).TryFindNext(out c,
-                    x => x.MatchCall(AccessTools.PropertyGetter(typeof(EventSystem), nameof(EventSystem.current))),
-                    x => x.MatchCall(AccessTools.PropertySetter(typeof(EventSystem), nameof(EventSystem.current)))
-                ))
-            {
-                c[0].Remove();
-                c[1].Remove();
-            }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MPEventSystem.Update");
-        }
-
+        /// <summary>
+        /// something on sundered grove throws an error here periodically
+        /// </summary>
         [HarmonyPatch(typeof(RouletteChestController.Idle), nameof(RouletteChestController.Idle.OnEnter))]
         [HarmonyILManipulator]
         public static void Spinny(ILContext il)
@@ -352,27 +403,9 @@ namespace MiscFixes
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for MPEventSystem.Update");
         }
 
-        [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
-        [HarmonyFinalizer]
-        public static Exception FixFacepunch(Exception __exception) => null;
-
-        [HarmonyPatch(typeof(EntityStates.VoidCamp.Idle), nameof(EntityStates.VoidCamp.Idle.FixedUpdate))]
-        [HarmonyPatch(typeof(EntityStates.VoidCamp.Idle.VoidCampObjectiveTracker), nameof(EntityStates.VoidCamp.Idle.VoidCampObjectiveTracker.GenerateString))]
-        [HarmonyILManipulator]
-        public static void FixVoidSeed(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (c.TryGotoNext(
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(ReadOnlyCollection<TeamComponent>), nameof(ReadOnlyCollection<TeamComponent>.Count)))
-                ))
-            {
-                c.Remove();
-                c.Emit(OpCodes.Call, AccessTools.DeclaredMethod(typeof(FixVanilla), nameof(FixVanilla.GetRealCount)));
-            }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for EntityStates.VoidCamp.Idle");
-        }
-
+        /// <summary>
+        /// gold coast plus revived chest is fucked, and that's like the only time ive ever seen it
+        /// </summary>
         [HarmonyPatch(typeof(Interactor), nameof(Interactor.FindBestInteractableObject))]
         [HarmonyILManipulator]
         public static void FixInteraction(ILContext il)
@@ -408,18 +441,6 @@ namespace MiscFixes
                 c.Emit(OpCodes.Brfalse, label2);
             }
             else MiscFixesPlugin.Logger.LogError($"IL hook failed for Interactor.FindBestInteractableObject2");
-        }
-
-        public static int GetRealCount(ReadOnlyCollection<TeamComponent> teamMembers)
-        {
-            int count = 0;
-            foreach (var member in teamMembers)
-            {
-                var body = member ? member.body : null;
-                if (body && body.master && body.healthComponent && body.healthComponent.alive)
-                    count++;
-            }
-            return count;
         }
     }
 }
