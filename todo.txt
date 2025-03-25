@@ -1,5 +1,17 @@
 
 
+*****************************************
+
+    @SCORE     <- UPDATE THE GODDAMN README 
+    @SCORE 
+    @SCORE     <- ITS LIKE 6  MONTHS OUTDATED
+                   
+****************************************
+
+
+unity explorer error in lobby. doesn't fuck everything up anymore but it still throws from update, which is annoying
+
+
 this is driver's fault technically since he heavily abuses this debuff
 
         NullReferenceException: Object reference not set to an instance of an object
@@ -9,7 +21,7 @@ this is driver's fault technically since he heavily abuses this debuff
 
 
 
-Doesnt throw errors but it removed items from a destroyed object which results in OnInventoryChanged nre's
+Doesnt throw errors but it removed items from a destroyed object which results in OnInventoryChanged nre's from some mods
 
         RoR2.MinionOwnership+MinionGroup.SetMinionOwner (RoR2.MinionOwnership minion, UnityEngine.Networking.NetworkInstanceId ownerId) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0022)
         RoR2.MinionOwnership.OnDestroy () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0000)

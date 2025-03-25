@@ -1,3 +1,7 @@
+## 1.3.0
+
+- Removed fixes that have been addressed by vanilla
+
 ## 1.2.8
 
 - Changed false to true in OnBossGroupDefeated
