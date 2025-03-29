@@ -15,6 +15,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace MiscFixes
 {
@@ -740,6 +741,7 @@ namespace MiscFixes
             IL.EntityStates.ChildMonster.Frolic.TeleportAroundPlayer += FixFrolicTeleportWithoutAvailableNodes;
             On.RoR2.MeridianEventTriggerInteraction.Awake += FixMeridianTestStateSpam;
             FixSaleStarCollider();
+            FixFalseSonBossP2NotUsingSpecial();
         }
 
         private static void FixFalseSonBossGroupDefeatedEvent(ILContext il)
@@ -805,6 +807,23 @@ namespace MiscFixes
                 return;
             }
             collider.convex = true;
+        }
+
+        private static void FixFalseSonBossP2NotUsingSpecial()
+        {
+            Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/FalseSonBoss/FalseSonBossLunarShardMaster.prefab").Completed += delegate(AsyncOperationHandle<GameObject> obj)
+            {
+                var skillDrivers = obj.Result.GetComponents<AISkillDriver>();
+                foreach (var skillDriver in skillDrivers)
+                {
+                    if (skillDriver.customName == "Corrupted Paths (Step Brothers)")
+                    {
+                        skillDriver.requiredSkill = null;
+                        return;
+                    }
+                }
+                LogError("False Son Boss Phase 2 special skill");
+            };
         }
         #endregion
     }
