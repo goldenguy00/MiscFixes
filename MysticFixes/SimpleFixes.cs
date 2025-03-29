@@ -4,7 +4,6 @@ using HarmonyLib;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.UI;
-using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace MiscFixes
@@ -16,6 +15,9 @@ namespace MiscFixes
     [HarmonyPatch]
     public class SimpleFixes
     {
+        /// <summary>
+        /// Sometimes prevents loading, so suppress exceptions
+        /// </summary>
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
         [HarmonyFinalizer]
         public static System.Exception FixFacepunch() => null;
