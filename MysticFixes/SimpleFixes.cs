@@ -18,11 +18,7 @@ namespace MiscFixes
     {
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
         [HarmonyFinalizer]
-        public static System.Exception FixFacepunch(System.Exception __exception)
-        {
-            Debug.Log(__exception);
-            return null;
-        }
+        public static System.Exception FixFacepunch() => null;
 
         /// <summary>
         /// blame ss2
