@@ -813,5 +813,29 @@ namespace MiscFixes
                 c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterMaster), nameof(CharacterMaster.inventory)));
             }
         }
+
+        /// <summary>
+        /// Fix Aurelionite not spawning for you on the next teleporter event after beating False Son.
+        ///
+        /// After the boss fight GoldTitanManager.isFalseSonBossLunarShardBrokenMaster remains true until the next teleporter event.
+        /// The problem is this method is called before the boss spawns and sets it back to false, leading to NRE by executing unexpected code.
+        /// A solution is to set the bool back to false the moment Aurelionite is summoned for False Son.
+        /// </summary>
+        [HarmonyPatch(typeof(GoldTitanManager), nameof(GoldTitanManager.TryStartChannelingTitansServer))]
+        [HarmonyILManipulator]
+        public static void FixAurelioniteNotSpawningAfterBeatingFalseSon(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdsfld(typeof(GoldTitanManager), nameof(GoldTitanManager.isFalseSonBossLunarShardBrokenMaster)),
+                x => x.MatchBrfalse(out _)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Emit(OpCodes.Ldc_I4_0);
+            c.Emit(OpCodes.Stsfld, AccessTools.Field(typeof(GoldTitanManager), nameof(GoldTitanManager.isFalseSonBossLunarShardBrokenMaster)));
+        }
     }
 }
