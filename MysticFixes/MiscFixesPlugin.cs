@@ -23,11 +23,13 @@ namespace MiscFixes
         public void Awake()
         {
             Log.Init(Logger);
+            
+            AssetFixes.Init();
+
             harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
             harm.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
-            AssetFixes.Init();
         }
     }
 }

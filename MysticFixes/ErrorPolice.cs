@@ -673,10 +673,11 @@ namespace MiscFixes
         /// <summary>
         /// Null check EventSystem.current, occurs when exiting a lobby.
         /// </summary>
-        [HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
+        //[HarmonyILManipulator]
         public static void FixLobbyQuitEventSystem(ILContext il)
         {
+            Log.Warning(il);
             var c = new ILCursor(il);
             if (!c.TryGotoNext(
                 x => x.MatchPop(),
