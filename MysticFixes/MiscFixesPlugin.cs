@@ -18,7 +18,7 @@ namespace MiscFixes
         public const string PluginName = "MiscFixes";
         public const string PluginVersion = "1.3.0";
 
-        private Harmony harm;
+        private Harmony harmonyPatcher;
 
         public void Awake()
         {
@@ -26,10 +26,10 @@ namespace MiscFixes
             
             AssetFixes.Init();
 
-            harm = new Harmony(PluginGUID);
-            harm.CreateClassProcessor(typeof(SimpleFixes)).Patch();
-            harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
-            harm.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
+            harmonyPatcher = new Harmony(PluginGUID);
+            harmonyPatcher.CreateClassProcessor(typeof(SimpleFixes)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(FixVanilla)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
         }
     }
 }
