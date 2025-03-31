@@ -2,7 +2,6 @@ using System.Security.Permissions;
 using System.Security;
 using BepInEx;
 using HarmonyLib;
-using BepInEx.Logging;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -21,15 +20,14 @@ namespace MiscFixes
 
         private Harmony harm;
 
-        internal static new ManualLogSource Logger;
-
         public void Awake()
         {
-            Logger = base.Logger;
+            Log.Init(Logger);
             harm = new Harmony(PluginGUID);
             harm.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harm.CreateClassProcessor(typeof(FixVanilla)).Patch();
-            GameFixes.Init();
+            harm.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
+            AssetFixes.Init();
         }
     }
 }

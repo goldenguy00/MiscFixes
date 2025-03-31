@@ -1,0 +1,430 @@
+﻿using EntityStates;
+using HarmonyLib;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using RoR2;
+using UnityEngine;
+using UnityEngine.Networking;
+
+namespace MiscFixes
+{
+    /// <summary>
+    /// A collection of patches that skip Server method calls on a client preventing log spam.
+    /// </summary>
+    [HarmonyPatch]
+    public class ServerCommandsOnClient
+    {
+        private static void EmitNetworkServerActive(ILCursor cursor) => cursor.Emit<NetworkServer>(OpCodes.Call, "get_active");
+
+        [HarmonyPatch(typeof(EntityStates.BrotherMonster.EnterSkyLeap), nameof(EntityStates.BrotherMonster.EnterSkyLeap.OnEnter))]
+        [HarmonyILManipulator]
+        public static void FixEnterSkyLeapOnEnter(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody))),
+                x => x.MatchLdsfld(typeof(RoR2Content.Buffs), nameof(RoR2Content.Buffs.ArmorBoost)),
+                x => x.MatchLdsfld<EntityStates.BrotherMonster.EnterSkyLeap>(nameof(EntityStates.BrotherMonster.EnterSkyLeap.baseDuration)),
+                x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.AddTimedBuff)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.BrotherMonster.ExitSkyLeap), nameof(EntityStates.BrotherMonster.ExitSkyLeap.OnEnter))]
+        [HarmonyILManipulator]
+        public static void FixExitSkyLeapOnEnter(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody))),
+                x => x.MatchLdsfld(typeof(RoR2Content.Buffs), nameof(RoR2Content.Buffs.ArmorBoost)),
+                x => x.MatchLdsfld<EntityStates.BrotherMonster.ExitSkyLeap>(nameof(EntityStates.BrotherMonster.ExitSkyLeap.baseDuration)),
+                x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.AddTimedBuff)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.BrotherMonster.HoldSkyLeap), nameof(EntityStates.BrotherMonster.HoldSkyLeap.OnEnter))]
+        [HarmonyILManipulator]
+        public static void FixHoldSkyLeapOnEnter(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody))),
+                x => x.MatchLdsfld(typeof(RoR2Content.Buffs), nameof(RoR2Content.Buffs.HiddenInvincibility)),
+                x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.AddBuff)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il.Method.Name + " #1");
+                return;
+            }
+            EmitNetworkServerActive(c);
+            var ifInstr = c.Prev;
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+            if (!c.TryGotoPrev(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<EntityStates.BrotherMonster.HoldSkyLeap>(nameof(EntityStates.BrotherMonster.HoldSkyLeap.hurtboxGroup)),
+                x => x.MatchOpImplicit()))
+            {
+                Log.PatchFail(il.Method.Name + " #2");
+                return;
+            }
+            c.Remove();
+            c.Emit(OpCodes.Brfalse_S, ifInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.BrotherMonster.HoldSkyLeap), nameof(EntityStates.BrotherMonster.HoldSkyLeap.OnExit))]
+        [HarmonyILManipulator]
+        public static void FixHoldSkyLeapOnExit(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody))),
+                x => x.MatchLdsfld(typeof(RoR2Content.Buffs), nameof(RoR2Content.Buffs.HiddenInvincibility)),
+                x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.RemoveBuff)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il.Method.Name + " #1");
+                return;
+            }
+            EmitNetworkServerActive(c);
+            var ifInstr = c.Prev;
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+            if (!c.TryGotoPrev(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<EntityStates.BrotherMonster.HoldSkyLeap>(nameof(EntityStates.BrotherMonster.HoldSkyLeap.hurtboxGroup)),
+                x => x.MatchOpImplicit()))
+            {
+                Log.PatchFail(il.Method.Name + " #2");
+                return;
+            }
+            c.Remove();
+            c.Emit(OpCodes.Brfalse_S, ifInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.BrotherMonster.SpellChannelState), nameof(EntityStates.BrotherMonster.SpellChannelState.OnEnter))]
+        [HarmonyILManipulator]
+        public static void FixSpellChannelStateOnEnter(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody))),
+                x => x.MatchLdsfld(typeof(RoR2Content.Buffs), nameof(RoR2Content.Buffs.Immune)),
+                x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.AddBuff)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il.Method.Name + " #1");
+                return;
+            }
+            EmitNetworkServerActive(c);
+            var ifInstr = c.Prev;
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+            if (!c.TryGotoPrev(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<EntityStates.BrotherMonster.SpellChannelState>(nameof(EntityStates.BrotherMonster.SpellChannelState.spellChannelChildTransform)),
+                x => x.MatchOpImplicit()))
+            {
+                Log.PatchFail(il.Method.Name + " #2");
+                return;
+            }
+            c.Remove();
+            c.Emit(OpCodes.Brfalse_S, ifInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.BrotherMonster.SpellChannelState), nameof(EntityStates.BrotherMonster.SpellChannelState.OnExit))]
+        [HarmonyILManipulator]
+        public static void SpellChannelState_OnExit(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody))),
+                x => x.MatchLdsfld(typeof(RoR2Content.Buffs), nameof(RoR2Content.Buffs.Immune)),
+                x => x.MatchCallOrCallvirt<CharacterBody>(nameof(CharacterBody.RemoveBuff)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
+        [HarmonyILManipulator]
+        public static void FixDuplicatingDropDroplet(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt<EntityState>(nameof(EntityState.GetComponent)),
+                x => x.MatchCallOrCallvirt<ShopTerminalBehavior>(nameof(ShopTerminalBehavior.DropPickup)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.Huntress.Weapon.FireArrowSnipe), nameof(EntityStates.Huntress.Weapon.FireArrowSnipe.FireBullet))]
+        [HarmonyILManipulator]
+        public static void FixFireArrowSnipeFireBullet(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.healthComponent))),
+                x => x.MatchLdarga(1),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Ray), nameof(Ray.direction))),
+                x => x.MatchLdcR4(out _),
+                x => x.MatchCallOrCallvirt<Vector3>("op_Multiply"),
+                x => x.MatchLdcI4(1),
+                x => x.MatchLdcI4(0),
+                x => x.MatchCallOrCallvirt<HealthComponent>(nameof(HealthComponent.TakeDamageForce)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.MinorConstruct.Hidden), nameof(EntityStates.MinorConstruct.Hidden.OnEnter))]
+        [HarmonyILManipulator]
+        public static void FixHiddenOnEnter(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<EntityStates.MinorConstruct.Hidden>(nameof(EntityStates.MinorConstruct.Hidden.buffDef)),
+                x => x.MatchOpImplicit(),
+                x => x.MatchBrfalse(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextLabel);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.MinorConstruct.Hidden), nameof(EntityStates.MinorConstruct.Hidden.OnExit))]
+        [HarmonyILManipulator]
+        public static void FixHiddenOnExit(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<EntityStates.MinorConstruct.Hidden>(nameof(EntityStates.MinorConstruct.Hidden.buffDef)),
+                x => x.MatchOpImplicit(),
+                x => x.MatchBrfalse(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextLabel);
+        }
+
+        [HarmonyPatch(typeof(EntityStates.Scrapper.ScrapperBaseState), nameof(EntityStates.Scrapper.ScrapperBaseState.OnEnter))]
+        [HarmonyILManipulator]
+        public static void FixScrapperBaseStateOnEnter(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<EntityStates.Scrapper.ScrapperBaseState>(nameof(EntityStates.Scrapper.ScrapperBaseState.pickupPickerController)),
+                x => x.MatchLdarg(0),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityStates.Scrapper.ScrapperBaseState), nameof(EntityStates.Scrapper.ScrapperBaseState.enableInteraction))),
+                x => x.MatchCallOrCallvirt<PickupPickerController>(nameof(PickupPickerController.SetAvailable)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(BuffPassengerWhileSeated), nameof(BuffPassengerWhileSeated.OnDisable))]
+        [HarmonyILManipulator]
+        public static void FixBuffPassengerWhileSeatedOnDisable(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<BuffPassengerWhileSeated>(nameof(BuffPassengerWhileSeated.vehicleSeat)),
+                x => x.MatchOpImplicit(),
+                x => x.MatchBrfalse(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextLabel);
+        }
+
+        [HarmonyPatch(typeof(BuffPassengerWhileSeated), nameof(BuffPassengerWhileSeated.OnEnable))]
+        [HarmonyILManipulator]
+        public static void FixBuffPassengerWhileSeatedOnEnable(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<BuffPassengerWhileSeated>(nameof(BuffPassengerWhileSeated.vehicleSeat)),
+                x => x.MatchOpImplicit(),
+                x => x.MatchBrfalse(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextLabel);
+        }
+
+        [HarmonyPatch(typeof(DelusionChestController), nameof(DelusionChestController.ResetChestForDelusion))]
+        [HarmonyILManipulator]
+        public static void FixDelusionChestControllerResetChestForDelusion(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<DelusionChestController>(nameof(DelusionChestController._pickupPickerController)),
+                x => x.MatchLdcI4(out _),
+                x => x.MatchCallOrCallvirt<PickupPickerController>(nameof(PickupPickerController.SetAvailable)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(DelusionChestController), nameof(DelusionChestController.Start))]
+        [HarmonyILManipulator]
+        public static void FixDelusionChestControllerStart(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<DelusionChestController>(nameof(DelusionChestController._pickupPickerController)),
+                x => x.MatchLdcI4(out _),
+                x => x.MatchCallOrCallvirt<PickupPickerController>(nameof(PickupPickerController.SetAvailable)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(DevotionInventoryController), nameof(DevotionInventoryController.Awake))]
+        [HarmonyILManipulator]
+        public static void FixDevotionInventoryControllerAwake(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<DevotionInventoryController>(nameof(DevotionInventoryController._devotionMinionInventory)),
+                x => x.MatchLdsfld(typeof(CU8Content.Items), nameof(CU8Content.Items.LemurianHarness)),
+                x => x.MatchLdcI4(out _),
+                x => x.MatchCallOrCallvirt<Inventory>(nameof(Inventory.GiveItem)),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(MasterDropDroplet), nameof(MasterDropDroplet.DropItems))]
+        [HarmonyILManipulator]
+        public static void FixMasterDropDropletDropItems(ILContext il)
+        {
+            var c = new ILCursor(il);
+            var nextInstr = c.Instrs[c.Instrs.Count - 1];
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+        }
+
+        [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.AddMinion))]
+        [HarmonyILManipulator]
+        public static void FixMinionGroupAddMinion(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdloc(1),
+                x => x.MatchOpImplicit(),
+                x => x.MatchBrfalse(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextLabel);
+        }
+
+        [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.RemoveMinion))]
+        public static void FixMinionGroupRemoveMinion(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdloc(0),
+                x => x.MatchOpImplicit(),
+                x => x.MatchBrfalse(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            EmitNetworkServerActive(c);
+            c.Emit(OpCodes.Brfalse_S, nextLabel);
+        }
+    }
+}

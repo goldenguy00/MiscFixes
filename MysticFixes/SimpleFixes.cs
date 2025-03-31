@@ -52,7 +52,7 @@ namespace MiscFixes
                 c[0].Remove();
                 c[1].Remove();
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MPEventSystem.Update");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace MiscFixes
                     return count;
                 });
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for EntityStates.VoidCamp.Idle");
+            else Log.PatchFail(il);
         }
     }
 }

@@ -1,13 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
+using EntityStates;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using Rewired;
 using RoR2;
+using RoR2.CharacterAI;
 using RoR2.Items;
+using RoR2.Navigation;
 using RoR2.Orbs;
 using RoR2.Projectile;
 using RoR2.Stats;
+using RoR2.UI;
 using UnityEngine;
 
 namespace MiscFixes
@@ -36,7 +42,7 @@ namespace MiscFixes
                 c.GotoNext(MoveType.After, x => x.MatchPop());
                 c.MarkLabel(label);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for CharacterBody.TriggerEnemyDebuffs");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -70,7 +76,7 @@ namespace MiscFixes
 
                 c.MarkLabel(callLabel);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for CharacterBody.TryGiveFreeUnlockWhenLevelUp");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -111,7 +117,7 @@ namespace MiscFixes
                 c.GotoNext(x => x.MatchLdstr("Play_item_proc_triggerEnemyDebuffs"));
                 c.MarkLabel(label);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for VineOrb.OnArrival");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -150,7 +156,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for ProjectileController.Start");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -203,7 +209,7 @@ namespace MiscFixes
 
                 c.EmitOpImplicit();
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for StatManager.ProcessGoldEvents 1");
+            else Log.PatchFail(il.Method.Name + " 1");
 
             if (c.TryGotoNext(
                     x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent)),
@@ -215,7 +221,7 @@ namespace MiscFixes
 
                 c.EmitOpImplicit();
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for StatManager.ProcessGoldEvents 2");
+            else Log.PatchFail(il.Method.Name + " 2");
         }
 
         /// <summary>
@@ -266,7 +272,7 @@ namespace MiscFixes
                 // prev = SceneInfo.instance?.sceneDef?.cachedName
                 c.MarkLabel(compareLabel);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MinionLeashBodyBehavior.OnDisable");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -305,7 +311,7 @@ namespace MiscFixes
 
                 c.MarkLabel(stLocLabel);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for ElusiveAntlersPickup.FixedUpdate");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -337,7 +343,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for FogDamageController.EvaluateTeam");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -367,7 +373,7 @@ namespace MiscFixes
                         self.modelLocator.modelTransform.gameObject.SetActive(false);
                 });
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for DeathState.FixedUpdate");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -400,7 +406,7 @@ namespace MiscFixes
                         ctrl.rouletteChestController.purchaseInteraction.Networkavailable = true;
                 });
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for MPEventSystem.Update");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -425,7 +431,7 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for Interactor.FindBestInteractableObject");
+            else Log.PatchFail(il.Method.Name + " 1");
 
             int loc2 = 0;
             ILLabel label2 = null;
@@ -440,7 +446,336 @@ namespace MiscFixes
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brfalse, label2);
             }
-            else MiscFixesPlugin.Logger.LogError($"IL hook failed for Interactor.FindBestInteractableObject2");
+            else Log.PatchFail(il.Method.Name + " 2");
+        }
+
+        /// <summary>
+        /// Filter allies from Merc's Eviscerate target search.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.Merc.EvisDash), nameof(EntityStates.Merc.EvisDash.FixedUpdate))]
+        [HarmonyILManipulator]
+        public static void FixMercEvisAllyTargetting(ILContext il)
+        {
+            var c = new ILCursor(il);
+            var varIndex = 0;
+            ILLabel label = null;
+            if (!c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent)),
+                    x => x.MatchStloc(out varIndex)) ||
+                !c.TryGotoNext(
+                    MoveType.After,
+                    x => x.MatchLdloc(varIndex),
+                    x => x.MatchLdfld<HurtBox>(nameof(HurtBox.healthComponent)),
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.healthComponent))),
+                    x => x.MatchOpInequality(),
+                    x => x.MatchBrfalse(out label)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            // victim
+            c.Emit(OpCodes.Ldloc, varIndex);
+            c.Emit<HurtBox>(OpCodes.Ldfld, nameof(HurtBox.healthComponent));
+
+            // teamindex
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody)));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.teamComponent)));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(TeamComponent), nameof(TeamComponent.teamIndex)));
+
+            // ShouldDirectHitProceed(HealthComponent victim, TeamIndex attackerTeamIndex)
+            c.EmitDelegate(FriendlyFireManager.ShouldDirectHitProceed);
+            c.Emit(OpCodes.Brfalse_S, label);
+        }
+
+        /// <summary>
+        /// The printer uses EffectManager for VFX without an EffectComponent, use Object.Instantiate instead.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
+        [HarmonyILManipulator]
+        public static void FixPrinterDropEffect(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(x => x.MatchCallOrCallvirt(typeof(EffectManager), nameof(EffectManager.SimpleMuzzleFlash))))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Remove();
+            c.EmitDelegate<Action<GameObject, GameObject, string, bool>>((effectPrefab, obj, muzzleName, _) =>
+            {
+                if (obj && obj.TryGetComponent<ModelLocator>(out var modelLocator) && modelLocator.modelTransform)
+                {
+                    var childLocator = modelLocator.modelTransform.GetComponent<ChildLocator>();
+                    if (childLocator)
+                    {
+                        int childIndex = childLocator.FindChildIndex(muzzleName);
+                        Transform transform = childLocator.FindChild(childIndex);
+                        if (transform)
+                        {
+                            UnityEngine.Object.Instantiate(effectPrefab, transform.position, Quaternion.identity, transform);
+                        }
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Prevent an error logging when trying to detatch a child from a disabled game object.
+        /// </summary>
+        [HarmonyPatch(typeof(DetachParticleOnDestroyAndEndEmission), nameof(DetachParticleOnDestroyAndEndEmission.OnDisable))]
+        [HarmonyILManipulator]
+        public static void FixParticleDetachOnDestroy(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel returnLabel = null;
+            if (!c.TryGotoNext(
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdfld<DetachParticleOnDestroyAndEndEmission>(nameof(DetachParticleOnDestroyAndEndEmission.particleSystem)),
+                    x => x.MatchOpImplicit(),
+                    x => x.MatchBrfalse(out returnLabel)) ||
+                !c.TryGotoNext(
+                    MoveType.After,
+                    x => x.MatchCallOrCallvirt<ParticleSystem>(nameof(ParticleSystem.Stop))
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit<DetachParticleOnDestroyAndEndEmission>(OpCodes.Ldfld, nameof(DetachParticleOnDestroyAndEndEmission.particleSystem));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject)));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeInHierarchy)));
+            c.Emit(OpCodes.Brfalse, returnLabel);
+        }
+
+        /// <summary>
+        /// Filter null HurtBox from HurtBoxGroup, e.g. Golden Dieback's hanging mushrooms.
+        /// </summary>
+        [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.Awake))]
+        [HarmonyILManipulator]
+        public static void FixCharacterModelNullHurtBoxes(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdfld<HurtBoxGroup>(nameof(HurtBoxGroup.hurtBoxes))))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<HurtBox[], CharacterModel, HurtBox[]>>((hurtBoxes, model) =>
+            {
+                var filteredHurtBoxes = new List<HurtBox>();
+                foreach (var hurtBox in hurtBoxes)
+                {
+                    if (hurtBox && hurtBox.transform != null)
+                    {
+                        filteredHurtBoxes.Add(hurtBox);
+                    }
+                }
+                return filteredHurtBoxes.Count == hurtBoxes.Length ? hurtBoxes : [.. filteredHurtBoxes];
+            });
+        }
+
+        /// <summary>
+        /// The OutsideInteractableLocker does not check if a Lemurian Egg lock already exists before creating the VFX.
+        /// </summary>
+        [HarmonyPatch(typeof(OutsideInteractableLocker), nameof(OutsideInteractableLocker.LockLemurianEgg))]
+        [HarmonyILManipulator]
+        public static void FixReapplingEggLockVFX(ILContext il)
+        {
+            var c = new ILCursor(il);
+            var nextInstr = c.Next;
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit<OutsideInteractableLocker>(OpCodes.Ldfld, nameof(OutsideInteractableLocker.eggLockInfoMap));
+            c.Emit(OpCodes.Ldarg_1);
+            c.Emit<Dictionary<LemurianEggController, OutsideInteractableLocker.LockInfo>>(OpCodes.Callvirt, "get_Item");
+            c.Emit<OutsideInteractableLocker.LockInfo>(OpCodes.Callvirt, nameof(OutsideInteractableLocker.LockInfo.IsLocked));
+            c.Emit(OpCodes.Brfalse_S, nextInstr);
+            c.Emit(OpCodes.Ret);
+        }
+
+        /// <summary>
+        /// PositionIndicator.alwaysVisibleObject is not null checked before every access (is null with hidden UI).
+        /// </summary>
+        [HarmonyPatch(typeof(PositionIndicator), nameof(PositionIndicator.UpdatePositions))]
+        [HarmonyILManipulator]
+        public static void FixPositionIndicatorWithHiddenHud(ILContext il)
+        {
+            var c = new ILCursor(il);
+            int locVarIndex = 0;
+            ILLabel nextLabel = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdloc(out locVarIndex),
+                x => x.MatchLdfld<PositionIndicator>(nameof(PositionIndicator.alwaysVisibleObject)),
+                x => x.MatchLdcI4(0),
+                x => x.MatchCallOrCallvirt<GameObject>(nameof(GameObject.SetActive)),
+                x => x.MatchBr(out nextLabel)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Index += 2;
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brfalse, nextLabel.Target);
+            c.Emit(OpCodes.Ldloc, locVarIndex);
+            c.Emit<PositionIndicator>(OpCodes.Ldfld, nameof(PositionIndicator.alwaysVisibleObject));
+        }
+
+        /// <summary>
+        /// Some Renderers in the collection can be null.
+        /// </summary>
+        [HarmonyPatch(typeof(Indicator), nameof(Indicator.SetVisibleInternal))]
+        [HarmonyILManipulator]
+        public static void FixIndicatorSetVisibleNRE(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction ifInstr = null;
+            Instruction nextInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchLdarg(1),
+                x => x.MatchCallOrCallvirt<Renderer>("set_enabled"),
+                x => x.MatchAny(out nextInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            ifInstr = c.Next;
+            c.Emit(OpCodes.Dup);
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brtrue_S, ifInstr);
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Br_S, nextInstr);
+        }
+
+        /// <summary>
+        /// Iterating a list while modifying it raises an error, iterate on a copy of it instead. Occurs when Seeker respawns.
+        /// </summary>
+        [HarmonyPatch(typeof(CrosshairUtils.CrosshairOverrideBehavior), nameof(CrosshairUtils.CrosshairOverrideBehavior.OnDestroy))]
+        [HarmonyILManipulator]
+        public static void FixCrosshairOverrideOnDestroy(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<CrosshairUtils.CrosshairOverrideBehavior>(nameof(CrosshairUtils.CrosshairOverrideBehavior.requestList))))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.EmitDelegate<Func<List<CrosshairUtils.OverrideRequest>, List<CrosshairUtils.OverrideRequest>>>(requestList => [.. requestList]);
+        }
+
+        /// <summary>
+        /// Null check EventSystem.current, occurs when exiting a lobby.
+        /// </summary>
+        [HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
+        [HarmonyILManipulator]
+        public static void FixLobbyQuitEventSystem(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(
+                x => x.MatchPop(),
+                x => x.MatchLdnull(),
+                x => x.MatchRet()))
+            {
+                Log.PatchFail(il.Method.Name + " #1");
+                return;
+            }
+            var instr = c.Next;
+            if (!c.TryGotoPrev(
+                MoveType.After,
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(UnityEngine.EventSystems.EventSystem), nameof(UnityEngine.EventSystems.EventSystem.current)))))
+            {
+                Log.PatchFail(il.Method.Name + " #2");
+                return;
+            }
+            c.Remove();
+            c.Emit(OpCodes.Isinst, typeof(MPEventSystem));
+            c.Emit(OpCodes.Dup);
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brfalse, instr);
+        }
+
+        /// <summary>
+        /// Prevent RewiredIntegration from running if not initialised, occurs when exiting the game.
+        /// </summary>
+        [HarmonyPatch(typeof(RewiredIntegrationManager), nameof(RewiredIntegrationManager.RefreshJoystickAssignment))]
+        [HarmonyPrefix]
+        public static bool FixNoRewiredInputOnQuit()
+        {
+            return ReInput.initialized && ReInput.controllers != null;
+        }
+
+        /// <summary>
+        /// Disable a pointless ESM that spams stuff to the console.
+        /// </summary>
+        [HarmonyPatch(typeof(MeridianEventTriggerInteraction), nameof(MeridianEventTriggerInteraction.Awake))]
+        [HarmonyPrefix]
+        public static void FixMeridianTestStateSpam(MeridianEventTriggerInteraction __instance)
+        {
+            var esm = EntityStateMachine.FindByCustomName(__instance.gameObject, "");
+            if (esm != null)
+            {
+                esm.initialStateType = new SerializableEntityStateType(typeof(Uninitialized));
+                esm.enabled = false;
+            }
+            else
+            {
+                Log.PatchFail("Meridian Test ESM");
+            }
+        }
+
+        /// <summary>
+        /// Quiting/dying before killing False Son leaves a stale event subscribed. Allow gracious removal the next time it's called.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.MeridianEvent.FSBFPhaseBaseState), nameof(EntityStates.MeridianEvent.FSBFPhaseBaseState.OnBossGroupDefeated))]
+        [HarmonyILManipulator]
+        public static void FixFalseSonBossGroupDefeatedEvent(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction skipInstr = null;
+            if (!c.TryGotoNext(
+                x => x.MatchCallOrCallvirt<MeridianEventTriggerInteraction>(nameof(MeridianEventTriggerInteraction.ResetPMHeadState)),
+                x => x.MatchAny(out skipInstr)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            var continueInstr = c.Next;
+            c.Emit(OpCodes.Dup);
+            c.Emit(OpCodes.Brtrue_S, continueInstr);
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Br, skipInstr);
+        }
+
+        /// <summary>
+        /// Prevent an IndexOutOfRange on an empty list if the Child does not find any suitable nodes to teleport to.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.ChildMonster.Frolic), nameof(EntityStates.ChildMonster.Frolic.TeleportAroundPlayer))]
+        [HarmonyILManipulator]
+        public static void FixFrolicTeleportWithoutAvailableNodes(ILContext il)
+        {
+            var c = new ILCursor(il);
+            int varIndex = 0;
+            if (!c.TryGotoNext(
+                MoveType.After,
+                x => x.MatchCallOrCallvirt<NodeGraph>(nameof(NodeGraph.FindNodesInRange)),
+                x => x.MatchStloc(out varIndex)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            var instr = c.Next;
+            c.Emit(OpCodes.Ldloc, varIndex);
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(List<NodeGraph.NodeIndex>), nameof(List<NodeGraph.NodeIndex>.Count)));
+            c.Emit(OpCodes.Ldc_I4_0);
+            c.Emit(OpCodes.Bgt_S, instr);
+            c.Emit(OpCodes.Ret);
         }
     }
 }
