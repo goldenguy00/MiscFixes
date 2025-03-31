@@ -777,5 +777,41 @@ namespace MiscFixes
             c.Emit(OpCodes.Bgt_S, instr);
             c.Emit(OpCodes.Ret);
         }
+
+        /// <summary>
+        /// When spawning next to a chest the body hasn't been linked to the master yet and body.inventory is null.
+        /// Use pcmc.master.inventory which is more straightforward.
+        /// </summary>
+        [HarmonyPatch(typeof(TeamManager), nameof(TeamManager.LongstandingSolitudesInParty))]
+        [HarmonyILManipulator]
+        public static void FixSpawnNearInteractableWithLongstandingSolitude(ILContext il)
+        {
+            var c = new ILCursor(il);
+            int pcmcVarIndex = 0;
+            int bodyVarIndex = 0;
+            if (!c.TryGotoNext(
+                x => x.MatchLdloc(out pcmcVarIndex),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(PlayerCharacterMasterController), nameof(PlayerCharacterMasterController.master))),
+                x => x.MatchCallOrCallvirt<CharacterMaster>(nameof(CharacterMaster.GetBody)),
+                x => x.MatchStloc(out bodyVarIndex)))
+            {
+                Log.PatchFail(il.Method.Name + " #1");
+                return;
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                if (!c.TryGotoNext(
+                    x => x.MatchLdloc(bodyVarIndex),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory)))))
+                {
+                    Log.PatchFail(il.Method.Name + $" #{i + 2}");
+                    return;
+                }
+                c.RemoveRange(2);
+                c.Emit(OpCodes.Ldloc, pcmcVarIndex);
+                c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(PlayerCharacterMasterController), nameof(PlayerCharacterMasterController.master)));
+                c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterMaster), nameof(CharacterMaster.inventory)));
+            }
+        }
     }
 }
