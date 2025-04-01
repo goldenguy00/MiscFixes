@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using EntityStates;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
@@ -22,25 +23,26 @@ namespace MiscFixes
     public class FixVanilla
     {
         /// <summary>
-        /// call to DotController.GetDotDef(dotDefIndex); and pops the result. useless call, probably leftover code. functions fine without it.
-        /// DotController.GetDotDef doesn't use ArrayUtils.GetSafe so DotDefIndex.None throws
+        /// DotController.GetDotDef doesn't use ArrayUtils.GetSafe so it can throw
         /// </summary>
-        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TriggerEnemyDebuffs))]
+        [HarmonyPatch(typeof(DotController), nameof(DotController.GetDotDef))]
         [HarmonyILManipulator]
-        public static void WhatTheFuck(ILContext il)
+        public static void FixDotDefs(ILContext il)
         {
             var c = new ILCursor(il);
-
-            if (c.TryGotoNext(
-                    x => x.MatchLdloc(out _),
-                    x => x.MatchCallOrCallvirt<DotController>(nameof(DotController.GetDotDef)),
-                    x => x.MatchPop()
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdsfld<DotController>(nameof(DotController.dotDefs)),
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdelemRef()
                 ))
             {
-                var label = c.DefineLabel();
-                c.Emit(OpCodes.Br, label);
-                c.GotoNext(MoveType.After, x => x.MatchPop());
-                c.MarkLabel(label);
+                c.Index--;
+                c.Remove();
+                // probably can do this better but idc tbh
+                c.EmitDelegate(delegate (DotController.DotDef[] dotDefs, DotController.DotIndex index) 
+                {
+                    return HG.ArrayUtils.GetSafe(dotDefs, (int)index); 
+                });
             }
             else Log.PatchFail(il);
         }
@@ -93,28 +95,21 @@ namespace MiscFixes
         public static void VineOrbArrival(ILContext il)
         {
             var c = new ILCursor(il);
-
-            var nextInstr = c.Next;
-            c.Emit(OpCodes.Ldarg_0);
-            c.Emit<Orb>(OpCodes.Ldfld, nameof(Orb.target));
-            c.EmitOpImplicit();
-            c.Emit(OpCodes.Brtrue_S, nextInstr);
-            c.Emit(OpCodes.Ret);
-
             int bodyLoc = 0;
             if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdfld<Orb>(nameof(Orb.target)),
+                    x => x.MatchLdfld<HurtBox>(nameof(HurtBox.healthComponent)),
                     x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.body)),
-                    x => x.MatchStloc(out bodyLoc)) &&
-                c.TryFindNext(out _, 
-                    x => x.MatchLdstr("Play_item_proc_triggerEnemyDebuffs")
+                    x => x.MatchStloc(out bodyLoc)
                 ))
             {
                 var label = c.DefineLabel();
                 c.Emit(OpCodes.Ldloc, bodyLoc);
                 c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Brtrue_S, label);
+                c.Emit(OpCodes.Ret);
 
-                c.GotoNext(x => x.MatchLdstr("Play_item_proc_triggerEnemyDebuffs"));
                 c.MarkLabel(label);
             }
             else Log.PatchFail(il);
@@ -280,7 +275,8 @@ namespace MiscFixes
         /// 
         /// Vector3 position = ownerBody.gameObject.transform.position;
         /// </summary>
-        [HarmonyILManipulator, HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
+        [HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
+        [HarmonyILManipulator]
         private static void ElusiveAntlersPickup_FixedUpdate(ILContext il)
         {
             var c = new ILCursor(il);

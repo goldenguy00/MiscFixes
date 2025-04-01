@@ -24,12 +24,12 @@ namespace MiscFixes
         {
             Log.Init(Logger);
             
-            AssetFixes.Init();
-
             harmonyPatcher = new Harmony(PluginGUID);
             harmonyPatcher.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(FixVanilla)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
+
+            AssetFixes.Init();
         }
     }
 }
