@@ -174,7 +174,7 @@ namespace MiscFixes
         [HarmonyPrefix]
         public static void SetupMaterial(TemporaryOverlayInstance __instance)
         {
-            if (!__instance.originalMaterial && __instance.ValidateOverlay())
+            if (!__instance.originalMaterial && __instance.componentReference && __instance.ValidateOverlay())
             {
                 __instance.componentReference.CopyDataFromPrefabToInstance();
             }
