@@ -10,9 +10,38 @@ namespace MiscFixes
     {
         internal static void Init()
         {
+            FixElderLemurianFootstepEvents();
             FixSaleStarCollider();
             FixFalseSonBossP2NotUsingSpecial();
             FixVillageCscDrones();
+        }
+
+        /// <summary>
+        /// Fix two Elder Lemurian footstep events to play sound and not spam Layer Index -1.
+        /// </summary>
+        public static void FixElderLemurianFootstepEvents()
+        {
+            Addressables.LoadAssetAsync<RuntimeAnimatorController>("RoR2/Base/Lemurian/animLemurianBruiser.controller").Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
+            {
+                PatchClip(obj.Result, 4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
+                PatchClip(obj.Result, 12, "LemurianBruiserArmature|Death", 2, "MouthMuzzle", "MuzzleMouth");
+
+                static void PatchClip(RuntimeAnimatorController anim, int clipIndex, string clipName, int eventIndex, string oldEventString, string newEventString)
+                {
+                    if (anim.animationClips.Length > clipIndex && anim.animationClips[clipIndex].name == clipName)
+                    {
+                        var clip = anim.animationClips[clipIndex];
+                        if (clip.events.Length > eventIndex && clip.events[eventIndex].stringParameter == oldEventString)
+                        {
+                            var events = clip.events;
+                            events[eventIndex].stringParameter = newEventString;
+                            clip.events = events;
+                            return;
+                        }
+                    }
+                    Log.PatchFail(anim.name + " - " + clipName);
+                }
+            };
         }
 
         /// <summary>
