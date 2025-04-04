@@ -82,13 +82,8 @@ namespace MiscFixes
         }
 
         /// <summary>
-        /// orb calling target.healthComponent.body OnArrival and never null checking it.
-        /// probably shouldn't match the sound string, it should just jump right over the foreach loop
-        /// 
-        /// NullReferenceException:
-        /// 
-        /// RoR2.Orbs.VineOrb.OnArrival() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0067)
-        /// RoR2.Orbs.OrbManager.FixedUpdate() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_00A3)
+        /// The method never null checks target, which can lead to multiple body.gameObject NREs.
+        /// The dotDef can also be null, in which case we should continue to the next iteration.
         /// </summary>
         [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
         [HarmonyILManipulator]
@@ -112,7 +107,31 @@ namespace MiscFixes
 
                 c.MarkLabel(label);
             }
-            else Log.PatchFail(il);
+            else
+            {
+                Log.PatchFail(il.Method.Name + " #1");
+                return;
+            }
+
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchCallOrCallvirt<GlobalEventManager>(nameof(GlobalEventManager.ProcDeathMark))
+                ))
+            {
+                var continueLabel = c.DefineLabel();
+                c.MarkLabel(continueLabel);
+                var dotLoc = 0;
+                if (c.TryGotoPrev(MoveType.After,
+                        x => x.MatchCallOrCallvirt<DotController>(nameof(DotController.GetDotDef)),
+                        x => x.MatchStloc(out dotLoc)
+                    ))
+                {
+                    c.Emit(OpCodes.Ldloc, dotLoc);
+                    c.EmitOpImplicit();
+                    c.Emit(OpCodes.Brfalse_S, continueLabel);
+                }
+                else Log.PatchFail(il.Method.Name + " #3");
+            }
+            else Log.PatchFail(il.Method.Name + " #2");
         }
 
         /// <summary>
@@ -716,7 +735,7 @@ namespace MiscFixes
         public static void FixMeridianTestStateSpam(MeridianEventTriggerInteraction __instance)
         {
             var esm = EntityStateMachine.FindByCustomName(__instance.gameObject, "");
-            if (esm != null)
+            if (esm != null && esm.initialStateType.stateType == typeof(TestState1))
             {
                 esm.initialStateType = new SerializableEntityStateType(typeof(Uninitialized));
                 esm.enabled = false;
