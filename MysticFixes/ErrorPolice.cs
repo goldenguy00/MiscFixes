@@ -853,5 +853,46 @@ namespace MiscFixes
             c.Emit(OpCodes.Ldc_I4_0);
             c.Emit(OpCodes.Stsfld, AccessTools.Field(typeof(GoldTitanManager), nameof(GoldTitanManager.isFalseSonBossLunarShardBrokenMaster)));
         }
+
+        /// <summary>
+        /// Fix NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite.
+        ///
+        /// The root issue is that the patched method originally uses body.coreTransform instead of body.mainHurtBox.transform,
+        /// which for some characters, e.g.,Commando, cannot reverse engineer the HealthComponent game object. Related errors:
+        ///
+        /// [Error  : Unity Log] ArgumentNullException: Value cannot be null.
+        /// Parameter name: key
+        /// Stack trace:
+        /// System.Collections.Generic.Dictionary`2[TKey, TValue].FindEntry(TKey key) (at<7e05db41a20b45108859fa03b97088d4>:IL_0008)
+        /// System.Collections.Generic.Dictionary`2[TKey, TValue].ContainsKey(TKey key) (at<7e05db41a20b45108859fa03b97088d4>:IL_0000)
+        /// RoR2.AffixBeadAttachment.OnTetherAdded(RoR2.TetherVfx vfx, UnityEngine.Transform transform) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0008)
+        /// RoR2.TetherVfxOrigin.AddTether(UnityEngine.Transform target) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0058)
+        /// RoR2.TetherVfxOrigin.UpdateTargets(System.Collections.ObjectModel.ReadOnlyCollection`1[T] listOfHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] discoveredHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] lostHealthComponents) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_008A)
+        /// RoR2.TargetNearbyHealthComponents.Tick() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_018B)
+        /// RoR2.TargetNearbyHealthComponents.FixedUpdate() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_004B)
+        ///
+        /// [Error  : Unity Log] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.
+        /// Parameter name: index
+        /// Stack trace:
+        /// System.Collections.Generic.List`1[T].get_Item(System.Int32 index) (at<7e05db41a20b45108859fa03b97088d4>:IL_0009)
+        /// RoR2.TetherVfxOrigin.RemoveTetherAt(System.Int32 i) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0000)
+        /// RoR2.TetherVfxOrigin.UpdateTargets(System.Collections.ObjectModel.ReadOnlyCollection`1[T] listOfHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] discoveredHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] lostHealthComponents) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0062)
+        /// RoR2.TargetNearbyHealthComponents.Tick() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_018B)
+        /// RoR2.TargetNearbyHealthComponents.FixedUpdate() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_004B)
+        /// </summary>
+        [HarmonyPatch(typeof(Util), nameof(Util.HealthComponentToTransform))]
+        [HarmonyILManipulator]
+        public static void FixBeadTetherAddedNRE(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.coreTransform)))))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Remove();
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.mainHurtBox)));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)));
+        }
     }
 }

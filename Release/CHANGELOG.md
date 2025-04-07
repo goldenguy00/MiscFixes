@@ -7,6 +7,7 @@
 - Added fix for the multiple Lemurian Egg lock VFX
 - Added fix for False Son not using Tainted Offering in phase 2
 - Added fix for Aurelionite not spawning for you on the next stage after beating False Son
+- Added fix for tether errors with the twisted elite
 - Added fix for Longstanding Solitude NRE when spawning near a chest
 - Added fix for the Elder Lemurian footstep sounds
 - Added fix for ConVars with uppercase letters working

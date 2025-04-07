@@ -26,6 +26,7 @@
 - Fixes an error when the Child fails to teleport near your location
 - Fixes an NRE when spawning close to a chest
 - Fixes Aurelionite not spawning for you on the next stage after beating False Son with Halcyon Seed
+- Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup
