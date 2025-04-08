@@ -24,6 +24,3 @@ Error when Halcyonite's dash targets something that is killed, e.g., a turret yo
         EntityStates.Halcyonite.WhirlWindPersuitCycle.FixedUpdate () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0042)
         RoR2.EntityStateMachine.ManagedFixedUpdate (System.Single deltaTime) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_001D)
         RoR2.EntityStateMachine.FixedUpdate () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0006)
-
-
-Fix the ILCursor match for RuleChoiceController.FindNetworkUser
