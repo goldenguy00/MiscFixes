@@ -770,28 +770,39 @@ namespace MiscFixes
         }
 
         /// <summary>
-        /// Prevent an IndexOutOfRange on an empty list if the Child does not find any suitable nodes to teleport to.
+        /// Prevent an IndexOutOfRange if the Child finds 0 or only 1 suitable node to teleport to.
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.ChildMonster.Frolic), nameof(EntityStates.ChildMonster.Frolic.TeleportAroundPlayer))]
         [HarmonyILManipulator]
         public static void FixFrolicTeleportWithoutAvailableNodes(ILContext il)
         {
             var c = new ILCursor(il);
-            int varIndex = 0;
+            int listVar = 0, vectorVar = 0, boolVar =0;
             if (!c.TryGotoNext(
                 MoveType.After,
                 x => x.MatchCallOrCallvirt<NodeGraph>(nameof(NodeGraph.FindNodesInRange)),
-                x => x.MatchStloc(out varIndex)))
+                x => x.MatchStloc(out listVar),
+                x => x.MatchLdloca(out vectorVar),
+                x => x.MatchInitobj<Vector3>(),
+                x => x.MatchLdcI4(out _),
+                x => x.MatchStloc(out boolVar)))
             {
                 Log.PatchFail(il);
                 return;
             }
-            var instr = c.Next;
-            c.Emit(OpCodes.Ldloc, varIndex);
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody)));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.coreTransform)));
+            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position)));
+            c.Emit(OpCodes.Stloc, vectorVar);
+            c.Emit(OpCodes.Ldloc, listVar);
             c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(List<NodeGraph.NodeIndex>), nameof(List<NodeGraph.NodeIndex>.Count)));
+            c.Emit(OpCodes.Ldc_I4_1);
+            // x <= 1 becomes !(x > 1) in CIL
+            c.Emit(OpCodes.Cgt);
             c.Emit(OpCodes.Ldc_I4_0);
-            c.Emit(OpCodes.Bgt_S, instr);
-            c.Emit(OpCodes.Ret);
+            c.Emit(OpCodes.Ceq);
+            c.Emit(OpCodes.Stloc, boolVar);
         }
 
         /// <summary>
