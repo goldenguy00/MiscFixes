@@ -330,6 +330,28 @@ namespace MiscFixes
         }
 
         /// <summary>
+        /// Fixes an NRE when picking up an Elusive Antlers orb from a respawned/dead character.
+        /// </summary>
+        [HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.OnShardDestroyed))]
+        [HarmonyILManipulator]
+        private static void ElusiveAntlersPickup_OnShardDestroyed(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent))) &&
+                c.TryGotoPrev(
+                    x => x.MatchLdfld<ElusiveAntlersPickup>(nameof(ElusiveAntlersPickup.ownerBody)),
+                    x => x.MatchDup(),
+                    x => x.MatchBrtrue(out _)
+                ))
+            {
+                c.Index += 2;
+                // ownerBody?.GetComponent is not good enough, an actual null check is needed.
+                c.EmitOpImplicit();
+            }
+            else Log.PatchFail(il);
+        }
+
+        /// <summary>
         /// seen most often when the fog is attacking enemies
         /// </summary>
         [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
