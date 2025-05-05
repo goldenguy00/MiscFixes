@@ -769,29 +769,6 @@ namespace MiscFixes
         }
 
         /// <summary>
-        /// Quiting/dying before killing False Son leaves a stale event subscribed. Allow gracious removal the next time it's called.
-        /// </summary>
-        [HarmonyPatch(typeof(EntityStates.MeridianEvent.FSBFPhaseBaseState), nameof(EntityStates.MeridianEvent.FSBFPhaseBaseState.OnBossGroupDefeated))]
-        [HarmonyILManipulator]
-        public static void FixFalseSonBossGroupDefeatedEvent(ILContext il)
-        {
-            var c = new ILCursor(il);
-            Instruction skipInstr = null;
-            if (!c.TryGotoNext(
-                x => x.MatchCallOrCallvirt<MeridianEventTriggerInteraction>(nameof(MeridianEventTriggerInteraction.ResetPMHeadState)),
-                x => x.MatchAny(out skipInstr)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            var continueInstr = c.Next;
-            c.Emit(OpCodes.Dup);
-            c.Emit(OpCodes.Brtrue_S, continueInstr);
-            c.Emit(OpCodes.Pop);
-            c.Emit(OpCodes.Br, skipInstr);
-        }
-
-        /// <summary>
         /// Prevent an IndexOutOfRange if the Child finds 0 or only 1 suitable node to teleport to.
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.ChildMonster.Frolic), nameof(EntityStates.ChildMonster.Frolic.TeleportAroundPlayer))]
@@ -861,30 +838,6 @@ namespace MiscFixes
                 c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(PlayerCharacterMasterController), nameof(PlayerCharacterMasterController.master)));
                 c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterMaster), nameof(CharacterMaster.inventory)));
             }
-        }
-
-        /// <summary>
-        /// Fix Aurelionite not spawning for you on the next teleporter event after beating False Son.
-        ///
-        /// After the boss fight GoldTitanManager.isFalseSonBossLunarShardBrokenMaster remains true until the next teleporter event.
-        /// The problem is this method is called before the boss spawns and sets it back to false, leading to NRE by executing unexpected code.
-        /// A solution is to set the bool back to false the moment Aurelionite is summoned for False Son.
-        /// </summary>
-        [HarmonyPatch(typeof(GoldTitanManager), nameof(GoldTitanManager.TryStartChannelingTitansServer))]
-        [HarmonyILManipulator]
-        public static void FixAurelioniteNotSpawningAfterBeatingFalseSon(ILContext il)
-        {
-            var c = new ILCursor(il);
-            if (!c.TryGotoNext(
-                MoveType.After,
-                x => x.MatchLdsfld(typeof(GoldTitanManager), nameof(GoldTitanManager.isFalseSonBossLunarShardBrokenMaster)),
-                x => x.MatchBrfalse(out _)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.Emit(OpCodes.Ldc_I4_0);
-            c.Emit(OpCodes.Stsfld, AccessTools.Field(typeof(GoldTitanManager), nameof(GoldTitanManager.isFalseSonBossLunarShardBrokenMaster)));
         }
 
         /// <summary>

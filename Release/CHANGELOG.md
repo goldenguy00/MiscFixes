@@ -1,17 +1,14 @@
 ## 1.3.0
 
 - Removed fixes that have been addressed by vanilla
-- Added fix when dying or quiting during the False Son fight that causes issues on boss events for the remainder of the session
 - Rewrote the VineOrb.OnArrival patch and added an additional fix for null DotDefs
 - Added fix for null HurtBoxes in CharacterModel.Awake
 - Added fix for the multiple Lemurian Egg lock VFX
 - Added fix for False Son not using Tainted Offering in phase 2
-- Added fix for Aurelionite not spawning for you on the next stage after beating False Son
 - Added fix for tether errors with the twisted elite
 - Added fix for Longstanding Solitude NRE when spawning near a chest
 - Added fix for the Elder Lemurian footstep sounds
 - Added fix for ConVars with uppercase letters working
-- Optimised the village drone fix
 - Reworked a bunch of patches to use Harmony so there is no MMHOOK dependency
 - Removed log spam for the Facepunch fix
 
