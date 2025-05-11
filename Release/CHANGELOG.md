@@ -9,6 +9,7 @@
 - Added fix for Longstanding Solitude NRE when spawning near a chest
 - Added fix for the Elder Lemurian footstep sounds
 - Added fix for ConVars with uppercase letters working
+- Added fix for CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 - Reworked a bunch of patches to use Harmony so there is no MMHOOK dependency
 - Removed log spam for the Facepunch fix
 

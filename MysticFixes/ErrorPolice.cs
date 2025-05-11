@@ -880,5 +880,21 @@ namespace MiscFixes
             c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.mainHurtBox)));
             c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)));
         }
+
+        /// <summary>
+        /// Fix CHEF's BurnMithrix achievement not unsubscribing a DamageDealt event once completed.
+        /// </summary>
+        [HarmonyPatch(typeof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement), nameof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement.OnUninstall))]
+        [HarmonyILManipulator]
+        public static void FixChefBurnMithrixAchievementNotUnsubscribing(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (!c.TryGotoNext(x => x.MatchCallOrCallvirt<GlobalEventManager>("add_" + nameof(GlobalEventManager.onServerDamageDealt))))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.Next.Operand = typeof(GlobalEventManager).GetMethod("remove_" + nameof(GlobalEventManager.onServerDamageDealt));
+        }
     }
 }

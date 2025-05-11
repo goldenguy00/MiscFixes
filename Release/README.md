@@ -22,16 +22,14 @@
 - Fixes a crosshair error when Seeker respawns
 - Fixes a Rewired error when quiting the game
 - Fixes the TestState1 - TestState2 log spam on Prime Meridian
-- Fixes an error for subsequent boss events (TP, twisted scav, etc) when dying or quiting during the False Son fight
 - Fixes an error when the Child fails to teleport near your location
 - Fixes an NRE when spawning close to a chest
-- Fixes Aurelionite not spawning for you on the next stage after beating False Son with Halcyon Seed
-- Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
+- Fix NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
+- Fix CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup
 - Fixes False Son not using Tainted Offering during phase 2
-- Shattered Abodes PopulateScene exception when spawning drones with the wrong card type when devotion is enabled
 
 - The dreadful Facepunch exception that can occur, which randomly prevented loading (3% bug)
 - Flicker light error

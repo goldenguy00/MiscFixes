@@ -25,6 +25,7 @@
 - Fixes an error when the Child fails to teleport near your location
 - Fixes an NRE when spawning close to a chest
 - Fix NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
+- Fix CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup
