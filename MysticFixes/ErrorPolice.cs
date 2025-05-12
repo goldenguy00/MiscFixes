@@ -569,25 +569,23 @@ namespace MiscFixes
         public static void FixCharacterModelNullHurtBoxes(ILContext il)
         {
             var c = new ILCursor(il);
-            if (!c.TryGotoNext(
-                MoveType.After,
-                x => x.MatchLdfld<HurtBoxGroup>(nameof(HurtBoxGroup.hurtBoxes))))
+            if (!c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdfld<HurtBoxGroup>(nameof(HurtBoxGroup.hurtBoxes))
+                ))
             {
                 Log.PatchFail(il);
                 return;
             }
-            c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Func<HurtBox[], CharacterModel, HurtBox[]>>((hurtBoxes, model) =>
+
+            c.EmitDelegate<Func<HurtBox[], HurtBox[]>>((hurtBoxes) =>
             {
-                var filteredHurtBoxes = new List<HurtBox>();
-                foreach (var hurtBox in hurtBoxes)
+                for (int i = hurtBoxes.Length - 1; 0 <= i ; i--)
                 {
-                    if (hurtBox && hurtBox.transform != null)
-                    {
-                        filteredHurtBoxes.Add(hurtBox);
-                    }
+                    if (!hurtBoxes[i])
+                        HG.ArrayUtils.ArrayRemoveAtAndResize(ref hurtBoxes, i);
                 }
-                return filteredHurtBoxes.Count == hurtBoxes.Length ? hurtBoxes : [.. filteredHurtBoxes];
+
+                return hurtBoxes;
             });
         }
 
