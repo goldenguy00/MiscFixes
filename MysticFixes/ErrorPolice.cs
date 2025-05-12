@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using EntityStates;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
@@ -22,31 +21,6 @@ namespace MiscFixes
     [HarmonyPatch]
     public class FixVanilla
     {
-        /// <summary>
-        /// DotController.GetDotDef doesn't use ArrayUtils.GetSafe so it can throw
-        /// </summary>
-        [HarmonyPatch(typeof(DotController), nameof(DotController.GetDotDef))]
-        [HarmonyILManipulator]
-        public static void FixDotDefs(ILContext il)
-        {
-            var c = new ILCursor(il);
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdsfld<DotController>(nameof(DotController.dotDefs)),
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdelemRef()
-                ))
-            {
-                c.Index--;
-                c.Remove();
-                // probably can do this better but idc tbh
-                c.EmitDelegate(delegate (DotController.DotDef[] dotDefs, DotController.DotIndex index) 
-                {
-                    return HG.ArrayUtils.GetSafe(dotDefs, (int)index); 
-                });
-            }
-            else Log.PatchFail(il);
-        }
-
         /// <summary>
         /// NullReferenceException: 
         /// 

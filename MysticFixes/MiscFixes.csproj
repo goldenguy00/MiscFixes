@@ -5,16 +5,7 @@
 		<LangVersion>latestMajor</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <Compile Remove="FixBelmont.cs" />
-	  <Compile Remove="FixTank.cs" />
-	  <Compile Remove="MaterialHolyCrossIcon.cs" />
-	  <Compile Remove="NewColorRuntime.cs" />
-	  <Compile Remove="NewVisualRuntime.cs" />
-	  <Compile Remove="ReplaceVisualRuntime.cs" />
-	</ItemGroup>
-	
+    
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
 			<PrivateAssets>all</PrivateAssets>
@@ -27,7 +18,7 @@
 	
 	<ItemGroup>
 	  <Reference Include="Facepunch.Steamworks">
-	    <HintPath>..\..\SharedRef\Facepunch.Steamworks.dll</HintPath>
+	    <HintPath>libs\Facepunch.Steamworks.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 
