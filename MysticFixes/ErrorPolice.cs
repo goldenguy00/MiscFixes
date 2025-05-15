@@ -851,5 +851,31 @@ namespace MiscFixes
             }
             c.Next.Operand = typeof(GlobalEventManager).GetMethod("remove_" + nameof(GlobalEventManager.onServerDamageDealt));
         }
+
+        /// <summary>
+        /// Fix Halcyonite's Whirlwind NRE spam when its target is killed during the skill.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.Halcyonite.WhirlWindPersuitCycle), nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDecelerate))]
+        [HarmonyILManipulator]
+        public static void FixHalcyoniteWhirlwindNoTargetNRE(ILContext il, ILLabel retLabel)
+        {
+            var c = new ILCursor(il);
+            // In theory all we want is to convert `if (age > duration) { A(); return; } B();` into
+            // `if (age > duration || !this.targetBody) ...` However, in IL the original check branches if the
+            // condition isn't satisfied, while with the OR as we want it we need to branch into `A`,
+            // effectively changing the comparison instruction and branch targets. I am very worried this will
+            // break if the method ever changes, so it's safer to add our own check separately at the top, i.e.,
+            // `if (!self.targetBody) { A(); return; } <the rest>`. Can `A` change in the original method? I guess.
+            // Is it likely? Not at all, so we're replicating it here.
+            var firstOriginalInstr = c.Next;
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit<EntityStates.Halcyonite.WhirlWindPersuitCycle>(OpCodes.Ldfld, nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.targetBody));
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brtrue_S, firstOriginalInstr);
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldc_I4, (int)EntityStates.Halcyonite.WhirlWindPersuitCycle.PersuitState.Land);
+            c.Emit<EntityStates.Halcyonite.WhirlWindPersuitCycle>(OpCodes.Stfld, nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.state));
+            c.Emit(OpCodes.Br, retLabel);
+        }
     }
 }

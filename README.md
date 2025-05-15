@@ -1,6 +1,5 @@
 # Misc Fixes
 
-- Safe array access for DotDefs
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
 - Fixes various NREs with VineOrb (dead target on arrival, null dotDef)
 - Prevents an error when spawning some projectiles, probably because they lack a model
@@ -24,8 +23,9 @@
 - Fixes the TestState1 - TestState2 log spam on Prime Meridian
 - Fixes an error when the Child fails to teleport near your location
 - Fixes an NRE when spawning close to a chest
-- Fix NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
-- Fix CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
+- Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
+- Fixes CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
+- Fixes Halcyonite's Whirlwind NRE spam when its target is killed during the skill
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup

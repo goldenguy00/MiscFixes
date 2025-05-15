@@ -12,15 +12,3 @@ Doesnt throw errors but it removed items from a destroyed object which results i
 
         RoR2.MinionOwnership+MinionGroup.SetMinionOwner (RoR2.MinionOwnership minion, UnityEngine.Networking.NetworkInstanceId ownerId) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0022)
         RoR2.MinionOwnership.OnDestroy () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0000)
-
-
-Error when Halcyonite's dash targets something that is killed, e.g., a turret you intentionally respawn
-
-        [Error  : Unity Log] NullReferenceException
-        Stack trace:
-        UnityEngine.Transform.get_position () (at <a20b3695b7ce4017b7981f9d06962bd1>:IL_0000)
-        RoR2.CharacterBody.get_footPosition () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0000)
-        EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDecelerate () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0068)
-        EntityStates.Halcyonite.WhirlWindPersuitCycle.FixedUpdate () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0042)
-        RoR2.EntityStateMachine.ManagedFixedUpdate (System.Single deltaTime) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_001D)
-        RoR2.EntityStateMachine.FixedUpdate () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0006)
