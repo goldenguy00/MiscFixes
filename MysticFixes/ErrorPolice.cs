@@ -392,7 +392,7 @@ namespace MiscFixes
                 c.Emit(OpCodes.Br, retLabel);
                 c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(PurchaseInteraction), nameof(PurchaseInteraction.Networkavailable))));
                 c.MarkLabel(retLabel);
-                
+
                 c.Emit(OpCodes.Ldarg_0);
                 c.EmitDelegate<Action<RouletteChestController.RouletteChestControllerBaseState>>((ctrl) =>
                 {
@@ -876,6 +876,59 @@ namespace MiscFixes
             c.Emit(OpCodes.Ldc_I4, (int)EntityStates.Halcyonite.WhirlWindPersuitCycle.PersuitState.Land);
             c.Emit<EntityStates.Halcyonite.WhirlWindPersuitCycle>(OpCodes.Stfld, nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.state));
             c.Emit(OpCodes.Br, retLabel);
+        }
+
+        /// <summary>
+        /// Fix Meridian's Will NRE for targets without a rigid body, e.g. Grandparent
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.InitializePullInfo))]
+        [HarmonyILManipulator]
+        public static void FixMeridiansWillForTargetsWithNoRigidbody_PullInfo(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel label = null;
+            if (c.TryGotoNext(
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.rigidbody))),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Rigidbody), nameof(Rigidbody.mass))),
+                x => x.MatchBr(out label)))
+            {
+                c.Index++;
+                var getMassInstr = c.Next;
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue_S, getMassInstr);
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Ldc_R4, 0f);
+                c.Emit(OpCodes.Br, label);
+            }
+            else Log.PatchFail(il);
+        }
+
+        /// <summary>
+        /// Fix Meridian's Will NRE for targets without a rigid body, e.g. Grandparent
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.ApplyForce))]
+        [HarmonyILManipulator]
+        public static void FixMeridiansWillForTargetsWithNoRigidbody_ApplyForce(ILContext il)
+        {
+            var c = new ILCursor(il);
+            Instruction nextInstr = null;
+            if (c.TryGotoNext(
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.rigidbody))),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.zero))),
+                x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(Rigidbody), nameof(Rigidbody.velocity))),
+                x => x.MatchAny(out nextInstr)
+                ))
+            {
+                c.Index++;
+                var continueWithSetVelocity = c.Next;
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue_S, continueWithSetVelocity);
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, nextInstr);
+            }
+            else Log.PatchFail(il);
         }
     }
 }

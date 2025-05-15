@@ -26,6 +26,7 @@
 - Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
 - Fixes CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 - Fixes Halcyonite's Whirlwind NRE spam when its target is killed during the skill
+- Fixes Meridian's Will failing to pull monsters in when a stationary target is hit
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup
