@@ -61,32 +61,15 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
         [HarmonyILManipulator]
-        public static void VineOrbArrival(ILContext il)
+        public static void VineOrbArrival(ILContext il, ILLabel retLabel)
         {
             var c = new ILCursor(il);
-            int bodyLoc = 0;
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdfld<Orb>(nameof(Orb.target)),
-                    x => x.MatchLdfld<HurtBox>(nameof(HurtBox.healthComponent)),
-                    x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.body)),
-                    x => x.MatchStloc(out bodyLoc)
-                ))
-            {
-                var label = c.DefineLabel();
-                c.Emit(OpCodes.Ldloc, bodyLoc);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue_S, label);
-                c.Emit(OpCodes.Ret);
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit<Orb>(OpCodes.Ldfld, nameof(Orb.target));
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brfalse_S, retLabel);
 
-                c.MarkLabel(label);
-            }
-            else
-            {
-                Log.PatchFail(il.Method.Name + " #1");
-                return;
-            }
-
+            // The check for null dotDef isn't necessary anymore in vanilla, but should stay in because of mods and good principles
             if (c.TryGotoNext(MoveType.After,
                     x => x.MatchCallOrCallvirt<GlobalEventManager>(nameof(GlobalEventManager.ProcDeathMark))
                 ))
@@ -103,9 +86,9 @@ namespace MiscFixes
                     c.EmitOpImplicit();
                     c.Emit(OpCodes.Brfalse_S, continueLabel);
                 }
-                else Log.PatchFail(il.Method.Name + " #3");
+                else Log.PatchFail(il.Method.Name + " #2");
             }
-            else Log.PatchFail(il.Method.Name + " #2");
+            else Log.PatchFail(il.Method.Name + " #1");
         }
 
         /// <summary>
