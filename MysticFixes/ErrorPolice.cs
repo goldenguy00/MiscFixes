@@ -22,6 +22,18 @@ namespace MiscFixes
     public class FixVanilla
     {
         /// <summary>
+        /// [Error: Unity Log] NullReferenceException: Object reference not set to an instance of an object
+        /// Stack trace:
+        /// RoR2.CharacterBody.<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0 (System.Boolean _disable) (at<f166c0602b0c47ccb39283131d23568d>:IL_0040)
+        /// </summary>
+        [HarmonyPatch(typeof(CharacterBody), "RoR2.CharacterBody.<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
+        [HarmonyILManipulator]
+        public static void CharacterBody_HandleDisableAllSkillsDebuff(ILContext il)
+        {
+
+        }
+
+        /// <summary>
         /// NullReferenceException: 
         /// 
         /// RoR2.CharacterBody.TryGiveFreeUnlockWhenLevelUp() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
@@ -30,7 +42,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
         [HarmonyILManipulator]
-        public static void FreeFortniteCard(ILContext il)
+        public static void CharacterBody_FreeFortniteCard(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -61,7 +73,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
         [HarmonyILManipulator]
-        public static void VineOrbArrival(ILContext il, ILLabel retLabel)
+        public static void VineOrb_OnArrival(ILContext il, ILLabel retLabel)
         {
             var c = new ILCursor(il);
             c.Emit(OpCodes.Ldarg_0);
@@ -106,7 +118,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
         [HarmonyILManipulator]
-        public static void ProjectileStart(ILContext il)
+        public static void ProjectileController_Start(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -148,7 +160,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(TemporaryOverlayInstance), nameof(TemporaryOverlayInstance.SetupMaterial))]
         [HarmonyPrefix]
-        public static void SetupMaterial(TemporaryOverlayInstance __instance)
+        public static void TemporaryOverlayInstance_SetupMaterial(TemporaryOverlayInstance __instance)
         {
             if (!__instance.originalMaterial && __instance.componentReference && __instance.ValidateOverlay())
             {
@@ -166,7 +178,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(StatManager), nameof(StatManager.ProcessGoldEvents))]
         [HarmonyILManipulator]
-        public static void ProcessGold(ILContext il)
+        public static void StatManager_ProcessGoldEvents(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -200,7 +212,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
         [HarmonyILManipulator]
-        private static void MinionLeash(ILContext il)
+        private static void MinionLeashBodyBehavior_OnDisable(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -313,7 +325,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
         [HarmonyILManipulator]
-        public static void FixFog(ILContext il)
+        public static void FogDamageController_EvaluateTeam(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -346,7 +358,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
         [HarmonyILManipulator]
-        public static void FixExplode(ILContext il)
+        public static void DeathState_FixedUpdate(ILContext il)
         {
             if (new ILCursor(il).TryFindNext(out var c, 
                     x => x.MatchCallOrCallvirt<DeathState>(nameof(DeathState.FireExplosion)),
@@ -375,7 +387,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(RouletteChestController.Idle), nameof(RouletteChestController.Idle.OnEnter))]
         [HarmonyILManipulator]
-        public static void Spinny(ILContext il)
+        public static void RouletteChestController_Idle_OnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             if (c.TryGotoNext(
@@ -408,7 +420,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(Interactor), nameof(Interactor.FindBestInteractableObject))]
         [HarmonyILManipulator]
-        public static void FixInteraction(ILContext il)
+        public static void Interactor_FindBestInteractableObject(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -448,7 +460,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Merc.EvisDash), nameof(EntityStates.Merc.EvisDash.FixedUpdate))]
         [HarmonyILManipulator]
-        public static void FixMercEvisAllyTargetting(ILContext il)
+        public static void EvisDash_FixedUpdate(ILContext il)
         {
             var c = new ILCursor(il);
             var varIndex = 0;
@@ -488,7 +500,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
         [HarmonyILManipulator]
-        public static void FixPrinterDropEffect(ILContext il)
+        public static void Duplicating_DropDroplet(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(x => x.MatchCallOrCallvirt(typeof(EffectManager), nameof(EffectManager.SimpleMuzzleFlash))))
@@ -520,7 +532,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(DetachParticleOnDestroyAndEndEmission), nameof(DetachParticleOnDestroyAndEndEmission.OnDisable))]
         [HarmonyILManipulator]
-        public static void FixParticleDetachOnDestroy(ILContext il)
+        public static void DetachParticleOnDestroyAndEndEmission_OnDisable(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel returnLabel = null;
@@ -549,7 +561,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.Awake))]
         [HarmonyILManipulator]
-        public static void FixCharacterModelNullHurtBoxes(ILContext il)
+        public static void CharacterModel_Awake(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(MoveType.After,
@@ -577,7 +589,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(OutsideInteractableLocker), nameof(OutsideInteractableLocker.LockLemurianEgg))]
         [HarmonyILManipulator]
-        public static void FixReapplingEggLockVFX(ILContext il)
+        public static void OutsideInteractableLocker_LockLemurianEgg(ILContext il)
         {
             var c = new ILCursor(il);
             var nextInstr = c.Next;
@@ -595,7 +607,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(PositionIndicator), nameof(PositionIndicator.UpdatePositions))]
         [HarmonyILManipulator]
-        public static void FixPositionIndicatorWithHiddenHud(ILContext il)
+        public static void PositionIndicator_UpdatePositions(ILContext il)
         {
             var c = new ILCursor(il);
             int locVarIndex = 0;
@@ -622,7 +634,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(Indicator), nameof(Indicator.SetVisibleInternal))]
         [HarmonyILManipulator]
-        public static void FixIndicatorSetVisibleNRE(ILContext il)
+        public static void Indicator_SetVisibleInternal(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction ifInstr = null;
@@ -648,7 +660,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(CrosshairUtils.CrosshairOverrideBehavior), nameof(CrosshairUtils.CrosshairOverrideBehavior.OnDestroy))]
         [HarmonyILManipulator]
-        public static void FixCrosshairOverrideOnDestroy(ILContext il)
+        public static void CrosshairUtils_CrosshairOverrideBehavior_OnDestroy(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(
@@ -667,7 +679,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
         [HarmonyILManipulator]
-        public static void FixLobbyQuitEventSystem(ILContext il)
+        public static void RuleChoiceController_FindNetworkUser(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(
@@ -699,7 +711,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(RewiredIntegrationManager), nameof(RewiredIntegrationManager.RefreshJoystickAssignment))]
         [HarmonyPrefix]
-        public static bool FixNoRewiredInputOnQuit()
+        public static bool RewiredIntegrationManager_RefreshJoystickAssignment()
         {
             return ReInput.initialized && ReInput.controllers != null;
         }
@@ -709,7 +721,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(MeridianEventTriggerInteraction), nameof(MeridianEventTriggerInteraction.Awake))]
         [HarmonyPrefix]
-        public static void FixMeridianTestStateSpam(MeridianEventTriggerInteraction __instance)
+        public static void MeridianEventTriggerInteraction_Awake(MeridianEventTriggerInteraction __instance)
         {
             var esm = EntityStateMachine.FindByCustomName(__instance.gameObject, "");
             if (esm != null && esm.initialStateType.stateType == typeof(TestState1))
@@ -728,7 +740,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.ChildMonster.Frolic), nameof(EntityStates.ChildMonster.Frolic.TeleportAroundPlayer))]
         [HarmonyILManipulator]
-        public static void FixFrolicTeleportWithoutAvailableNodes(ILContext il)
+        public static void Frolic_TeleportAroundPlayer(ILContext il)
         {
             var c = new ILCursor(il);
             int listVar = 0, vectorVar = 0, boolVar =0;
@@ -765,7 +777,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(TeamManager), nameof(TeamManager.LongstandingSolitudesInParty))]
         [HarmonyILManipulator]
-        public static void FixSpawnNearInteractableWithLongstandingSolitude(ILContext il)
+        public static void TeamManager_LongstandingSolitudesInParty(ILContext il)
         {
             var c = new ILCursor(il);
             int pcmcVarIndex = 0;
@@ -823,7 +835,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(Util), nameof(Util.HealthComponentToTransform))]
         [HarmonyILManipulator]
-        public static void FixBeadTetherAddedNRE(ILContext il)
+        public static void Util_HealthComponentToTransform(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.coreTransform)))))
@@ -841,7 +853,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement), nameof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement.OnUninstall))]
         [HarmonyILManipulator]
-        public static void FixChefBurnMithrixAchievementNotUnsubscribing(ILContext il)
+        public static void BurnMithrix_BurnMithrixServerAchievement_OnUninstall(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(x => x.MatchCallOrCallvirt<GlobalEventManager>("add_" + nameof(GlobalEventManager.onServerDamageDealt))))
@@ -857,7 +869,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Halcyonite.WhirlWindPersuitCycle), nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDecelerate))]
         [HarmonyILManipulator]
-        public static void FixHalcyoniteWhirlwindNoTargetNRE(ILContext il, ILLabel retLabel)
+        public static void WhirlWindPersuitCycle_UpdateDecelerate(ILContext il, ILLabel retLabel)
         {
             var c = new ILCursor(il);
             // In theory all we want is to convert `if (age > duration) { A(); return; } B();` into
@@ -883,7 +895,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.InitializePullInfo))]
         [HarmonyILManipulator]
-        public static void FixMeridiansWillForTargetsWithNoRigidbody_PullInfo(ILContext il)
+        public static void MeridiansWillFire_InitializePullInfo(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel label = null;
@@ -909,7 +921,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.ApplyForce))]
         [HarmonyILManipulator]
-        public static void FixMeridiansWillForTargetsWithNoRigidbody_ApplyForce(ILContext il)
+        public static void MeridiansWillFire_ApplyForce(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
