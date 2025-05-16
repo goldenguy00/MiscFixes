@@ -98,6 +98,48 @@ namespace MiscFixes
             var newChildLoc = childLoc.transformPairs.ToList();
             newChildLoc.AddRange(
             [
+                // main clusters
+                // exists:
+                // BottomLeftCluster
+                // TopCenterCluster
+                new ChildLocator.NameTransformPair
+                {
+                    name = "UpperRightCluster",
+                    transform = springCanvas.Find("UpperRightCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "BottomRightCluster",
+                    transform = springCanvas.Find("BottomRightCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "UpperLeftCluster",
+                    transform = springCanvas.Find("UpperLeftCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "BottomCenterCluster",
+                    transform = springCanvas.Find("BottomCenterCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "LeftCluster",
+                    transform = springCanvas.Find("LeftCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "RightCluster",
+                    transform = springCanvas.Find("RightCluster")
+                },
+
+                // extra stuff
+                // exists:
+                // RightUtilityArea
+                // RightInfoBar
+                // ScopeContainer
+                // CrosshairExtras
+                // BossHealthBar
                 new ChildLocator.NameTransformPair
                 {
                     name = "NotificationArea",
@@ -105,8 +147,8 @@ namespace MiscFixes
                 },
                 new ChildLocator.NameTransformPair
                 {
-                    name = "UpperLeftCluster",
-                    transform = springCanvas.Find("UpperLeftCluster")
+                    name = "ScoreboardPanel",
+                    transform = springCanvas.Find("ScoreboardPanel")
                 },
                 new ChildLocator.NameTransformPair
                 {
@@ -125,8 +167,8 @@ namespace MiscFixes
                 }
             ]);
 
-            // shouldnt happen, but any nulls/duplicates can get removed
-            childLoc.transformPairs = [.. newChildLoc.Where(pair => pair.transform != null)];
+            // shouldnt happen, but any duplicates can get removed (null is ok)
+            childLoc.transformPairs = [.. newChildLoc.GroupBy(pair => pair.name).Select(group => group.First())];
         }
     }
 }
