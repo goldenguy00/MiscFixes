@@ -1,11 +1,13 @@
-﻿using System;
+﻿extern alias Rewired_Core_NS;
+
+using System;
 using System.Collections.Generic;
 using EntityStates;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using Rewired;
+using Rewired_Core_NS::Rewired;
 using RoR2;
 using RoR2.CharacterAI;
 using RoR2.Items;
@@ -22,23 +24,122 @@ namespace MiscFixes
     public class FixVanilla
     {
         /// <summary>
-        /// [Error: Unity Log] NullReferenceException: Object reference not set to an instance of an object
-        /// Stack trace:
-        /// RoR2.CharacterBody.<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0 (System.Boolean _disable) (at<f166c0602b0c47ccb39283131d23568d>:IL_0040)
+        /// Never checks the generic skill for null before overriding it, so ill assume all four of these should be handled the same
+        /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState|388_0 (System.Boolean _disable) (at:IL_0040)
+        /// 
+        /// this.skillLocator.secondary.SetSkillOverride(this, disabledSkill, GenericSkill.SkillOverridePriority.Contextual);
+        /// IL_003a: ldarg.0
+        /// IL_003b: call instance class RoR2.SkillLocator RoR2.CharacterBody::get_skillLocator()
+        /// IL_0040: ldfld class RoR2.GenericSkill RoR2.SkillLocator::secondary
+        /// IL_0045: ldarg.0
+        /// IL_0046: ldloc.0
+        /// IL_0047: ldc.i4.4
+        /// IL_0048: callvirt instance void RoR2.GenericSkill::SetSkillOverride(object, class RoR2.Skills.SkillDef, valuetype RoR2.GenericSkill/SkillOverridePriority)
         /// </summary>
-        [HarmonyPatch(typeof(CharacterBody), "RoR2.CharacterBody.<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
+        [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
         [HarmonyILManipulator]
-        public static void CharacterBody_HandleDisableAllSkillsDebuff(ILContext il)
+        public static void CharacterBody_HandleDisableAllSkillsDebuff1(ILContext il)
         {
+            var c = new ILCursor(il);
+            var cList = new List<ILCursor>();
 
+            //beefy and fragile match because while loops are scary, fail if anything has been modified
+            while (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCall(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.skillLocator))),
+                    x => x.MatchLdfld(out _),
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdloc(0),
+                    x => x.MatchLdcI4(4),
+                    x => x.MatchCallvirt(out _)
+                ))
+            {
+                if (cList.Count >= 8)
+                {
+                    Log.Error("YO HOMIE YOU BEST NOT BE RECURSING");
+                    Log.PatchFail(il);
+                    return;
+                }
+
+                cList.Add(c.Clone());
+            }
+
+            if (cList.Count != 8)
+            {
+                Log.Error("GOD DAMMIT ");
+                for (int i = 0; i < cList.Count; i++)
+                    Log.Error("FUCK " + i);
+                Log.PatchFail(il + "IKJEDNF");
+                return;
+            }
+
+            for (int i = 0; i < cList.Count; i++)
+            {
+                c = cList[i];
+
+                var endLabel = c.MarkLabel();
+                var callLabel = c.DefineLabel();
+
+                c.GotoPrev(MoveType.After,
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.skillLocator))),
+                    x => x.MatchLdfld(out _));
+
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, endLabel);
+
+                c.MarkLabel(callLabel);
+            }
+        }
+        /// <summary>
+        /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState|388_0 (System.Boolean _disable) (at:IL_012D)
+        /// 
+        /// this.inventory.SetEquipmentDisabled(_disable);
+        /// IL_0125: brfalse.s IL_0133
+        /// IL_0127: ldarg.0
+	    /// IL_0128: call instance class RoR2.Inventory RoR2.CharacterBody::get_inventory()
+        /// IL_012d: ldarg.1
+	    /// IL_012e: callvirt instance void RoR2.Inventory::SetEquipmentDisabled(bool)
+        /// </summary>
+        [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
+        [HarmonyILManipulator]
+        public static void CharacterBody_HandleDisableAllSkillsDebuff23(ILContext il)
+        {
+            var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
+
+            ILLabel retLabel = null;
+            if (c.TryGotoPrev(MoveType.Before,
+                    x => x.MatchBrfalse(out retLabel),
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory))),
+                    x => x.MatchLdarg(1),
+                    x => x.MatchCallOrCallvirt<Inventory>(nameof(Inventory.SetEquipmentDisabled))
+                ))
+            {
+                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory))));
+
+                var callLabel = c.DefineLabel();
+
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brtrue, callLabel);
+
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br, retLabel);
+
+                c.MarkLabel(callLabel);
+            }
+            else Log.PatchFail(il + " #2");
         }
 
         /// <summary>
-        /// NullReferenceException: 
-        /// 
-        /// RoR2.CharacterBody.TryGiveFreeUnlockWhenLevelUp() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
-        /// RoR2.CharacterBody.OnLevelUp() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
-        /// RoR2.CharacterBody.OnCalculatedLevelChanged(System.Single oldLevel, System.Single newLevel) (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0017)
+        /// NullReferenceException:
+        /// RoR2.CharacterBody.TryGiveFreeUnlockWhenLevelUp() (at:IL_0006)
+        /// RoR2.CharacterBody.OnLevelUp() (at:IL_0006)
+        /// RoR2.CharacterBody.OnCalculatedLevelChanged(System.Single oldLevel, System.Single newLevel) (at:IL_0017)
         /// </summary>
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
         [HarmonyILManipulator]
@@ -114,7 +215,7 @@ namespace MiscFixes
         /// ghost.enabled = true;
         /// 
         /// NullReferenceException:
-        /// (wrapper dynamic-method) RoR2.Projectile.ProjectileController.DMD<RoR2.Projectile.ProjectileController::Start>(RoR2.Projectile.ProjectileController)
+        /// (wrapper dynamic-method) RoR2.Projectile.ProjectileController.DMDRoR2.Projectile.ProjectileController::Start(RoR2.Projectile.ProjectileController)
         /// </summary>
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
         [HarmonyILManipulator]
@@ -148,15 +249,15 @@ namespace MiscFixes
         /// 
         /// ArgumentNullException: Parameter name: source
         /// 
-        /// UnityEngine.Material..ctor(UnityEngine.Material source) (at<a20b3695b7ce4017b7981f9d06962bd1>:IL_0008)
-        /// RoR2.TemporaryOverlayInstance.SetupMaterial() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_000D)
-        /// RoR2.TemporaryOverlayInstance.AddToCharacterModel(RoR2.CharacterModel characterModel) (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0000)
-        /// RoR2.TemporaryOverlay.AddToCharacerModel(RoR2.CharacterModel characterModel) (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+        /// UnityEngine.Material..ctor(UnityEngine.Material source) (at:IL_0008)
+        /// RoR2.TemporaryOverlayInstance.SetupMaterial() (at:IL_000D)
+        /// RoR2.TemporaryOverlayInstance.AddToCharacterModel(RoR2.CharacterModel characterModel) (at:IL_0000)
+        /// RoR2.TemporaryOverlay.AddToCharacerModel(RoR2.CharacterModel characterModel) (at:IL_0006)
         /// 
-        /// UnityEngine.Material..ctor(UnityEngine.Material source) (at<a20b3695b7ce4017b7981f9d06962bd1>:IL_0008)
-        /// RoR2.TemporaryOverlayInstance.SetupMaterial() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_000D)
-        /// RoR2.TemporaryOverlayInstance.Start() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0009)
-        /// RoR2.TemporaryOverlay.Start() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0006)
+        /// UnityEngine.Material..ctor(UnityEngine.Material source) (at:IL_0008)
+        /// RoR2.TemporaryOverlayInstance.SetupMaterial() (at:IL_000D)
+        /// RoR2.TemporaryOverlayInstance.Start() (at:IL_0009)
+        /// RoR2.TemporaryOverlay.Start() (at:IL_0006)
         /// </summary>
         [HarmonyPatch(typeof(TemporaryOverlayInstance), nameof(TemporaryOverlayInstance.SetupMaterial))]
         [HarmonyPrefix]
@@ -171,10 +272,10 @@ namespace MiscFixes
         /// <summary>
         /// NullReferenceException:
         /// 
-        /// UnityEngine.Component.GetComponent[T] () (at<a20b3695b7ce4017b7981f9d06962bd1>:IL_0021)
-        /// RoR2.Stats.StatManager.ProcessGoldEvents() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0017)
-        /// RoR2.Stats.StatManager.ProcessEvents() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_000F)
-        /// RoR2.RoR2Application.FixedUpdate() (at<a43009bc6a5f4aee99e5521ef176a18d>:IL_0024)
+        /// UnityEngine.Component.GetComponent[T] () (at:IL_0021)
+        /// RoR2.Stats.StatManager.ProcessGoldEvents() (at:IL_0017)
+        /// RoR2.Stats.StatManager.ProcessEvents() (at:IL_000F)
+        /// RoR2.RoR2Application.FixedUpdate() (at:IL_0024)
         /// </summary>
         [HarmonyPatch(typeof(StatManager), nameof(StatManager.ProcessGoldEvents))]
         [HarmonyILManipulator]
@@ -816,22 +917,22 @@ namespace MiscFixes
         /// [Error  : Unity Log] ArgumentNullException: Value cannot be null.
         /// Parameter name: key
         /// Stack trace:
-        /// System.Collections.Generic.Dictionary`2[TKey, TValue].FindEntry(TKey key) (at<7e05db41a20b45108859fa03b97088d4>:IL_0008)
-        /// System.Collections.Generic.Dictionary`2[TKey, TValue].ContainsKey(TKey key) (at<7e05db41a20b45108859fa03b97088d4>:IL_0000)
-        /// RoR2.AffixBeadAttachment.OnTetherAdded(RoR2.TetherVfx vfx, UnityEngine.Transform transform) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0008)
-        /// RoR2.TetherVfxOrigin.AddTether(UnityEngine.Transform target) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0058)
-        /// RoR2.TetherVfxOrigin.UpdateTargets(System.Collections.ObjectModel.ReadOnlyCollection`1[T] listOfHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] discoveredHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] lostHealthComponents) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_008A)
-        /// RoR2.TargetNearbyHealthComponents.Tick() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_018B)
-        /// RoR2.TargetNearbyHealthComponents.FixedUpdate() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_004B)
+        /// System.Collections.Generic.Dictionary`2[TKey, TValue].FindEntry(TKey key) (at:IL_0008)
+        /// System.Collections.Generic.Dictionary`2[TKey, TValue].ContainsKey(TKey key) (at:IL_0000)
+        /// RoR2.AffixBeadAttachment.OnTetherAdded(RoR2.TetherVfx vfx, UnityEngine.Transform transform) (at:IL_0008)
+        /// RoR2.TetherVfxOrigin.AddTether(UnityEngine.Transform target) (at:IL_0058)
+        /// RoR2.TetherVfxOrigin.UpdateTargets(System.Collections.ObjectModel.ReadOnlyCollection`1[T] listOfHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] discoveredHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] lostHealthComponents) (at:IL_008A)
+        /// RoR2.TargetNearbyHealthComponents.Tick() (at:IL_018B)
+        /// RoR2.TargetNearbyHealthComponents.FixedUpdate() (at:IL_004B)
         ///
         /// [Error  : Unity Log] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.
         /// Parameter name: index
         /// Stack trace:
-        /// System.Collections.Generic.List`1[T].get_Item(System.Int32 index) (at<7e05db41a20b45108859fa03b97088d4>:IL_0009)
-        /// RoR2.TetherVfxOrigin.RemoveTetherAt(System.Int32 i) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0000)
-        /// RoR2.TetherVfxOrigin.UpdateTargets(System.Collections.ObjectModel.ReadOnlyCollection`1[T] listOfHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] discoveredHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] lostHealthComponents) (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_0062)
-        /// RoR2.TargetNearbyHealthComponents.Tick() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_018B)
-        /// RoR2.TargetNearbyHealthComponents.FixedUpdate() (at<f7443728c4d4442b8c2db9f6c21a6e92>:IL_004B)
+        /// System.Collections.Generic.List`1[T].get_Item(System.Int32 index) (at:IL_0009)
+        /// RoR2.TetherVfxOrigin.RemoveTetherAt(System.Int32 i) (at:IL_0000)
+        /// RoR2.TetherVfxOrigin.UpdateTargets(System.Collections.ObjectModel.ReadOnlyCollection`1[T] listOfHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] discoveredHealthComponents, System.Collections.ObjectModel.ReadOnlyCollection`1[T] lostHealthComponents) (at:IL_0062)
+        /// RoR2.TargetNearbyHealthComponents.Tick() (at:IL_018B)
+        /// RoR2.TargetNearbyHealthComponents.FixedUpdate() (at:IL_004B)
         /// </summary>
         [HarmonyPatch(typeof(Util), nameof(Util.HealthComponentToTransform))]
         [HarmonyILManipulator]

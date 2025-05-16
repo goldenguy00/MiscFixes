@@ -2,6 +2,9 @@
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine;
 using RoR2.CharacterAI;
+using RoR2.UI;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace MiscFixes
 {
@@ -12,6 +15,7 @@ namespace MiscFixes
             FixElderLemurianFootstepEvents();
             FixSaleStarCollider();
             FixFalseSonBossP2NotUsingSpecial();
+            MoreHudChildLocEntries();
         }
 
         /// <summary>
@@ -77,6 +81,57 @@ namespace MiscFixes
                 }
                 Log.PatchFail("False Son Boss Phase 2 special skill");
             };
+        }
+
+        public static void MoreHudChildLocEntries()
+        {
+            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple.prefab").Completed += AssetFixes_Completed;
+            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple_Big.prefab").Completed += AssetFixes_Completed;
+        }
+
+        private static void AssetFixes_Completed(AsyncOperationHandle<GameObject> obj)
+        {
+            var hud = obj.Result.GetComponent<HUD>();
+            var childLoc = hud.GetComponent<ChildLocator>();
+            var springCanvas = hud.mainUIPanel.transform.Find("SpringCanvas");
+
+            var newChildLoc = childLoc.transformPairs.ToList();
+            newChildLoc.AddRange(
+            [
+                new ChildLocator.NameTransformPair
+                {
+                    name = "NotificationArea",
+                    transform = hud.mainContainer.transform.Find("NotificationArea")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "UpperLeftCluster",
+                    transform = springCanvas.Find("UpperLeftCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "SkillIconContainer",
+                    transform = springCanvas.Find("BottomRightCluster/Scaler")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "AllyCardContainer",
+                    transform = springCanvas.Find("LeftCluster/AllyCardContainer")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "BuffDisplayRoot",
+                    transform = springCanvas.Find("BottomLeftCluster/BarRoots/LevelDisplayCluster/BuffDisplayRoot")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "InventoryContainer",
+                    transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
+                }
+            ]);
+
+            // shouldnt happen, but any nulls/duplicates can get removed
+            childLoc.transformPairs = [.. newChildLoc.Where(pair => pair.transform != null).GroupBy(pair => pair.name).First()];
         }
     }
 }

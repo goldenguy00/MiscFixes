@@ -1,3 +1,8 @@
+## 1.3.1
+
+- Fixed 9 seperate possible NREs in CharacterBody_HandleDisableAllSkillsDebuff
+- ugh
+
 ## 1.3.0
 
 - Removed fixes that have been addressed by vanilla

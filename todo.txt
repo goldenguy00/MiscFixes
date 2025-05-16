@@ -1,13 +1,5 @@
 unity explorer error in lobby. doesn't fuck everything up anymore but it still throws from update, which is annoying
 
-
-this is driver's fault technically since he heavily abuses this debuff
-
-        NullReferenceException: Object reference not set to an instance of an object
-        RoR2.CharacterBody.<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|392_0 (System.Boolean _disable) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0041)
-        RoR2.CharacterBody.HandleDisableAllSkillsDebuff () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0018)
-
-
 Doesnt throw errors but it removed items from a destroyed object which results in OnInventoryChanged nre's from some mods
 
         RoR2.MinionOwnership+MinionGroup.SetMinionOwner (RoR2.MinionOwnership minion, UnityEngine.Networking.NetworkInstanceId ownerId) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0022)
