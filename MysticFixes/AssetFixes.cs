@@ -86,7 +86,7 @@ namespace MiscFixes
         public static void MoreHudChildLocEntries()
         {
             Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple.prefab").Completed += AssetFixes_Completed;
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple_Big.prefab").Completed += AssetFixes_Completed;
+            //Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple_Big.prefab").Completed += AssetFixes_Completed;
         }
 
         private static void AssetFixes_Completed(AsyncOperationHandle<GameObject> obj)
@@ -115,11 +115,6 @@ namespace MiscFixes
                 },
                 new ChildLocator.NameTransformPair
                 {
-                    name = "AllyCardContainer",
-                    transform = springCanvas.Find("LeftCluster/AllyCardContainer")
-                },
-                new ChildLocator.NameTransformPair
-                {
                     name = "BuffDisplayRoot",
                     transform = springCanvas.Find("BottomLeftCluster/BarRoots/LevelDisplayCluster/BuffDisplayRoot")
                 },
@@ -131,7 +126,7 @@ namespace MiscFixes
             ]);
 
             // shouldnt happen, but any nulls/duplicates can get removed
-            childLoc.transformPairs = [.. newChildLoc.Where(pair => pair.transform != null).GroupBy(pair => pair.name).First()];
+            childLoc.transformPairs = [.. newChildLoc.Where(pair => pair.transform != null)];
         }
     }
 }

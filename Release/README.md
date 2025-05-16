@@ -1,5 +1,12 @@
 # Misc Fixes
 
+- Added additional child locator entries to the Hud. These are difficult to find normally because they have no identifiable component attached.
+> - UpperLeftCluster
+> - NotificationArea
+> - SkillIconContainer
+> - BuffDisplayRoot
+> - InventoryContainer
+
 - Fixed 9 seperate possible NREs in CharacterBody_HandleDisableAllSkillsDebuff
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
 - Fixes various NREs with VineOrb (dead target on arrival, null dotDef)

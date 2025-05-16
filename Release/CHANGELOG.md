@@ -1,7 +1,16 @@
+## 1.3.2
+
+- Didn't happen
+
 ## 1.3.1
 
 - Fixed 9 seperate possible NREs in CharacterBody_HandleDisableAllSkillsDebuff
-- ugh
+- Added additional child locator entries to the Hud. These are difficult to find normally because they have no identifiable component attached.
+> - UpperLeftCluster
+> - NotificationArea
+> - SkillIconContainer
+> - BuffDisplayRoot
+> - InventoryContainer
 
 ## 1.3.0
 
