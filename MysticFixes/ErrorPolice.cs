@@ -24,6 +24,17 @@ namespace MiscFixes
     public class FixVanilla
     {
         /// <summary>
+        /// Halcyonite Shrine is able to drain 0 gold and will softlock itself.
+        /// If the scaled gold cost is less than 1, it gets truncated to 0 (mostly for modded scalings)
+        /// </summary>
+        [HarmonyPatch(typeof(HalcyoniteShrineInteractable), nameof(HalcyoniteShrineInteractable.Awake))]
+        [HarmonyPostfix]
+        public static void HalcyoniteShrineInteractable_Awake(HalcyoniteShrineInteractable __instance)
+        {
+            __instance.goldDrainValue = Math.Max(1, __instance.goldDrainValue);
+        }
+
+        /// <summary>
         /// Never checks the generic skill for null before overriding it, so ill assume all four of these should be handled the same
         /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState|388_0 (System.Boolean _disable) (at:IL_0040)
         /// 
@@ -66,10 +77,8 @@ namespace MiscFixes
 
             if (cList.Count != 8)
             {
-                Log.Error("GOD DAMMIT ");
-                for (int i = 0; i < cList.Count; i++)
-                    Log.Error("FUCK " + i);
-                Log.PatchFail(il + "IKJEDNF");
+                Log.Warning("Match count did not equal 8!");
+                Log.PatchFail(il);
                 return;
             }
 
@@ -106,7 +115,7 @@ namespace MiscFixes
         /// </summary>
         [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
         [HarmonyILManipulator]
-        public static void CharacterBody_HandleDisableAllSkillsDebuff23(ILContext il)
+        public static void CharacterBody_HandleDisableAllSkillsDebuff2(ILContext il)
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
 
@@ -132,7 +141,7 @@ namespace MiscFixes
 
                 c.MarkLabel(callLabel);
             }
-            else Log.PatchFail(il + " #2");
+            else Log.PatchFail(il.Method.Name + "#2");
         }
 
         /// <summary>

@@ -1,3 +1,8 @@
+## 1.3.3
+
+- Added more childLocator entries and renamed some
+- Added fix for Halcyonite Shrine being able to drain 0 gold and getting stuck
+
 ## 1.3.2
 
 - Didn't happen

@@ -152,7 +152,7 @@ namespace MiscFixes
                 },
                 new ChildLocator.NameTransformPair
                 {
-                    name = "SkillIconContainer",
+                    name = "SkillDisplayRoot",
                     transform = springCanvas.Find("BottomRightCluster/Scaler")
                 },
                 new ChildLocator.NameTransformPair
@@ -162,13 +162,19 @@ namespace MiscFixes
                 },
                 new ChildLocator.NameTransformPair
                 {
-                    name = "InventoryContainer",
+                    name = "InventoryDisplayRoot",
                     transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
                 }
             ]);
 
-            // shouldnt happen, but any duplicates can get removed (null is ok)
-            childLoc.transformPairs = [.. newChildLoc.GroupBy(pair => pair.name).Select(group => group.First())];
+            // shouldnt happen, but any null/duplicates can get removed
+            childLoc.transformPairs = 
+            [
+                ..newChildLoc
+                .Where(pair => pair.transform != null)
+                .GroupBy(pair => pair.name)
+                .Select(group => group.First())
+            ];
         }
     }
 }

@@ -16,7 +16,7 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.3.2";
+        public const string PluginVersion = "1.3.3";
 
         private Harmony harmonyPatcher;
 
