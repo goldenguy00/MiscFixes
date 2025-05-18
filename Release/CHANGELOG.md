@@ -1,3 +1,7 @@
+## 1.3.4
+
+- Added fix for Xi Construct's laser attack not exploding at the end
+
 ## 1.3.3
 
 - Added more childLocator entries and renamed some

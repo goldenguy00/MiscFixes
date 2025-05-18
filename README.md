@@ -27,6 +27,7 @@
 - Fixes CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 - Fixes Halcyonite's Whirlwind NRE spam when its target is killed during the skill
 - Fixes Meridian's Will failing to pull monsters in when a stationary target is hit
+- Fixes the Xi Construct not creating a blast at the end of the laser attack
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup

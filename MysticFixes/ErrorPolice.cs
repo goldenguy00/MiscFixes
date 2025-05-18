@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using EntityStates;
+using EntityStates.EngiTurret.EngiTurretWeapon;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
 using Mono.Cecil.Cil;
@@ -1049,6 +1050,26 @@ namespace MiscFixes
                 c.Emit(OpCodes.Brtrue_S, continueWithSetVelocity);
                 c.Emit(OpCodes.Pop);
                 c.Emit(OpCodes.Br, nextInstr);
+            }
+            else Log.PatchFail(il);
+        }
+
+        /// <summary>
+        /// Fix the Xi Construct not creating a blast at the end of the laser attack.
+        /// SotS changed `outer.SetNextState(GetNextState())` to `outer.SetNextStateToMain()`
+        /// </summary>
+        [HarmonyPatch(typeof(FireBeam), nameof(FireBeam.FixedUpdate))]
+        [HarmonyILManipulator]
+        public static void FireBeam_FixedUpdate(ILContext il)
+        {
+            var c = new ILCursor(il);
+            // Using ShouldFireLaser as a landmark juuuust in case there are ever multiple SetNextStateToMain calls
+            if (c.TryGotoNext(x => x.MatchCallOrCallvirt<FireBeam>(nameof(FireBeam.ShouldFireLaser))) &&
+                c.TryGotoNext(x => x.MatchCallOrCallvirt<EntityStateMachine>(nameof(EntityStateMachine.SetNextStateToMain))))
+            {
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(FireBeam), nameof(FireBeam.GetNextState)));
+                c.Next.Operand = AccessTools.Method(typeof(EntityStateMachine), nameof(EntityStateMachine.SetNextState));
             }
             else Log.PatchFail(il);
         }
