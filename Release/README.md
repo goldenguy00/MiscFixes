@@ -2,17 +2,39 @@
 
 - Added additional child locator entries to the Hud. These are difficult to find normally because they have no identifiable component attached.
 
+---
+
+### New entries:
+
+> - "SpringCanvas"
 > - "UpperRightCluster"
 > - "BottomRightCluster"
 > - "UpperLeftCluster"
 > - "BottomCenterCluster"
 > - "LeftCluster"
 > - "RightCluster"
+
 > - "NotificationArea"
 > - "ScoreboardPanel"
 > - "SkillDisplayRoot"
 > - "BuffDisplayRoot"
 > - "InventoryDisplayRoot"
+
+---
+
+### Existing entries:
+
+> - "BottomLeftCluster"
+> - "TopCenterCluster"
+
+
+> - "RightUtilityArea"
+> - "ScopeContainer"
+> - "CrosshairExtras"
+> - "BossHealthBar"
+> - "RightInfoBar" -Always null, kept in for compat
+
+---
 
 - Fixed 9 seperate possible NREs in CharacterBody_HandleDisableAllSkillsDebuff
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)

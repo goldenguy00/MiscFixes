@@ -104,6 +104,11 @@ namespace MiscFixes
                 // TopCenterCluster
                 new ChildLocator.NameTransformPair
                 {
+                    name = "SpringCanvas",
+                    transform = springCanvas
+                },
+                new ChildLocator.NameTransformPair
+                {
                     name = "UpperRightCluster",
                     transform = springCanvas.Find("UpperRightCluster")
                 },
@@ -165,13 +170,13 @@ namespace MiscFixes
                     name = "InventoryDisplayRoot",
                     transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
                 }
+                // riskUI is the only REAL full UI overhaul so this should alleviate some of the differences
             ]);
 
-            // shouldnt happen, but any null/duplicates can get removed
+            // shouldnt happen, but any duplicates can get removed
             childLoc.transformPairs = 
             [
                 ..newChildLoc
-                .Where(pair => pair.transform != null)
                 .GroupBy(pair => pair.name)
                 .Select(group => group.First())
             ];
