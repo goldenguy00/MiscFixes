@@ -74,6 +74,6 @@
 - Flicker light error
 - Fixes an unrecoverable error caused by having multiple event systems (thanks Bubbet)
 - Incompletable void seed bug
-- Fixes ConVars with uppercase letters not working, e.g, egsToggle
+- (temporarily removed) Fixes ConVars with uppercase letters not working, e.g, egsToggle
 
 - Prevents spam error for various server methods called on clients

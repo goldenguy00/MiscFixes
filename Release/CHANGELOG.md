@@ -2,7 +2,7 @@
 
 - Added fix for Xi Construct's laser attack not exploding at the end
 - Updated HUD childloc to include springCanvas
-
+- Removed convar fix for now.
 
 ## 1.3.3
 
