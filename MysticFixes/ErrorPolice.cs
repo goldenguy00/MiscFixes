@@ -37,8 +37,8 @@ namespace MiscFixes
         /// IL_0047: ldc.i4.4
         /// IL_0048: callvirt instance void RoR2.GenericSkill::SetSkillOverride(object, class RoR2.Skills.SkillDef, valuetype RoR2.GenericSkill/SkillOverridePriority)
         /// </summary>
-        [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
+        //[HarmonyILManipulator]
         public static void CharacterBody_HandleDisableAllSkillsDebuff1(ILContext il)
         {
             var c = new ILCursor(il);
@@ -103,8 +103,8 @@ namespace MiscFixes
         /// IL_012d: ldarg.1
 	    /// IL_012e: callvirt instance void RoR2.Inventory::SetEquipmentDisabled(bool)
         /// </summary>
-        [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
+        //[HarmonyILManipulator]
         public static void CharacterBody_HandleDisableAllSkillsDebuff2(ILContext il)
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
@@ -925,8 +925,8 @@ namespace MiscFixes
         /// <summary>
         /// Fix CHEF's BurnMithrix achievement not unsubscribing a DamageDealt event once completed.
         /// </summary>
-        [HarmonyPatch(typeof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement), nameof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement.OnUninstall))]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement), nameof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement.OnUninstall))]
+        //[HarmonyILManipulator]
         public static void BurnMithrix_BurnMithrixServerAchievement_OnUninstall(ILContext il)
         {
             var c = new ILCursor(il);

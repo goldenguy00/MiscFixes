@@ -36,7 +36,6 @@
 
 ---
 
-- Fixed 9 seperate possible NREs in CharacterBody_HandleDisableAllSkillsDebuff
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
 - Fixes various NREs with VineOrb (dead target on arrival, null dotDef)
 - Prevents an error when spawning some projectiles, probably because they lack a model
@@ -61,7 +60,6 @@
 - Fixes an error when the Child fails to teleport near your location
 - Fixes an NRE when spawning close to a chest
 - Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
-- Fixes CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 - Fixes Halcyonite's Whirlwind NRE spam when its target is killed during the skill
 - Fixes Meridian's Will failing to pull monsters in when a stationary target is hit
 - Fixes the Xi Construct not creating a blast at the end of the laser attack

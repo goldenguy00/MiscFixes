@@ -1,3 +1,8 @@
+## 1.3.5
+
+- Removed CharacterBody HandleDisableAllSkillsDebuff fix
+- Removed fix for CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
+
 ## 1.3.4
 
 - Added fix for Xi Construct's laser attack not exploding at the end
