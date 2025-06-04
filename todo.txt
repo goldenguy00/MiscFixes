@@ -1,5 +1,3 @@
-unity explorer error in lobby. doesn't fuck everything up anymore but it still throws from update, which is annoying
-
 Doesnt throw errors but it removed items from a destroyed object which results in OnInventoryChanged nre's from some mods
 
         RoR2.MinionOwnership+MinionGroup.SetMinionOwner (RoR2.MinionOwnership minion, UnityEngine.Networking.NetworkInstanceId ownerId) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0022)
@@ -12,17 +10,6 @@ I'm now try-catching orig(self) and dumping items/buffs/etc for both victim and 
 
 
 need to investigate convar stuff, egsToggle breaks with current hook. commenting out for now.
-
-
-[Error  : Unity Log] InvalidCastException: Specified cast is not valid.
-Stack trace:
-RoR2.UI.SurvivorIconController.GetLocalUser () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0005)
-RoR2.UI.SurvivorIconController.UpdateAvailability () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0024)
-(wrapper dynamic-method) RoR2.UI.SurvivorIconController.DMD<RoR2.UI.SurvivorIconController::Update>(RoR2.UI.SurvivorIconController) (at IL_0014)
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Trampoline<RoR2.UI.SurvivorIconController::Update>?1786807396(RoR2.UI.SurvivorIconController) (at IL_0025)
-LeeHyperrealMod.Content.Controllers.LeeHyperrealCharacterMenuListener.SurvivorIconController_Update (On.RoR2.UI.SurvivorIconController+orig_Update orig, RoR2.UI.SurvivorIconController self) (at <56555afbef914900b129bd11725fbded>:IL_0001)
-(wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Hook<RoR2.UI.SurvivorIconController::Update>?1413346516(RoR2.UI.SurvivorIconController) (at IL_0019)
-
 
 
 safe handling of item displays

@@ -1,3 +1,9 @@
+## 1.3.6
+
+- Fix for UnityExplorer's all commando bug
+- Fix for Item display rule instantiation
+- Fix for SurvivorMannequinSlotController ApplyLoadoutToMannequinInstance
+
 ## 1.3.5
 
 - Removed CharacterBody HandleDisableAllSkillsDebuff fix

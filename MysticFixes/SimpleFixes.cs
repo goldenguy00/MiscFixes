@@ -4,7 +4,9 @@ using HarmonyLib;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using RoR2.SurvivorMannequins;
 using RoR2.UI;
+using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
 namespace MiscFixes
@@ -16,6 +18,63 @@ namespace MiscFixes
     [HarmonyPatch]
     public class SimpleFixes
     {
+        ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_003C)
+        ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.RebuildMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_007C)
+        ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.Update() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0031)
+        [HarmonyPatch(typeof(SurvivorMannequinSlotController), nameof(SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance))]
+        [HarmonyPrefix]
+        public static bool SurvivorMannequinSlotController_ApplyLoadoutToMannequinInstance(SurvivorMannequinSlotController __instance)
+        {
+            //dont care
+            return __instance.mannequinInstanceTransform && __instance.mannequinInstanceTransform.GetComponentInChildren<ModelSkinController>();
+        }
+
+        /// <summary>
+        /// RoR2.CharacterModel.InstantiateDisplayRuleGroup(RoR2.DisplayRuleGroup displayRuleGroup, RoR2.ItemIndex itemIndex, RoR2.EquipmentIndex equipmentIndex) (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_008B)
+        /// 
+        /// IL_008b: ldloc.1
+        /// IL_008c: ldfld class [Unity.Addressables] UnityEngine.AddressableAssets.AssetReferenceGameObject RoR2.ItemDisplayRule::followerPrefabAddress
+        /// IL_0091: callvirt instance bool[Unity.Addressables] UnityEngine.AddressableAssets.AssetReference::RuntimeKeyIsValid()
+        /// IL_0096: brfalse.s IL_00b7
+        /// </summary>
+        [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.InstantiateDisplayRuleGroup))]
+        [HarmonyILManipulator]
+        public static void CharacterModel_InstantiateDisplayRuleGroup(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel label = null;
+            if (!c.TryGotoNext(MoveType.Before,
+                    x => x.MatchLdfld<ItemDisplayRule>(nameof(ItemDisplayRule.followerPrefabAddress)),
+                    x => x.MatchCallOrCallvirt<AssetReference>(nameof(AssetReference.RuntimeKeyIsValid)),
+                    x => x.MatchBrfalse(out label)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Index++;
+            var runtimeKeyValidCall = c.Next;
+            c.Emit(OpCodes.Dup);
+            c.Emit(OpCodes.Brtrue_S, runtimeKeyValidCall);
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Br, label);
+        }
+
+        /// <summary>
+        /// unity explorer can eat my whole ass
+        /// </summary>
+        [HarmonyPatch(typeof(SurvivorIconController), nameof(SurvivorIconController.GetLocalUser))]
+        [HarmonyPrefix]
+        public static bool SurvivorIconController_GetLocalUser(SurvivorIconController __instance, ref LocalUser __result)
+        {
+            if (EventSystem.current is MPEventSystem)
+                return true;
+
+            __result = LocalUserManager.GetFirstLocalUser();
+            return false;
+        }
         /// <summary>
         /// ConVars are not registered as lower case but when submitting them from the console they are converted, leading to a match fail.
         /// </summary>
