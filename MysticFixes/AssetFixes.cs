@@ -4,7 +4,7 @@ using UnityEngine;
 using RoR2.CharacterAI;
 using RoR2.UI;
 using System.Linq;
-using System.Collections.Generic;
+using RoR2;
 
 namespace MiscFixes
 {
@@ -16,6 +16,44 @@ namespace MiscFixes
             FixSaleStarCollider();
             FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
+            FixHenry();
+        }
+
+        private static void FixHenry()
+        {
+            // finish asap, no timing issue
+
+            var matCmd = Addressables.LoadAssetAsync<Material>("RoR2/Base/Commando/matCommandoDualies.mat").WaitForCompletion();
+            var body = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Commando/CommandoBody.prefab").WaitForCompletion();
+
+            var mdlLoc = body.GetComponent<ModelLocator>();
+            if (mdlLoc && mdlLoc.modelTransform)
+            {
+                var mdl = mdlLoc.modelTransform.GetComponent<CharacterModel>();
+                var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
+                Log.Error(mdl.baseRendererInfos.Length);
+                mdl.baseRendererInfos =
+                [
+                    new CharacterModel.RendererInfo
+                    {
+                        renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshL"),
+                        defaultMaterial = matCmd,
+                        defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                    },
+                    new CharacterModel.RendererInfo
+                    {
+                        renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshR"),
+                        defaultMaterial = matCmd,
+                        defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                    },
+                    new CharacterModel.RendererInfo
+                    {
+                        renderer = mdl.transform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
+                        defaultMaterial = matCmd,
+                        defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                    }
+                ];
+            }
         }
 
         /// <summary>

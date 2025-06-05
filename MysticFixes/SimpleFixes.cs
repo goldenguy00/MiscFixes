@@ -1,11 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using Facepunch.Steamworks;
 using HarmonyLib;
+using HG;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.SurvivorMannequins;
 using RoR2.UI;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
@@ -18,6 +20,31 @@ namespace MiscFixes
     [HarmonyPatch]
     public class SimpleFixes
     {
+        [HarmonyPatch(typeof(NormalizeParticleScale), nameof(NormalizeParticleScale.OnEnable))]
+        [HarmonyPrefix]
+        public static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance)
+        {
+            return !__instance.particleSystem;
+        }
+
+        [HarmonyPatch(typeof(BurnEffectController), nameof(BurnEffectController.AddFireParticles))]
+        [HarmonyPostfix]
+        public static void BurnEffectController_AddFireParticles(NormalizeParticleScale __instance, ref BurnEffectControllerHelper __result, Renderer modelRenderer, Transform targetParentTransform)
+        {
+            if (__result && modelRenderer)
+            {
+                var scale = modelRenderer.transform.localScale.ComponentMax();
+                if (scale > 1f && __result.normalizeParticleScale && __result.burnParticleSystem)
+                {
+                    ParticleSystem.MainModule main = __result.burnParticleSystem.main;
+                    ParticleSystem.MinMaxCurve startSize = main.startSize;
+
+                    startSize.constantMin /= scale;
+                    startSize.constantMax /= scale;
+                    main.startSize = startSize;
+                }
+            }
+        }
         ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_003C)
         ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.RebuildMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_007C)
         ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.Update() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0031)

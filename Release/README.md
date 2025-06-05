@@ -36,6 +36,7 @@
 
 ---
 
+- Fixes common Henry prefab creation error
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
 - Fixes various NREs with VineOrb (dead target on arrival, null dotDef)
 - Prevents an error when spawning some projectiles, probably because they lack a model

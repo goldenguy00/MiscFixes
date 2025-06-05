@@ -1,3 +1,8 @@
+## 1.3.7
+
+- Fixed common henry creation template error
+- Included the dotParticleFix hooks
+
 ## 1.3.6
 
 - Fix for UnityExplorer's all commando bug
