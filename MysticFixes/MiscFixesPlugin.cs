@@ -16,7 +16,7 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.3.7";
+        public const string PluginVersion = "1.3.8";
 
         private Harmony harmonyPatcher;
 
@@ -30,6 +30,7 @@ namespace MiscFixes
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
 
             AssetFixes.Init();
+            try { harmonyPatcher.CreateClassProcessor(typeof(fuck)).Patch(); } catch { }
         }
     }
 }

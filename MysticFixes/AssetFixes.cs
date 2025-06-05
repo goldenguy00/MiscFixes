@@ -5,6 +5,7 @@ using RoR2.CharacterAI;
 using RoR2.UI;
 using System.Linq;
 using RoR2;
+using System.Text.RegularExpressions;
 
 namespace MiscFixes
 {
@@ -24,35 +25,36 @@ namespace MiscFixes
             // finish asap, no timing issue
 
             var matCmd = Addressables.LoadAssetAsync<Material>("RoR2/Base/Commando/matCommandoDualies.mat").WaitForCompletion();
-            var body = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Commando/CommandoBody.prefab").WaitForCompletion();
-
-            var mdlLoc = body.GetComponent<ModelLocator>();
-            if (mdlLoc && mdlLoc.modelTransform)
+            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Commando/CommandoBody.prefab").Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
-                var mdl = mdlLoc.modelTransform.GetComponent<CharacterModel>();
-                var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
-                mdl.baseRendererInfos =
-                [
-                    new CharacterModel.RendererInfo
-                    {
-                        renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshL"),
-                        defaultMaterial = matCmd,
-                        defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
-                    },
-                    new CharacterModel.RendererInfo
-                    {
-                        renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshR"),
-                        defaultMaterial = matCmd,
-                        defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
-                    },
-                    new CharacterModel.RendererInfo
-                    {
-                        renderer = mdl.transform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
-                        defaultMaterial = matCmd,
-                        defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
-                    }
-                ];
-            }
+                var mdlLoc = obj.Result.GetComponent<ModelLocator>();
+                if (mdlLoc && mdlLoc.modelTransform)
+                {
+                    var mdl = mdlLoc.modelTransform.GetComponent<CharacterModel>();
+                    var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
+                    mdl.baseRendererInfos =
+                    [
+                        new CharacterModel.RendererInfo
+                        {
+                            renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshL"),
+                            defaultMaterial = matCmd,
+                            defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                        },
+                        new CharacterModel.RendererInfo
+                        {
+                            renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshR"),
+                            defaultMaterial = matCmd,
+                            defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                        },
+                        new CharacterModel.RendererInfo
+                        {
+                            renderer = mdl.transform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
+                            defaultMaterial = matCmd,
+                            defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                        }
+                    ];
+                }
+            };
         }
 
         /// <summary>

@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections;
+using System.Collections.ObjectModel;
 using Facepunch.Steamworks;
 using HarmonyLib;
 using HG;
@@ -20,6 +22,7 @@ namespace MiscFixes
     [HarmonyPatch]
     public class SimpleFixes
     {
+
         [HarmonyPatch(typeof(NormalizeParticleScale), nameof(NormalizeParticleScale.OnEnable))]
         [HarmonyPrefix]
         public static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance)
@@ -45,6 +48,7 @@ namespace MiscFixes
                 }
             }
         }
+
         ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_003C)
         ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.RebuildMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_007C)
         ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.Update() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0031)
@@ -125,6 +129,7 @@ namespace MiscFixes
             c.Emit(OpCodes.Pop);
             c.Emit(OpCodes.Br, instr);
         }
+
 
         /// <summary>
         /// unity explorer can eat my whole ass
