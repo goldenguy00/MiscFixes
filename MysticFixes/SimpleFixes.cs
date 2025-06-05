@@ -22,6 +22,40 @@ namespace MiscFixes
     [HarmonyPatch]
     public class SimpleFixes
     {
+        /*[Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
+Stack trace:
+RoR2.UI.InspectPanelController.Show (RoR2.UI.InspectInfo ToShow, System.Boolean WithSidecar, RoR2.UserProfile incomingUserProfile) (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
+RoR2.UI.ArtifactOfRebirthTooltipController.ShowInspectInfoIfAvailable () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0008)
+RoR2.UI.ArtifactOfRebirthTooltipController.OnEnable () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
+UnityEngine.GameObject:SetActive(GameObject, Boolean)
+RoR2.UI.RuleChoiceController:OnSelected()
+UnityEngine.Events.UnityEvent:Invoke()
+RoR2.UI.MPButton:OnSelect(BaseEventData)
+RoR2.UI.HGButton:OnSelect(BaseEventData)
+UnityEngine.EventSystems.EventSystem:DMD<UnityEngine.EventSystems.EventSystem::SetSelectedGameObject>(EventSystem, GameObject, BaseEventData)
+RoR2.UI.MPButton:AttemptSelection(PointerEventData)
+RoR2.UI.MPButton:OnPointerEnter(PointerEventData)
+RoR2.UI.HGButton:OnPointerEnter(PointerEventData)
+UnityEngine.EventSystems.BaseInputModule:HandlePointerExitAndEnter(PointerEventData, GameObject)
+RoR2.UI.MPInputModule:ProcessMove(PlayerPointerEventData)
+Rewired.Integration.UnityUI.RewiredStandaloneInputModule:ProcessMouseEvent(Int32, Int32)
+Rewired.Integration.UnityUI.RewiredStandaloneInputModule:ProcessMouseEvents()
+Rewired.Integration.UnityUI.RewiredStandaloneInputModule:Process()
+UnityEngine.EventSystems.EventSystem:Update()
+RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
+        	IL_0000: ldarg.0
+	IL_0001: ldfld class RoR2.UI.MPEventSystem RoR2.UI.InspectPanelController::eventSystem
+	IL_0006: ldfld class RoR2.LocalUser RoR2.UI.MPEventSystem::localUser
+	IL_000b: callvirt instance class RoR2.UserProfile RoR2.LocalUser::get_userProfile()
+	IL_0010: stloc.0
+*/
+
+        [HarmonyPatch(typeof(InspectPanelController), nameof(InspectPanelController.Show))]
+        [HarmonyPrefix]
+        public static bool InspectPanelController_Show(InspectPanelController __instance)
+        {
+            return __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
+        }
 
         [HarmonyPatch(typeof(NormalizeParticleScale), nameof(NormalizeParticleScale.OnEnable))]
         [HarmonyPrefix]

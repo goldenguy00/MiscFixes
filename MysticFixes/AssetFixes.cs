@@ -5,7 +5,6 @@ using RoR2.CharacterAI;
 using RoR2.UI;
 using System.Linq;
 using RoR2;
-using System.Text.RegularExpressions;
 
 namespace MiscFixes
 {
