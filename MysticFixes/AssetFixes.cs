@@ -31,7 +31,6 @@ namespace MiscFixes
             {
                 var mdl = mdlLoc.modelTransform.GetComponent<CharacterModel>();
                 var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
-                Log.Error(mdl.baseRendererInfos.Length);
                 mdl.baseRendererInfos =
                 [
                     new CharacterModel.RendererInfo

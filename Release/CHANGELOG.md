@@ -1,6 +1,7 @@
 ## 1.3.7
 
 - Fixed common henry creation template error
+- Fixed null itemDisplayRuleset prefab load error
 - Included the dotParticleFix hooks
 
 ## 1.3.6

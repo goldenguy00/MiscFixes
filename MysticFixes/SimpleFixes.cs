@@ -88,6 +88,43 @@ namespace MiscFixes
             c.Emit(OpCodes.Pop);
             c.Emit(OpCodes.Br, label);
         }
+        /// <summary>
+        /// 
+        /*
+	// if (!this.<keyAssetRuleGroup>5__3.keyAssetAddress.RuntimeKeyIsValid())
+	IL_008f: ldarg.0
+	IL_0090: ldflda valuetype RoR2.ItemDisplayRuleSet/KeyAssetRuleGroup RoR2.ItemDisplayRuleSet/'<GenerateRuntimeValuesAsync>d__16'::'<keyAssetRuleGroup>5__3'
+	IL_0095: ldfld class RoR2.AddressableAssets.IDRSKeyAssetReference RoR2.ItemDisplayRuleSet/KeyAssetRuleGroup::keyAssetAddress
+	IL_009a: callvirt instance bool [Unity.Addressables]UnityEngine.AddressableAssets.AssetReference::RuntimeKeyIsValid()
+	IL_009f: brtrue.s IL_00c1*/
+        /// </summary>
+        [HarmonyPatch(typeof(ItemDisplayRuleSet), nameof(ItemDisplayRuleSet.GenerateRuntimeValuesAsync), MethodType.Enumerator)]
+        [HarmonyILManipulator]
+        public static void ItemDisplayRuleSet_GenerateRuntimeValuesAsync(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            Instruction instr = null;
+            if (!c.TryGotoNext(MoveType.Before,
+                    x => x.MatchLdflda(out _),
+                    x => x.MatchLdfld<ItemDisplayRuleSet.KeyAssetRuleGroup>(nameof(ItemDisplayRuleSet.KeyAssetRuleGroup.keyAssetAddress)),
+                    x => x.MatchCallOrCallvirt<AssetReference>(nameof(AssetReference.RuntimeKeyIsValid)),
+                    x => x.MatchBrtrue(out _),
+                    x => x.MatchAny(out instr)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Index++;
+            c.Index++;
+            var runtimeKeyValidCall = c.Next;
+            c.Emit(OpCodes.Dup);
+            c.Emit(OpCodes.Brtrue_S, runtimeKeyValidCall);
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Br, instr);
+        }
 
         /// <summary>
         /// unity explorer can eat my whole ass
