@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using HarmonyLib;
+﻿using HarmonyLib;
 
 namespace MiscFixes
 {
@@ -11,5 +8,8 @@ namespace MiscFixes
         [HarmonyPatch(typeof(MSU.VanillaSurvivorModule), nameof(MSU.VanillaSurvivorModule.AddProvider))]
         [HarmonyPrefix]
         public static bool fiuck() => false;
+        [HarmonyPatch(typeof(SS2.Modules.SkinSpecificOverrides), nameof(SS2.Modules.SkinSpecificOverrides.Initialize))]
+        [HarmonyPrefix]
+        public static bool fwiuck() => false;
     }
 }
