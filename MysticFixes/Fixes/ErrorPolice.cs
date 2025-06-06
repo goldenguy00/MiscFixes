@@ -6,6 +6,7 @@ using EntityStates;
 using EntityStates.EngiTurret.EngiTurretWeapon;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
+using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Rewired_Core_NS::Rewired;
@@ -19,7 +20,7 @@ using RoR2.Stats;
 using RoR2.UI;
 using UnityEngine;
 
-namespace MiscFixes
+namespace MiscFixes.Fixes
 {
     [HarmonyPatch]
     public class FixVanilla
@@ -72,7 +73,7 @@ namespace MiscFixes
                 return;
             }
 
-            for (int i = 0; i < cList.Count; i++)
+            for (var i = 0; i < cList.Count; i++)
             {
                 c = cList[i];
 
@@ -434,7 +435,7 @@ namespace MiscFixes
         [HarmonyILManipulator]
         public static void DeathState_FixedUpdate(ILContext il)
         {
-            if (new ILCursor(il).TryFindNext(out var c, 
+            if (new ILCursor(il).TryFindNext(out var c,
                     x => x.MatchCallOrCallvirt<DeathState>(nameof(DeathState.FireExplosion)),
                     x => x.MatchCallOrCallvirt<GameObject>(nameof(GameObject.SetActive))
                 ))
@@ -498,7 +499,7 @@ namespace MiscFixes
         {
             var c = new ILCursor(il);
 
-            int loc = 0;
+            var loc = 0;
             ILLabel label = null;
             if (c.TryGotoNext(MoveType.After,
                     x => x.MatchLdloca(out loc),
@@ -513,7 +514,7 @@ namespace MiscFixes
             }
             else Log.PatchFail(il.Method.Name + " 1");
 
-            int loc2 = 0;
+            var loc2 = 0;
             ILLabel label2 = null;
             if (c.TryGotoNext(MoveType.After,
                     x => x.MatchLdloca(out loc2),
@@ -590,12 +591,10 @@ namespace MiscFixes
                     var childLocator = modelLocator.modelTransform.GetComponent<ChildLocator>();
                     if (childLocator)
                     {
-                        int childIndex = childLocator.FindChildIndex(muzzleName);
-                        Transform transform = childLocator.FindChild(childIndex);
+                        var childIndex = childLocator.FindChildIndex(muzzleName);
+                        var transform = childLocator.FindChild(childIndex);
                         if (transform)
-                        {
                             UnityEngine.Object.Instantiate(effectPrefab, transform.position, Quaternion.identity, transform);
-                        }
                     }
                 }
             });
@@ -648,7 +647,7 @@ namespace MiscFixes
 
             c.EmitDelegate<Func<HurtBox[], HurtBox[]>>((hurtBoxes) =>
             {
-                for (int i = hurtBoxes.Length - 1; 0 <= i ; i--)
+                for (var i = hurtBoxes.Length - 1; 0 <= i; i--)
                 {
                     if (!hurtBoxes[i])
                         HG.ArrayUtils.ArrayRemoveAtAndResize(ref hurtBoxes, i);
@@ -684,7 +683,7 @@ namespace MiscFixes
         public static void PositionIndicator_UpdatePositions(ILContext il)
         {
             var c = new ILCursor(il);
-            int locVarIndex = 0;
+            var locVarIndex = 0;
             ILLabel nextLabel = null;
             if (!c.TryGotoNext(
                 x => x.MatchLdloc(out locVarIndex),
@@ -817,7 +816,7 @@ namespace MiscFixes
         public static void Frolic_TeleportAroundPlayer(ILContext il)
         {
             var c = new ILCursor(il);
-            int listVar = 0, vectorVar = 0, boolVar =0;
+            int listVar = 0, vectorVar = 0, boolVar = 0;
             if (!c.TryGotoNext(
                 MoveType.After,
                 x => x.MatchCallOrCallvirt<NodeGraph>(nameof(NodeGraph.FindNodesInRange)),
@@ -854,8 +853,8 @@ namespace MiscFixes
         public static void TeamManager_LongstandingSolitudesInParty(ILContext il)
         {
             var c = new ILCursor(il);
-            int pcmcVarIndex = 0;
-            int bodyVarIndex = 0;
+            var pcmcVarIndex = 0;
+            var bodyVarIndex = 0;
             if (!c.TryGotoNext(
                 x => x.MatchLdloc(out pcmcVarIndex),
                 x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(PlayerCharacterMasterController), nameof(PlayerCharacterMasterController.master))),
@@ -865,7 +864,7 @@ namespace MiscFixes
                 Log.PatchFail(il.Method.Name + " #1");
                 return;
             }
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
             {
                 if (!c.TryGotoNext(
                     x => x.MatchLdloc(bodyVarIndex),

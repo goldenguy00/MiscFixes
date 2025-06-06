@@ -5,8 +5,9 @@ using RoR2.CharacterAI;
 using RoR2.UI;
 using System.Linq;
 using RoR2;
+using MiscFixes.Modules;
 
-namespace MiscFixes
+namespace MiscFixes.Fixes
 {
     public static class AssetFixes
     {
@@ -17,6 +18,9 @@ namespace MiscFixes
             FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
             FixHenry();
+
+            LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/NoxiousThornExplosion").Completed += x => CharacterBody.CommonAssets.thornExplosionEffect = x.Result;
+            CharacterBody.CommonAssets.thornExplosionEffect = LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/NoxiousThornExplosion").WaitForCompletion();
         }
 
         private static void FixHenry()
@@ -212,7 +216,7 @@ namespace MiscFixes
             ]);
 
             // shouldnt happen, but any duplicates can get removed
-            childLoc.transformPairs = 
+            childLoc.transformPairs =
             [
                 ..newChildLoc
                 .GroupBy(pair => pair.name)

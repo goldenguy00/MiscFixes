@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.ObjectModel;
 using Facepunch.Steamworks;
 using HarmonyLib;
 using HG;
+using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
-namespace MiscFixes
+namespace MiscFixes.Fixes
 {
     /// <summary>
     /// For things that likely will never change or are otherwise out of place in the other class.
@@ -22,59 +22,25 @@ namespace MiscFixes
     [HarmonyPatch]
     public class SimpleFixes
     {
-        /*[Error  : Unity Log] NullReferenceException: Object reference not set to an instance of an object
-Stack trace:
-RoR2.UI.InspectPanelController.Show (RoR2.UI.InspectInfo ToShow, System.Boolean WithSidecar, RoR2.UserProfile incomingUserProfile) (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
-RoR2.UI.ArtifactOfRebirthTooltipController.ShowInspectInfoIfAvailable () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0008)
-RoR2.UI.ArtifactOfRebirthTooltipController.OnEnable () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
-UnityEngine.GameObject:SetActive(GameObject, Boolean)
-RoR2.UI.RuleChoiceController:OnSelected()
-UnityEngine.Events.UnityEvent:Invoke()
-RoR2.UI.MPButton:OnSelect(BaseEventData)
-RoR2.UI.HGButton:OnSelect(BaseEventData)
-UnityEngine.EventSystems.EventSystem:DMD<UnityEngine.EventSystems.EventSystem::SetSelectedGameObject>(EventSystem, GameObject, BaseEventData)
-RoR2.UI.MPButton:AttemptSelection(PointerEventData)
-RoR2.UI.MPButton:OnPointerEnter(PointerEventData)
-RoR2.UI.HGButton:OnPointerEnter(PointerEventData)
-UnityEngine.EventSystems.BaseInputModule:HandlePointerExitAndEnter(PointerEventData, GameObject)
-RoR2.UI.MPInputModule:ProcessMove(PlayerPointerEventData)
-Rewired.Integration.UnityUI.RewiredStandaloneInputModule:ProcessMouseEvent(Int32, Int32)
-Rewired.Integration.UnityUI.RewiredStandaloneInputModule:ProcessMouseEvents()
-Rewired.Integration.UnityUI.RewiredStandaloneInputModule:Process()
-UnityEngine.EventSystems.EventSystem:Update()
-RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
-        	IL_0000: ldarg.0
-	IL_0001: ldfld class RoR2.UI.MPEventSystem RoR2.UI.InspectPanelController::eventSystem
-	IL_0006: ldfld class RoR2.LocalUser RoR2.UI.MPEventSystem::localUser
-	IL_000b: callvirt instance class RoR2.UserProfile RoR2.LocalUser::get_userProfile()
-	IL_0010: stloc.0
-*/
-
         [HarmonyPatch(typeof(InspectPanelController), nameof(InspectPanelController.Show))]
         [HarmonyPrefix]
-        public static bool InspectPanelController_Show(InspectPanelController __instance)
-        {
-            return __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
-        }
+        public static bool InspectPanelController_Show(InspectPanelController __instance) => __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
 
         [HarmonyPatch(typeof(NormalizeParticleScale), nameof(NormalizeParticleScale.OnEnable))]
         [HarmonyPrefix]
-        public static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance)
-        {
-            return !__instance.particleSystem;
-        }
+        public static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance) => !__instance.particleSystem;
 
         [HarmonyPatch(typeof(BurnEffectController), nameof(BurnEffectController.AddFireParticles))]
         [HarmonyPostfix]
-        public static void BurnEffectController_AddFireParticles(NormalizeParticleScale __instance, ref BurnEffectControllerHelper __result, Renderer modelRenderer, Transform targetParentTransform)
+        public static void BurnEffectController_AddFireParticles(NormalizeParticleScale __instance, ref BurnEffectControllerHelper __result, Renderer modelRenderer)
         {
             if (__result && modelRenderer)
             {
                 var scale = modelRenderer.transform.localScale.ComponentMax();
                 if (scale > 1f && __result.normalizeParticleScale && __result.burnParticleSystem)
                 {
-                    ParticleSystem.MainModule main = __result.burnParticleSystem.main;
-                    ParticleSystem.MinMaxCurve startSize = main.startSize;
+                    var main = __result.burnParticleSystem.main;
+                    var startSize = main.startSize;
 
                     startSize.constantMin /= scale;
                     startSize.constantMax /= scale;
@@ -178,6 +144,7 @@ RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
             __result = LocalUserManager.GetFirstLocalUser();
             return false;
         }
+
         /// <summary>
         /// ConVars are not registered as lower case but when submitting them from the console they are converted, leading to a match fail.
         /// </summary>
@@ -221,9 +188,7 @@ RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
         public static void TemporaryOverlayInstance_SetupMaterial(TemporaryOverlayInstance __instance)
         {
             if (!__instance.originalMaterial && __instance.componentReference && __instance.ValidateOverlay())
-            {
                 __instance.componentReference.CopyDataFromPrefabToInstance();
-            }
         }
 
         /// <summary>
@@ -234,7 +199,7 @@ RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
         [HarmonyPostfix]
         public static void HalcyoniteShrineInteractable_Awake(HalcyoniteShrineInteractable __instance)
         {
-            __instance.goldDrainValue = System.Math.Max(1, __instance.goldDrainValue);
+            __instance.goldDrainValue = Math.Max(1, __instance.goldDrainValue);
         }
 
         /// <summary>
@@ -242,7 +207,7 @@ RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
         /// </summary>
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
         [HarmonyFinalizer]
-        public static System.Exception FixFacepunch() => null;
+        public static Exception FixFacepunch() => null;
 
         /// <summary>
         /// blame ss2
@@ -296,7 +261,7 @@ RoR2.UI.MPEventSystem:DMD<RoR2.UI.MPEventSystem::Update>(MPEventSystem)
                 c.Remove();
                 c.EmitDelegate(delegate (ReadOnlyCollection<TeamComponent> teamMembers)
                 {
-                    int count = 0;
+                    var count = 0;
                     foreach (var member in teamMembers)
                     {
                         var body = member ? member.body : null;

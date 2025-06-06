@@ -1,12 +1,13 @@
 ﻿using EntityStates;
 using HarmonyLib;
+using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace MiscFixes
+namespace MiscFixes.Fixes
 {
     /// <summary>
     /// A collection of patches that skip Server method calls on a client preventing log spam.
@@ -14,8 +15,6 @@ namespace MiscFixes
     [HarmonyPatch]
     public class ServerCommandsOnClient
     {
-        private static void EmitNetworkServerActive(ILCursor cursor) => cursor.Emit<NetworkServer>(OpCodes.Call, "get_active");
-
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.EnterSkyLeap), nameof(EntityStates.BrotherMonster.EnterSkyLeap.OnEnter))]
         [HarmonyILManipulator]
         public static void FixEnterSkyLeapOnEnter(ILContext il)
@@ -33,7 +32,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -54,7 +53,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -74,7 +73,7 @@ namespace MiscFixes
                 Log.PatchFail(il.Method.Name + " #1");
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             var ifInstr = c.Prev;
             c.Emit(OpCodes.Brfalse_S, nextInstr);
             if (!c.TryGotoPrev(
@@ -106,7 +105,7 @@ namespace MiscFixes
                 Log.PatchFail(il.Method.Name + " #1");
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             var ifInstr = c.Prev;
             c.Emit(OpCodes.Brfalse_S, nextInstr);
             if (!c.TryGotoPrev(
@@ -138,7 +137,7 @@ namespace MiscFixes
                 Log.PatchFail(il.Method.Name + " #1");
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             var ifInstr = c.Prev;
             c.Emit(OpCodes.Brfalse_S, nextInstr);
             if (!c.TryGotoPrev(
@@ -170,7 +169,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -189,7 +188,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -214,7 +213,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -234,7 +233,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
 
@@ -254,7 +253,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
 
@@ -275,7 +274,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -295,7 +294,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
 
@@ -315,7 +314,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
 
@@ -335,7 +334,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -355,7 +354,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -376,7 +375,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -386,7 +385,7 @@ namespace MiscFixes
         {
             var c = new ILCursor(il);
             var nextInstr = c.Instrs[c.Instrs.Count - 1];
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
@@ -405,7 +404,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
 
@@ -423,7 +422,7 @@ namespace MiscFixes
                 Log.PatchFail(il);
                 return;
             }
-            EmitNetworkServerActive(c);
+            c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
     }
