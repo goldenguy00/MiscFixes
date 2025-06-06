@@ -1,10 +1,15 @@
 # Misc Fixes
 
-- Added additional child locator entries to the Hud. These are difficult to find normally because they have no identifiable component attached.
+Designed to comprehensively address the bugs and exceptions that game updates introduce, and attempts to soften the impact that breaking changes have on the existing mod ecosystem, primarily through Harmony based IL hooks. It also applies a small amount of game integrety focused asset updates. 
 
 ---
 
-### New entries:
+# FOR DEVS:
+## HUD ChildLocator Entries
+
+- These are difficult to find normally because they have no identifiable component attached.
+
+## New entries:
 
 > - "SpringCanvas"
 > - "UpperRightCluster"
@@ -22,7 +27,7 @@
 
 ---
 
-### Existing entries:
+## Existing entries:
 
 > - "BottomLeftCluster"
 > - "TopCenterCluster"
@@ -35,6 +40,9 @@
 > - "RightInfoBar" -Always null, kept in for compat
 
 ---
+
+# Important Changes
+### Check the changelog for more info. This list may not include everything.
 
 - Fixes common Henry prefab creation error
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
@@ -76,3 +84,10 @@
 - (temporarily removed) Fixes ConVars with uppercase letters not working, e.g, egsToggle
 
 - Prevents spam error for various server methods called on clients
+
+
+---
+
+# _SPECIAL THANKS TO:_
+
+- Chinchi, wouldn't have been possible without ya

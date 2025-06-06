@@ -18,24 +18,21 @@ namespace MiscFixes.Fixes
             FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
             FixHenry();
-
-            LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/NoxiousThornExplosion").Completed += x => CharacterBody.CommonAssets.thornExplosionEffect = x.Result;
-            CharacterBody.CommonAssets.thornExplosionEffect = LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/NoxiousThornExplosion").WaitForCompletion();
         }
 
         private static void FixHenry()
         {
             // finish asap, no timing issue
 
-            var matCmd = Addressables.LoadAssetAsync<Material>("RoR2/Base/Commando/matCommandoDualies.mat").WaitForCompletion();
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Commando/CommandoBody.prefab").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            Addressables.LoadAssetAsync<Material>("79721deb6c4df58499b339f81ac8b33d").Completed += delegate (AsyncOperationHandle<Material> obj0)
             {
-                var mdlLoc = obj.Result.GetComponent<ModelLocator>();
-                if (mdlLoc && mdlLoc.modelTransform)
+                Addressables.LoadAssetAsync<GameObject>("64ee0a4463fdfdc41ac7a06c8f5f2f0f").Completed += delegate (AsyncOperationHandle<GameObject> obj)
                 {
-                    var mdl = mdlLoc.modelTransform.GetComponent<CharacterModel>();
+                    var mdlLoc = obj.Result.GetComponent<ModelLocator>();
                     var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
-                    mdl.baseRendererInfos =
+                    var matCmd = obj0.Result;
+
+                    mdlLoc.modelTransform.GetComponent<CharacterModel>().baseRendererInfos =
                     [
                         new CharacterModel.RendererInfo
                         {
@@ -51,12 +48,15 @@ namespace MiscFixes.Fixes
                         },
                         new CharacterModel.RendererInfo
                         {
-                            renderer = mdl.transform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
+                            renderer = mdlLoc.modelTransform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
                             defaultMaterial = matCmd,
                             defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
                         }
                     ];
-                }
+
+                    Log.Debug("Commando baseRendererInfos done");
+                };
+
             };
         }
 
@@ -65,12 +65,15 @@ namespace MiscFixes.Fixes
         /// </summary>
         public static void FixElderLemurianFootstepEvents()
         {
-            Addressables.LoadAssetAsync<RuntimeAnimatorController>("RoR2/Base/Lemurian/animLemurianBruiser.controller").Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
+            Addressables.LoadAssetAsync<RuntimeAnimatorController>("fb369114f542a6f4ca1c3d58e737d3b4").Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
             {
-                PatchClip(obj.Result, 4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
-                PatchClip(obj.Result, 12, "LemurianBruiserArmature|Death", 2, "MouthMuzzle", "MuzzleMouth");
+                var anim = obj.Result;
+                PatchClip(4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
+                PatchClip(12, "LemurianBruiserArmature|Death", 2, "MouthMuzzle", "MuzzleMouth");
 
-                static void PatchClip(RuntimeAnimatorController anim, int clipIndex, string clipName, int eventIndex, string oldEventString, string newEventString)
+                Log.Debug("Elder lemurian footsteps done");
+
+                void PatchClip(int clipIndex, string clipName, int eventIndex, string oldEventString, string newEventString)
                 {
                     if (anim.animationClips.Length > clipIndex && anim.animationClips[clipIndex].name == clipName)
                     {
@@ -93,7 +96,7 @@ namespace MiscFixes.Fixes
         /// </summary>
         public static void FixSaleStarCollider()
         {
-            Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Items/LowerPricedChests/PickupSaleStar.prefab").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            Addressables.LoadAssetAsync<GameObject>("5fd34df3f48eeb049847ac8e1c34767a").Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var collider = obj.Result.transform.Find("SaleStar")?.GetComponent<MeshCollider>();
                 if (collider == null || collider.convex)
@@ -101,7 +104,9 @@ namespace MiscFixes.Fixes
                     Log.PatchFail("collider of SaleStar");
                     return;
                 }
+
                 collider.convex = true;
+                Log.Debug("SaleStar Collider done");
             };
         }
 
@@ -110,7 +115,7 @@ namespace MiscFixes.Fixes
         /// </summary>
         public static void FixFalseSonBossP2NotUsingSpecial()
         {
-            Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/FalseSonBoss/FalseSonBossLunarShardMaster.prefab").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            Addressables.LoadAssetAsync<GameObject>("cdbb41712e896454da142ab00d046d9f").Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var skillDrivers = obj.Result.GetComponents<AISkillDriver>();
                 foreach (var skillDriver in skillDrivers)
@@ -118,110 +123,111 @@ namespace MiscFixes.Fixes
                     if (skillDriver.customName == "Corrupted Paths (Step Brothers)")
                     {
                         skillDriver.requiredSkill = null;
+                        Log.Debug("FalseSon Boss P2 Not Using Special done");
                         return;
                     }
                 }
+
                 Log.PatchFail("False Son Boss Phase 2 special skill");
             };
         }
 
         public static void MoreHudChildLocEntries()
         {
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple.prefab").Completed += AssetFixes_Completed;
-            //Addressables.LoadAssetAsync<GameObject>("RoR2/Base/UI/HUDSimple_Big.prefab").Completed += AssetFixes_Completed;
-        }
+            Addressables.LoadAssetAsync<GameObject>("d79990e6848003d438cabcf79e7e5bf7").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            {
+                var hud = obj.Result.GetComponent<HUD>();
+                var childLoc = hud.GetComponent<ChildLocator>();
+                var springCanvas = hud.mainUIPanel.transform.Find("SpringCanvas");
 
-        private static void AssetFixes_Completed(AsyncOperationHandle<GameObject> obj)
-        {
-            var hud = obj.Result.GetComponent<HUD>();
-            var childLoc = hud.GetComponent<ChildLocator>();
-            var springCanvas = hud.mainUIPanel.transform.Find("SpringCanvas");
+                var newChildLoc = childLoc.transformPairs.ToList();
+                newChildLoc.AddRange(
+                [
+                    // main clusters
+                    // exists:
+                    // BottomLeftCluster
+                    // TopCenterCluster
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "SpringCanvas",
+                        transform = springCanvas
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "UpperRightCluster",
+                        transform = springCanvas.Find("UpperRightCluster")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "BottomRightCluster",
+                        transform = springCanvas.Find("BottomRightCluster")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "UpperLeftCluster",
+                        transform = springCanvas.Find("UpperLeftCluster")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "BottomCenterCluster",
+                        transform = springCanvas.Find("BottomCenterCluster")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "LeftCluster",
+                        transform = springCanvas.Find("LeftCluster")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "RightCluster",
+                        transform = springCanvas.Find("RightCluster")
+                    },
 
-            var newChildLoc = childLoc.transformPairs.ToList();
-            newChildLoc.AddRange(
-            [
-                // main clusters
-                // exists:
-                // BottomLeftCluster
-                // TopCenterCluster
-                new ChildLocator.NameTransformPair
-                {
-                    name = "SpringCanvas",
-                    transform = springCanvas
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "UpperRightCluster",
-                    transform = springCanvas.Find("UpperRightCluster")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "BottomRightCluster",
-                    transform = springCanvas.Find("BottomRightCluster")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "UpperLeftCluster",
-                    transform = springCanvas.Find("UpperLeftCluster")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "BottomCenterCluster",
-                    transform = springCanvas.Find("BottomCenterCluster")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "LeftCluster",
-                    transform = springCanvas.Find("LeftCluster")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "RightCluster",
-                    transform = springCanvas.Find("RightCluster")
-                },
+                    // extra stuff
+                    // exists:
+                    // RightUtilityArea
+                    // RightInfoBar
+                    // ScopeContainer
+                    // CrosshairExtras
+                    // BossHealthBar
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "NotificationArea",
+                        transform = hud.mainContainer.transform.Find("NotificationArea")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "ScoreboardPanel",
+                        transform = springCanvas.Find("ScoreboardPanel")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "SkillDisplayRoot",
+                        transform = springCanvas.Find("BottomRightCluster/Scaler")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "BuffDisplayRoot",
+                        transform = springCanvas.Find("BottomLeftCluster/BarRoots/LevelDisplayCluster/BuffDisplayRoot")
+                    },
+                    new ChildLocator.NameTransformPair
+                    {
+                        name = "InventoryDisplayRoot",
+                        transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
+                    }
+                    // riskUI is the only REAL full UI overhaul so this should alleviate some of the differences
+                ]);
 
-                // extra stuff
-                // exists:
-                // RightUtilityArea
-                // RightInfoBar
-                // ScopeContainer
-                // CrosshairExtras
-                // BossHealthBar
-                new ChildLocator.NameTransformPair
-                {
-                    name = "NotificationArea",
-                    transform = hud.mainContainer.transform.Find("NotificationArea")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "ScoreboardPanel",
-                    transform = springCanvas.Find("ScoreboardPanel")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "SkillDisplayRoot",
-                    transform = springCanvas.Find("BottomRightCluster/Scaler")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "BuffDisplayRoot",
-                    transform = springCanvas.Find("BottomLeftCluster/BarRoots/LevelDisplayCluster/BuffDisplayRoot")
-                },
-                new ChildLocator.NameTransformPair
-                {
-                    name = "InventoryDisplayRoot",
-                    transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
-                }
-                // riskUI is the only REAL full UI overhaul so this should alleviate some of the differences
-            ]);
+                // shouldnt happen, but any duplicates can get removed
+                childLoc.transformPairs =
+                [
+                    ..newChildLoc
+                    .GroupBy(pair => pair.name)
+                    .Select(group => group.First())
+                ];
 
-            // shouldnt happen, but any duplicates can get removed
-            childLoc.transformPairs =
-            [
-                ..newChildLoc
-                .GroupBy(pair => pair.name)
-                .Select(group => group.First())
-            ];
+                Log.Debug("HUD Childlocator updated");
+            };
         }
     }
 }

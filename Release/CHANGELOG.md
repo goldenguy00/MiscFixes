@@ -1,7 +1,14 @@
+## 1.3.9
+
+- Internal restructure
+- Readme update
+- Fixed previous patch's changelog
+- Added version dependent fixes for VAPI, MSU and SS2
+
 ## 1.3.8
 
-- Fixed ss2 (temp)
-- Added redirect to the new SkinDef.BakeAsync
+- Temporarily fixed ss2
+- (NOT IMPLEMENTED) Added redirect to the new SkinDef.BakeAsync
 
 ## 1.3.7
 
