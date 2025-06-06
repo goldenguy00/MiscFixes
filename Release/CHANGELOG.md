@@ -4,6 +4,7 @@
 - Readme update
 - Fixed previous patch's changelog
 - Added version dependent fixes for VAPI, MSU and SS2
+- Changed asset loading to GUIDs
 
 ## 1.3.8
 
