@@ -26,21 +26,7 @@ namespace MiscFixes.Modules
         #endregion
 
         #region Config Binding
-        /// <summary>
-        /// Erases all unbound config extries from the config file. Call this after all your ConfigEntries are bound!
-        /// </summary>
-        public static void WipeConfig(this ConfigFile cfg)
-        {
-            Log.Debug("Clearing config " + System.IO.Path.GetFileName(cfg.ConfigFilePath));
-            var orphanedEntriesProp = typeof(ConfigFile).GetProperty("OrphanedEntries", ~BindingFlags.Default);
 
-            if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
-                orphanedEntries.Clear();
-
-            cfg.Save();
-        }
-
-        #region Config Binding
         [Flags]
         public enum ConfigFlags : byte
         {
@@ -70,6 +56,20 @@ namespace MiscFixes.Modules
             return _sb.Take();
         }
 
+        /// <summary>
+        /// Erases all unbound config extries from the config file. Call this after all your ConfigEntries are bound!
+        /// </summary>
+        public static void WipeConfig(this ConfigFile cfg)
+        {
+            Log.Debug("Clearing config " + System.IO.Path.GetFileName(cfg.ConfigFilePath));
+            var orphanedEntriesProp = typeof(ConfigFile).GetProperty("OrphanedEntries", ~BindingFlags.Default);
+
+            if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
+                orphanedEntries.Clear();
+
+            cfg.Save();
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, ConfigFlags flags = ConfigFlags.None)
         {
@@ -83,7 +83,7 @@ namespace MiscFixes.Modules
             }
             catch (Exception e)
             {
-                Log.Warning(e);
+                Log.Error(e);
             }
 
             return configEntry;
@@ -167,7 +167,7 @@ namespace MiscFixes.Modules
             }
             catch (Exception e)
             {
-                Log.Warning(e);
+                Log.Error(e);
             }
 
             return configEntry;
@@ -201,7 +201,7 @@ namespace MiscFixes.Modules
             }
             else
             {
-                Log.Warning($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(T).Name} " +
+                Log.Error($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(T).Name} " +
                     $"could not be registered in Risk Of Options using {nameof(TryRegisterOption)}.");
             }
         }
@@ -243,7 +243,7 @@ namespace MiscFixes.Modules
             }
             else
             {
-                Log.Warning($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(T).Name} " +
+                Log.Error($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(T).Name} " +
                     $"could not be registered in Risk Of Options using {nameof(TryRegisterOptionSlider)}.");
             }
         }
@@ -264,11 +264,10 @@ namespace MiscFixes.Modules
             }
             else
             {
-                Log.Warning($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(float).Name} " +
+                Log.Error($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(float).Name} " +
                     $"could not be registered in Risk Of Options using {nameof(TryRegisterOptionSteppedSlider)}.");
             }
         }
-        #endregion
         #endregion
     }
 }

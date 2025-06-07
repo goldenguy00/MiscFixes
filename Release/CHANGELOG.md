@@ -1,10 +1,11 @@
 ## 1.3.9
 
+- Added version dependent fixes for VAPI, MSU and SS2
+- Added RiskOfOptions compatible config binding extensions
+- Changed asset loading to GUIDs
 - Internal restructure
 - Readme update
 - Fixed previous patch's changelog
-- Added version dependent fixes for VAPI, MSU and SS2
-- Changed asset loading to GUIDs
 
 ## 1.3.8
 
