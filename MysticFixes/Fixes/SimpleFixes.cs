@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Facepunch.Steamworks;
 using HarmonyLib;
@@ -129,7 +131,6 @@ namespace MiscFixes.Fixes
             c.Emit(OpCodes.Pop);
             c.Emit(OpCodes.Br, instr);
         }
-
 
         /// <summary>
         /// unity explorer can eat my whole ass
