@@ -1,5 +1,52 @@
 # Misc Fixes
 
+Designed to comprehensively address the bugs and exceptions that game updates introduce, and attempts to soften the impact that breaking changes have on the existing mod ecosystem, primarily through Harmony based IL hooks. It also applies a small amount of game integrety focused asset updates. 
+
+---
+
+# FOR DEVS:
+
+- HUD ChildLocator Entries
+  - These are difficult to find normally because they have no identifiable component attached.
+- Extension methods for RiskOfOptions compatible config binding
+- Extension methods for some common ILCursor functions
+
+## New entries:
+
+> - "SpringCanvas"
+> - "UpperRightCluster"
+> - "BottomRightCluster"
+> - "UpperLeftCluster"
+> - "BottomCenterCluster"
+> - "LeftCluster"
+> - "RightCluster"
+
+> - "NotificationArea"
+> - "ScoreboardPanel"
+> - "SkillDisplayRoot"
+> - "BuffDisplayRoot"
+> - "InventoryDisplayRoot"
+
+---
+
+## Existing entries:
+
+> - "BottomLeftCluster"
+> - "TopCenterCluster"
+
+
+> - "RightUtilityArea"
+> - "ScopeContainer"
+> - "CrosshairExtras"
+> - "BossHealthBar"
+> - "RightInfoBar" -Always null, kept in for compat
+
+---
+
+# Important Changes
+### Check the changelog for more info. This list may not include everything.
+
+- Fixes common Henry prefab creation error
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
 - Fixes various NREs with VineOrb (dead target on arrival, null dotDef)
 - Prevents an error when spawning some projectiles, probably because they lack a model
@@ -24,7 +71,6 @@
 - Fixes an error when the Child fails to teleport near your location
 - Fixes an NRE when spawning close to a chest
 - Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
-- Fixes CHEF's "It's Getting Hot Here" achievement not unregistering an event upon completion
 - Fixes Halcyonite's Whirlwind NRE spam when its target is killed during the skill
 - Fixes Meridian's Will failing to pull monsters in when a stationary target is hit
 - Fixes the Xi Construct not creating a blast at the end of the laser attack
@@ -37,6 +83,13 @@
 - Flicker light error
 - Fixes an unrecoverable error caused by having multiple event systems (thanks Bubbet)
 - Incompletable void seed bug
-- Fixes ConVars with uppercase letters not working, e.g, egsToggle
+- (temporarily removed) Fixes ConVars with uppercase letters not working, e.g, egsToggle
 
 - Prevents spam error for various server methods called on clients
+
+
+---
+
+# _SPECIAL THANKS TO:_
+
+- Chinchi, wouldn't have been possible without ya
