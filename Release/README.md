@@ -5,9 +5,11 @@ Designed to comprehensively address the bugs and exceptions that game updates in
 ---
 
 # FOR DEVS:
-## HUD ChildLocator Entries
 
-- These are difficult to find normally because they have no identifiable component attached.
+- HUD ChildLocator Entries
+  - These are difficult to find normally because they have no identifiable component attached.
+- Extension methods for RiskOfOptions compatible config binding
+- Extension methods for some common ILCursor functions
 
 ## New entries:
 

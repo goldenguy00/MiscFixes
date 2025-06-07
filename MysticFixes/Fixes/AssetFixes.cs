@@ -9,7 +9,7 @@ using MiscFixes.Modules;
 
 namespace MiscFixes.Fixes
 {
-    public static class AssetFixes
+    internal static class AssetFixes
     {
         internal static void Init()
         {

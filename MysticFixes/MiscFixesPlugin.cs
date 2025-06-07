@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System;
+using BepInEx.Bootstrap;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -28,17 +29,18 @@ namespace MiscFixes
         public const string PluginVersion = "1.3.9";
 
         private Harmony harmonyPatcher;
+        internal static bool RooInstalled => Chainloader.PluginInfos.ContainsKey("com.rune580.riskofoptions");
 
         private void Awake()
         {
             Log.Init(Logger);
 
+            AssetFixes.Init();
+
             harmonyPatcher = new Harmony(PluginGUID);
             harmonyPatcher.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(FixVanilla)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
-
-            AssetFixes.Init();
 
             AddCompatPatches();
         }
