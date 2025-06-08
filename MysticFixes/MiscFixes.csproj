@@ -5,6 +5,10 @@
 		<LangVersion>latestMajor</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Fixes\Compat\ReverseSkinAsync.cs" />
+	</ItemGroup>
     
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
