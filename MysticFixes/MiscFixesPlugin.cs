@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System;
 using BepInEx.Bootstrap;
+using MiscFixes.Fixes.ErrorPolice;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -38,9 +39,10 @@ namespace MiscFixes
             AssetFixes.Init();
 
             harmonyPatcher = new Harmony(PluginGUID);
-            harmonyPatcher.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(FixVanilla)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(SimpleFixes)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(SkinFixes)).Patch();
 
             AddCompatPatches();
         }

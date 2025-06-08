@@ -12,7 +12,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
-namespace MiscFixes.Fixes
+namespace MiscFixes.Fixes.ErrorPolice
 {
     /// <summary>
     /// For things that likely will never change or are otherwise out of place in the other class.

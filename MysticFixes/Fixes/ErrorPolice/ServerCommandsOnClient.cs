@@ -7,7 +7,7 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace MiscFixes.Fixes
+namespace MiscFixes.Fixes.ErrorPolice
 {
     /// <summary>
     /// A collection of patches that skip Server method calls on a client preventing log spam.

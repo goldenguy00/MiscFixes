@@ -20,7 +20,7 @@ using RoR2.Stats;
 using RoR2.UI;
 using UnityEngine;
 
-namespace MiscFixes.Fixes
+namespace MiscFixes.Fixes.ErrorPolice
 {
     [HarmonyPatch]
     public class FixVanilla

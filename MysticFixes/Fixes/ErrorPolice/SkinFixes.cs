@@ -6,7 +6,7 @@ using MonoMod.Cil;
 using RoR2;
 using RoR2.SurvivorMannequins;
 
-namespace MiscFixes.Fixes
+namespace MiscFixes.Fixes.ErrorPolice
 {
     [HarmonyPatch]
     internal class SkinFixes
@@ -41,7 +41,7 @@ namespace MiscFixes.Fixes
         {
             var c = new ILCursor(il);
 
-            int modelSkinControllerLoc = 0;
+            var modelSkinControllerLoc = 0;
             if (!c.TryGotoNext(MoveType.AfterLabel,
                     x => x.MatchLdloc(out modelSkinControllerLoc),
                     x => x.MatchLdfld<ModelSkinController>(nameof(ModelSkinController.skins))
@@ -59,23 +59,21 @@ namespace MiscFixes.Fixes
             if (skinController.skins is null)
                 return;
 
-            for (int i = skinController.skins.Length - 1; i >= 0; i--)
+            for (var i = skinController.skins.Length - 1; i >= 0; i--)
             {
                 var skinDef = skinController.skins[i];
                 if (skinDef.skinDefParams || skinDef.skinDefParamsAddress.RuntimeKeyIsValid())
                     continue;
 
                 if (ShouldRemove(skinDef))
-                {
                     ArrayUtils.ArrayRemoveAtAndResize(ref skinController.skins, i);
-                }
             }
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
         private static bool ShouldRemove(SkinDef skinDef)
         {
-            for (int i = 0; i < skinDef.gameObjectActivations.Length; i++)
+            for (var i = 0; i < skinDef.gameObjectActivations.Length; i++)
             {
                 if (!skinDef.gameObjectActivations[i].gameObject)
                 {
@@ -84,7 +82,7 @@ namespace MiscFixes.Fixes
                 }
             }
 
-            for (int j = 0; j < skinDef.meshReplacements.Length; j++)
+            for (var j = 0; j < skinDef.meshReplacements.Length; j++)
             {
                 if (!skinDef.meshReplacements[j].mesh)
                 {
@@ -99,7 +97,7 @@ namespace MiscFixes.Fixes
                 }
             }
 
-            for (int k = 0; k < skinDef.projectileGhostReplacements.Length; k++)
+            for (var k = 0; k < skinDef.projectileGhostReplacements.Length; k++)
             {
                 if (!skinDef.projectileGhostReplacements[k].projectilePrefab)
                 {
@@ -113,7 +111,7 @@ namespace MiscFixes.Fixes
                 }
             }
 
-            for (int l = 0; l < skinDef.minionSkinReplacements.Length; l++)
+            for (var l = 0; l < skinDef.minionSkinReplacements.Length; l++)
             {
                 if (!skinDef.minionSkinReplacements[l].minionSkin)
                 {
