@@ -27,7 +27,7 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.4.1";
+        public const string PluginVersion = "1.4.2";
 
         private Harmony harmonyPatcher;
         internal static bool RooInstalled => Chainloader.PluginInfos.ContainsKey("com.rune580.riskofoptions");
@@ -55,18 +55,7 @@ namespace MiscFixes
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
         private void AddCompatPatches()
         {
-            //try { PatchStarstorm("0.6.20"); } catch { }
             try { PatchLobbySkins("1.2.1"); } catch { }
-        }
-
-        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-        private void PatchStarstorm(string version)
-        {
-            var targetVersion = new Version(version);
-            var bepinAttribute = typeof(SS2.SS2Main).GetCustomAttribute<BepInPlugin>();
-
-            if (bepinAttribute.Version.Equals(targetVersion))
-                harmonyPatcher.CreateClassProcessor(typeof(StarstormFix)).Patch();
         }
 
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
