@@ -1,6 +1,7 @@
 ## 1.4.1
 
-- Meta update
+- Replace Skin validation with better runtime AsyncOperationHandle validation
+- Removed Starstorm fix
 
 ## 1.4.0
 

@@ -55,7 +55,7 @@ namespace MiscFixes
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
         private void AddCompatPatches()
         {
-            try { PatchStarstorm("0.6.20"); } catch { }
+            //try { PatchStarstorm("0.6.20"); } catch { }
             try { PatchLobbySkins("1.2.1"); } catch { }
         }
 
