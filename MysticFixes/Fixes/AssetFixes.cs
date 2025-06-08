@@ -71,8 +71,6 @@ namespace MiscFixes.Fixes
 
         private static void FixHenry()
         {
-            // finish asap, no timing issue
-
             Addressables.LoadAssetAsync<Material>("79721deb6c4df58499b339f81ac8b33d").Completed += delegate (AsyncOperationHandle<Material> obj0)
             {
                 Addressables.LoadAssetAsync<GameObject>("64ee0a4463fdfdc41ac7a06c8f5f2f0f").Completed += delegate (AsyncOperationHandle<GameObject> obj)
@@ -105,7 +103,6 @@ namespace MiscFixes.Fixes
 
                     Log.Debug("Commando baseRendererInfos done");
                 };
-
             };
         }
 

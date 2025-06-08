@@ -1,3 +1,7 @@
+## 1.4.1
+
+- Meta update
+
 ## 1.4.0
 
 - Added extended validation checking to skins on startup to prevent common NREs

@@ -12,6 +12,10 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
+		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="RoR2BepInExPack" Version="1.30.0" />
 		<PackageReference Include="Rune580.Mods.RiskOfRain2.RiskOfOptions" Version="2.8.3" />
 		<PackageReference Include="UnityEngine.Modules" Version="2021.3.33" IncludeAssets="compile" />
@@ -25,14 +29,8 @@
 	  <Reference Include="LobbySkinsFix">
 	    <HintPath>libs\LobbySkinsFix.dll</HintPath>
 	  </Reference>
-	  <Reference Include="MSU.Runtime">
-	    <HintPath>libs\MSU.Runtime.dll</HintPath>
-	  </Reference>
 	  <Reference Include="Starstorm2">
 	    <HintPath>libs\Starstorm2.dll</HintPath>
-	  </Reference>
-	  <Reference Include="VarianceAPI">
-	    <HintPath>libs\VarianceAPI.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 
