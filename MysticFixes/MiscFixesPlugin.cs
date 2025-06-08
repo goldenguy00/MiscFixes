@@ -26,7 +26,7 @@ namespace MiscFixes
         public const string PluginGUID = "_" + PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.3.9";
+        public const string PluginVersion = "1.4.0";
 
         private Harmony harmonyPatcher;
         internal static bool RooInstalled => Chainloader.PluginInfos.ContainsKey("com.rune580.riskofoptions");
@@ -53,21 +53,7 @@ namespace MiscFixes
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
         private void AddCompatPatches()
         {
-            try { PatchMoonstorm("2.2.3"); } catch { }
-
             try { PatchStarstorm("0.6.20"); } catch { }
-
-            try { PatchVariants("2.2.0"); } catch { }
-        }
-
-        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-        private void PatchMoonstorm(string version)
-        {
-            var targetVersion = new Version(version);
-            var bepinAttribute = typeof(MSU.MSUMain).GetCustomAttribute<BepInPlugin>();
-
-            if (bepinAttribute.Version.Equals(targetVersion))
-                harmonyPatcher.CreateClassProcessor(typeof(MoonstormFix)).Patch();
         }
         
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
@@ -78,16 +64,6 @@ namespace MiscFixes
 
             if (bepinAttribute.Version.Equals(targetVersion))
                 harmonyPatcher.CreateClassProcessor(typeof(StarstormFix)).Patch();
-        }
-
-        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-        private void PatchVariants(string version)
-        {
-            var targetVersion = new Version(version);
-            var bepinAttribute = typeof(VAPI.VAPIMain).GetCustomAttribute<BepInPlugin>();
-
-            if (bepinAttribute.Version.Equals(targetVersion))
-                harmonyPatcher.CreateClassProcessor(typeof(VariantsFix)).Patch();
         }
     }
 }

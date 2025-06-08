@@ -22,14 +22,17 @@
 	  <Reference Include="Facepunch.Steamworks">
 	    <HintPath>libs\Facepunch.Steamworks.dll</HintPath>
 	  </Reference>
+	  <Reference Include="LobbySkinsFix">
+	    <HintPath>libs\LobbySkinsFix.dll</HintPath>
+	  </Reference>
 	  <Reference Include="MSU.Runtime">
-	    <HintPath>..\..\..\..\..\..\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\Good3\BepInEx\plugins\TeamMoonstorm-MoonstormSharedUtils\MSU.Runtime.dll</HintPath>
+	    <HintPath>libs\MSU.Runtime.dll</HintPath>
 	  </Reference>
 	  <Reference Include="Starstorm2">
-	    <HintPath>..\..\..\..\..\..\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\Good3\BepInEx\plugins\TeamMoonstorm-Starstorm2\Starstorm2.dll</HintPath>
+	    <HintPath>libs\Starstorm2.dll</HintPath>
 	  </Reference>
 	  <Reference Include="VarianceAPI">
-	    <HintPath>..\..\..\..\..\..\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\Good3\BepInEx\plugins\Nebby-VarianceAPI\VarianceAPI.dll</HintPath>
+	    <HintPath>libs\VarianceAPI.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

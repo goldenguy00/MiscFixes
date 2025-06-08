@@ -6,6 +6,8 @@ using RoR2.UI;
 using System.Linq;
 using RoR2;
 using MiscFixes.Modules;
+using HG;
+using RoR2.UI.MainMenu;
 
 namespace MiscFixes.Fixes
 {
@@ -18,6 +20,53 @@ namespace MiscFixes.Fixes
             FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
             FixHenry();
+
+            MainMenuController.OnMainMenuInitialised += OnLoad;
+        }
+
+        private static void OnLoad()
+        {
+            MainMenuController.OnMainMenuInitialised -= OnLoad;
+
+            try
+            {
+                foreach (var survivor in SurvivorCatalog.survivorDefs)
+                {
+                    var display = survivor?.displayPrefab;
+                    var body = survivor?.bodyPrefab;
+
+                    if (!(display && body))
+                        continue;
+
+                    var bodySkins = body.GetComponentInChildren<ModelSkinController>();
+                    if (bodySkins?.skins?.Length == 0)
+                        continue;
+
+                    var displayModel = display.GetComponentInChildren<CharacterModel>();
+                    if (!displayModel)
+                    {
+                        Log.Warning($"Display prefab {display.name} is missing the CharacterModel component! Skipping...");
+                        continue;
+                    }
+
+                    var displaySkins = displayModel.GetComponent<ModelSkinController>();
+                    if (!displaySkins)
+                    {
+                        Log.Warning($"Display prefab {displayModel.name} is missing a ModelSkinController component! Adding...");
+                        displaySkins = displayModel.gameObject.AddComponent<ModelSkinController>();
+                    }
+
+                    if (displaySkins.skins?.Length != bodySkins.skins.Length)
+                    {
+                        Log.Warning($"Display prefab {displayModel.name} ModelSkinController.skins array is incorrect! Cloning from body prefab...");
+                        displaySkins.skins = ArrayUtils.Clone(bodySkins.skins);
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Log.Error(e);
+            }
         }
 
         private static void FixHenry()

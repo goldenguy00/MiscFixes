@@ -1,7 +1,15 @@
+## 1.4.0
+
+- Added lobby skins fix
+- Added extended validation checking to skins on startup to prevent common NREs
+  - This will remove broken skins and log errors that should help the developers know whats going wrong. 
+- Removed VAPI and MSU fixes
+
 ## 1.3.9
 
 - Added version dependent fixes for VAPI, MSU and SS2
 - Added RiskOfOptions compatible config binding extensions
+- Added some IL matching extensions
 - Changed asset loading to GUIDs
 - Internal restructure
 - Readme update
