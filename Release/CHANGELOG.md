@@ -1,9 +1,11 @@
 ## 1.4.0
 
-- Added lobby skins fix
 - Added extended validation checking to skins on startup to prevent common NREs
-  - This will remove broken skins and log errors that should help the developers know whats going wrong. 
-- Removed VAPI and MSU fixes
+  - This will remove broken skins and log errors that should help the developers know whats going wrong.
+- Added ModelSkinController to Survivor display prefabs if they are missing. 
+- Added lobby skins fix
+  - This includes a patch that disables LobbySkinsFix v1.2.1 entirely. 
+- Removed VAPI and MSU fixes (Starstorm2 v0.6.20 fix is still needed for now)
 
 ## 1.3.9
 

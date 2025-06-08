@@ -54,8 +54,9 @@ namespace MiscFixes
         private void AddCompatPatches()
         {
             try { PatchStarstorm("0.6.20"); } catch { }
+            try { PatchLobbySkins("1.2.1"); } catch { }
         }
-        
+
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
         private void PatchStarstorm(string version)
         {
@@ -64,6 +65,16 @@ namespace MiscFixes
 
             if (bepinAttribute.Version.Equals(targetVersion))
                 harmonyPatcher.CreateClassProcessor(typeof(StarstormFix)).Patch();
+        }
+
+        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+        private void PatchLobbySkins(string version)
+        {
+            var targetVersion = new Version(version);
+            var bepinAttribute = typeof(LobbySkinsFix.LobbySkinsFixPlugin).GetCustomAttribute<BepInPlugin>();
+
+            if (bepinAttribute.Version.Equals(targetVersion))
+                harmonyPatcher.CreateClassProcessor(typeof(UnfuckLobbySkins)).Patch();
         }
     }
 }
