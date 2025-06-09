@@ -8,6 +8,7 @@ using RoR2;
 using MiscFixes.Modules;
 using HG;
 using RoR2.UI.MainMenu;
+using RoR2BepInExPack.GameAssetPaths;
 
 namespace MiscFixes.ErrorPolice
 {
@@ -19,7 +20,7 @@ namespace MiscFixes.ErrorPolice
             FixSaleStarCollider();
             FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
-            //FixHenry();
+            FixHenry();
 
             MainMenuController.OnMainMenuInitialised += OnLoad;
         }
@@ -71,9 +72,9 @@ namespace MiscFixes.ErrorPolice
 
         private static void FixHenry()
         {
-            Addressables.LoadAssetAsync<Material>("79721deb6c4df58499b339f81ac8b33d").Completed += delegate (AsyncOperationHandle<Material> obj0)
+            Addressables.LoadAssetAsync<Material>(RoR2_Base_Commando.matCommandoDualies_mat).Completed += delegate (AsyncOperationHandle<Material> obj0)
             {
-                Addressables.LoadAssetAsync<GameObject>("64ee0a4463fdfdc41ac7a06c8f5f2f0f").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+                Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Commando.CommandoBody_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
                 {
                     var mdlLoc = obj.Result.GetComponent<ModelLocator>();
                     var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
