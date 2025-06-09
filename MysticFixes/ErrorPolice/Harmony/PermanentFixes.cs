@@ -69,29 +69,6 @@ namespace MiscFixes.ErrorPolice.Harmony
             __result = LocalUserManager.GetFirstLocalUser();
             return false;
         }
-
-        /// <summary>
-        /// ConVars are not registered as lower case but when submitting them from the console they are converted, leading to a match fail.
-        /// </summary>
-        //[HarmonyPatch(typeof(Console), nameof(Console.RegisterConVarInternal))]
-        //[HarmonyILManipulator]
-        public static void FixConVarCaseSensitive(ILContext il)
-        {
-            var c = new ILCursor(il);
-            // Technically we aren't checking if ToLowerInvariant or ToLower(CultureInfo.InvariantCulture)
-            // is called after these instructions just like Console.Awake does for ConCommands, mostly
-            // because it's a hassle to check for the existence of either, but an extra call wouldn't hurt.
-            if (!c.TryGotoNext(
-                MoveType.After,
-                x => x.MatchLdarg(1),
-                x => x.MatchLdfld<RoR2.ConVar.BaseConVar>(nameof(RoR2.ConVar.BaseConVar.name))))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.Emit<string>(OpCodes.Callvirt, nameof(string.ToLowerInvariant));
-        }
-
         /// <summary>
         /// Checks if the component exists, which should be the case for pre-sots overlay code
         /// If true, it creates a temporary overlay instance from the component for backwards compatibility 

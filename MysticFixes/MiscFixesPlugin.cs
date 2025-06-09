@@ -45,7 +45,6 @@ namespace MiscFixes
             harmonyPatcher.CreateClassProcessor(typeof(MemOpFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(PermanentFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
-            harmonyPatcher.CreateClassProcessor(typeof(SkinFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(VanillaFixes)).Patch();
 
             AddCompatPatches();

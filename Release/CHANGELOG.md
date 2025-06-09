@@ -1,3 +1,13 @@
+## 1.4.3
+
+- Affix Aurelionite targeting NRE
+- Removed False Son
+- Removed merc evis targetting fix
+- Removed Xi Construct blast fix
+  - Thanks to Cap_ for bringing these up!
+  - These fixes push the boundary of gameplay changes in a way I'm really not comfortable with.
+  - Go download a QoL mod or something. 
+
 ## 1.4.2
 
 - Added fix for OnStageLoad invalid key exceptions

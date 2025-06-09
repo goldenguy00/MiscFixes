@@ -1,7 +1,6 @@
 ﻿using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine;
-using RoR2.CharacterAI;
 using RoR2.UI;
 using System.Linq;
 using RoR2;
@@ -18,7 +17,6 @@ namespace MiscFixes.ErrorPolice
         {
             FixElderLemurianFootstepEvents();
             FixSaleStarCollider();
-            FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
             FixHenry();
 
@@ -154,28 +152,6 @@ namespace MiscFixes.ErrorPolice
 
                 collider.convex = true;
                 Log.Debug("SaleStar Collider done");
-            };
-        }
-
-        /// <summary>
-        /// Fix False Son not using Tainted Offering in phase 2 due to a misconfigured AISkillDriver.
-        /// </summary>
-        public static void FixFalseSonBossP2NotUsingSpecial()
-        {
-            Addressables.LoadAssetAsync<GameObject>(RoR2_DLC2_FalseSonBoss.FalseSonBossLunarShardMaster_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
-            {
-                var skillDrivers = obj.Result.GetComponents<AISkillDriver>();
-                foreach (var skillDriver in skillDrivers)
-                {
-                    if (skillDriver.customName == "Corrupted Paths (Step Brothers)")
-                    {
-                        skillDriver.requiredSkill = null;
-                        Log.Debug("FalseSon Boss P2 Not Using Special done");
-                        return;
-                    }
-                }
-
-                Log.PatchFail("False Son Boss Phase 2 special skill");
             };
         }
 

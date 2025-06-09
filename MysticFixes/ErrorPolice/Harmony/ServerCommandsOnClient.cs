@@ -409,6 +409,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         }
 
         [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.RemoveMinion))]
+        [HarmonyILManipulator]
         public static void FixMinionGroupRemoveMinion(ILContext il)
         {
             var c = new ILCursor(il);

@@ -26,6 +26,20 @@ namespace MiscFixes.ErrorPolice.Harmony
     public class VanillaFixes
     {
         /// <summary>
+        /// Affix Aurelionite calling transform.position from update
+        /// Prevent running update when body is null
+        /// 
+        /// [Error  : Unity Log] NullReferenceException
+        /// Stack trace:
+        /// UnityEngine.Transform.get_position() (at:IL_0000)
+        /// RoR2.AffixAurelioniteBehavior.StepPredictAndFireWarningProjectile() (at:IL_0046)
+        /// RoR2.AffixAurelioniteBehavior.Update() (at:IL_0059)
+        /// </summary>
+        [HarmonyPatch(typeof(AffixAurelioniteBehavior), nameof(AffixAurelioniteBehavior.Update))]
+        [HarmonyPrefix]
+        public static bool AffixAurelioniteBehavior_Update(AffixAurelioniteBehavior __instance) => __instance.body;
+
+        /// <summary>
         /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState
         /// if (NetworkServer.active)
         ///     this.inventory.SetEquipmentDisabled(_disable);
@@ -455,46 +469,6 @@ namespace MiscFixes.ErrorPolice.Harmony
         }
 
         /// <summary>
-        /// Filter allies from Merc's Eviscerate target search.
-        /// </summary>
-        [HarmonyPatch(typeof(EntityStates.Merc.EvisDash), nameof(EntityStates.Merc.EvisDash.FixedUpdate))]
-        [HarmonyILManipulator]
-        public static void EvisDash_FixedUpdate(ILContext il)
-        {
-            var c = new ILCursor(il);
-            var varIndex = 0;
-            ILLabel label = null;
-            if (!c.TryGotoNext(
-                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent)),
-                    x => x.MatchStloc(out varIndex)) ||
-                !c.TryGotoNext(
-                    MoveType.After,
-                    x => x.MatchLdloc(varIndex),
-                    x => x.MatchLdfld<HurtBox>(nameof(HurtBox.healthComponent)),
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.healthComponent))),
-                    x => x.MatchCallOrCallvirt<UnityEngine.Object>("op_Inequality"),
-                    x => x.MatchBrfalse(out label)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            // victim
-            c.Emit(OpCodes.Ldloc, varIndex);
-            c.Emit<HurtBox>(OpCodes.Ldfld, nameof(HurtBox.healthComponent));
-
-            // teamindex
-            c.Emit(OpCodes.Ldarg_0);
-            c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.characterBody)));
-            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.teamComponent)));
-            c.Emit(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(TeamComponent), nameof(TeamComponent.teamIndex)));
-
-            // ShouldDirectHitProceed(HealthComponent victim, TeamIndex attackerTeamIndex)
-            c.EmitDelegate(FriendlyFireManager.ShouldDirectHitProceed);
-            c.Emit(OpCodes.Brfalse_S, label);
-        }
-
-        /// <summary>
         /// The printer uses EffectManager for VFX without an EffectComponent, use Object.Instantiate instead.
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
@@ -846,22 +820,6 @@ namespace MiscFixes.ErrorPolice.Harmony
         }
 
         /// <summary>
-        /// Fix CHEF's BurnMithrix achievement not unsubscribing a DamageDealt event once completed.
-        /// </summary>
-        //[HarmonyPatch(typeof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement), nameof(RoR2.Achievements.Chef.BurnMithrix.BurnMithrixServerAchievement.OnUninstall))]
-        //[HarmonyILManipulator]
-        public static void BurnMithrix_BurnMithrixServerAchievement_OnUninstall(ILContext il)
-        {
-            var c = new ILCursor(il);
-            if (!c.TryGotoNext(x => x.MatchCallOrCallvirt<GlobalEventManager>("add_" + nameof(GlobalEventManager.onServerDamageDealt))))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.Next.Operand = typeof(GlobalEventManager).GetMethod("remove_" + nameof(GlobalEventManager.onServerDamageDealt));
-        }
-
-        /// <summary>
         /// Fix Halcyonite's Whirlwind NRE spam when its target is killed during the skill.
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Halcyonite.WhirlWindPersuitCycle), nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDecelerate))]
@@ -936,26 +894,6 @@ namespace MiscFixes.ErrorPolice.Harmony
                 c.Emit(OpCodes.Brtrue_S, continueWithSetVelocity);
                 c.Emit(OpCodes.Pop);
                 c.Emit(OpCodes.Br, nextInstr);
-            }
-            else Log.PatchFail(il);
-        }
-
-        /// <summary>
-        /// Fix the Xi Construct not creating a blast at the end of the laser attack.
-        /// SotS changed `outer.SetNextState(GetNextState())` to `outer.SetNextStateToMain()`
-        /// </summary>
-        [HarmonyPatch(typeof(FireBeam), nameof(FireBeam.FixedUpdate))]
-        [HarmonyILManipulator]
-        public static void FireBeam_FixedUpdate(ILContext il)
-        {
-            var c = new ILCursor(il);
-            // Using ShouldFireLaser as a landmark juuuust in case there are ever multiple SetNextStateToMain calls
-            if (c.TryGotoNext(x => x.MatchCallOrCallvirt<FireBeam>(nameof(FireBeam.ShouldFireLaser))) &&
-                c.TryGotoNext(x => x.MatchCallOrCallvirt<EntityStateMachine>(nameof(EntityStateMachine.SetNextStateToMain))))
-            {
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(FireBeam), nameof(FireBeam.GetNextState)));
-                c.Next.Operand = AccessTools.Method(typeof(EntityStateMachine), nameof(EntityStateMachine.SetNextState));
             }
             else Log.PatchFail(il);
         }
