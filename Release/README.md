@@ -2,6 +2,8 @@
 
 Designed to comprehensively address the bugs and exceptions that game updates introduce, and attempts to soften the impact that breaking changes have on the existing mod ecosystem, primarily through Harmony based IL hooks. It also applies a small amount of game integrity focused asset updates. 
 
+Note that these changes are NOT intended to modify the vanilla gameplay experience. If it's even debatable on whether or not it's in line with the "intended" vanilla experience, it doesn't belong here.
+
 ---
 
 # FOR DEVS:
@@ -46,6 +48,9 @@ Designed to comprehensively address the bugs and exceptions that game updates in
 # Important Changes
 ### Check the changelog for more info. This list may not include everything.
 
+- Fixes many of the issues modded characters and skins have in the recent update.
+- Fixes AssetLoading issues introduced in the recent memory optimization update.
+- Fixes NRE with Aurelionite affix targeting
 - Fixes common Henry prefab creation error
 - Fixes NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
 - Fixes various NREs with VineOrb (dead target on arrival, null dotDef)
@@ -58,7 +63,6 @@ Designed to comprehensively address the bugs and exceptions that game updates in
 - Lunar exploder killed by void death error
 - Fixes the roulette check NRE
 - Fixes Gilded Coast chest interaction error
-- Prevents Eviscerate from targetting allies
 - Fixes the printer not using a VFX when printing the item
 - Prevents pointless error spam when destroying some objects, e.g., killing a Stone Titan
 - Fixes an error for objects that have null HurtBoxes (only seen it for the hanging mushrooms in Golden Dieback)
@@ -73,11 +77,9 @@ Designed to comprehensively address the bugs and exceptions that game updates in
 - Fixes NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
 - Fixes Halcyonite's Whirlwind NRE spam when its target is killed during the skill
 - Fixes Meridian's Will failing to pull monsters in when a stationary target is hit
-- Fixes the Xi Construct not creating a blast at the end of the laser attack
 
 - Restores some failing Elder Lemurian footstep sounds
 - Fixes an error message for Sale's Star pickup
-- Fixes False Son not using Tainted Offering during phase 2
 
 - The dreadful Facepunch exception that can occur, which randomly prevented loading (3% bug)
 - Flicker light error

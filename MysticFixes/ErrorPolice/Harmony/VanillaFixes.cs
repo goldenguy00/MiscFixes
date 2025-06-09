@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using EntityStates;
-using EntityStates.EngiTurret.EngiTurretWeapon;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
 using MiscFixes.Modules;
