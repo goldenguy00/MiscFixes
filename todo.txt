@@ -10,13 +10,3 @@ I'm now try-catching orig(self) and dumping items/buffs/etc for both victim and 
 
 
 need to investigate convar stuff, egsToggle breaks with current hook. commenting out for now.
-
-[Error  : Unity Log] Exception: Attempting to use an invalid operation handle
-Stack trace:
-UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle`1[TObject].get_InternalOp () (at <62e1f0759ce84c369cc921c12e4a3d31>:IL_001B)
-UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle`1[TObject].get_Result () (at <62e1f0759ce84c369cc921c12e4a3d31>:IL_0000)
-RoR2.ContentManagement.AssetOrDirectReference`1[T].get_Result () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0016)
-RoR2.SkinDef+RuntimeSkin+<ApplyAsync>d__10.MoveNext () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_0531)
-RoR2.SkinDef+<ApplyAsync>d__36.MoveNext () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_00B1)
-RoR2.ModelSkinController+<ApplySkinAsync>d__29.MoveNext () (at <c0d9c70405a04cceacc72f65157d1ebd>:IL_00A4)
-UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) (at <a20b3695b7ce4017b7981f9d06962bd1>:IL_0026)
