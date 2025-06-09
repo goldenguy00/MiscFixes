@@ -112,7 +112,7 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         public static void FixElderLemurianFootstepEvents()
         {
-            Addressables.LoadAssetAsync<RuntimeAnimatorController>("fb369114f542a6f4ca1c3d58e737d3b4").Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
+            Addressables.LoadAssetAsync<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller).Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
             {
                 var anim = obj.Result;
                 PatchClip(4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
@@ -143,7 +143,7 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         public static void FixSaleStarCollider()
         {
-            Addressables.LoadAssetAsync<GameObject>("5fd34df3f48eeb049847ac8e1c34767a").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            Addressables.LoadAssetAsync<GameObject>(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var collider = obj.Result.transform.Find("SaleStar")?.GetComponent<MeshCollider>();
                 if (collider == null || collider.convex)
@@ -162,7 +162,7 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         public static void FixFalseSonBossP2NotUsingSpecial()
         {
-            Addressables.LoadAssetAsync<GameObject>("cdbb41712e896454da142ab00d046d9f").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            Addressables.LoadAssetAsync<GameObject>(RoR2_DLC2_FalseSonBoss.FalseSonBossLunarShardMaster_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var skillDrivers = obj.Result.GetComponents<AISkillDriver>();
                 foreach (var skillDriver in skillDrivers)
@@ -181,7 +181,7 @@ namespace MiscFixes.ErrorPolice
 
         public static void MoreHudChildLocEntries()
         {
-            Addressables.LoadAssetAsync<GameObject>("d79990e6848003d438cabcf79e7e5bf7").Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            Addressables.LoadAssetAsync<GameObject>(RoR2_Base_UI.HUDSimple_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var hud = obj.Result.GetComponent<HUD>();
                 var childLoc = hud.GetComponent<ChildLocator>();

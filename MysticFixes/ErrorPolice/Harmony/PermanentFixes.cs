@@ -8,7 +8,6 @@ using MonoMod.Cil;
 using RoR2;
 using RoR2.UI;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
 namespace MiscFixes.ErrorPolice.Harmony
