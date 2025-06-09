@@ -13,11 +13,23 @@ namespace MiscFixes.Modules
     public static class Extensions
     {
         #region IL
+        /// <summary> Emits call to UnityEngine's NetworkServer.active. Places bool on the stack. </summary>
         public static void EmitNetworkServerActive(this ILCursor cursor) => cursor.Emit<NetworkServer>(OpCodes.Call, "get_active");
-        public static void EmitOpImplicit(this ILCursor c) => c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
-        public static bool MatchOpImplicit(this Instruction instr) => instr.MatchCallOrCallvirt<UnityEngine.Object>("op_Implicit");
-        public static bool MatchOpInequality(this Instruction instr) => instr.MatchCallOrCallvirt<UnityEngine.Object>("op_Inequality");
 
+        /// <summary> Emits call to UnityEngine's Object.op_Implicit, aka the Unity Nullcheck -- if (obj). Consumes Object reference then places bool on the stack.</summary>
+        public static void EmitOpImplicit(this ILCursor c) => c.Emit<UnityEngine.Object>(OpCodes.Call, "op_Implicit");
+
+        /// <summary> Matches with UnityEngine's NetworkSever.active </summary>
+        public static bool MatchNetworkServerActive(this Instruction instr) => instr.MatchCallOrCallvirt<NetworkServer>("get_active");
+
+        /// <summary> Matches with UnityEngine.Object.op_Implicit, aka the Unity Nullcheck -- if (obj) </summary>
+        public static bool MatchOpImplicit(this Instruction instr) => instr.MatchCallOrCallvirt<UnityEngine.Object>("op_Implicit");
+
+        /// <summary>
+        /// Match to any arbitrary instruction. Useful for setting up new branches.
+        /// </summary>
+        /// <param name="instruction">Any instruction</param>
+        /// <returns>Always true</returns>
         public static bool MatchAny(this Instruction instr, out Instruction instruction)
         {
             instruction = instr;
@@ -52,8 +64,8 @@ namespace MiscFixes.Modules
 
             if ((flags & ConfigFlags.ServerSided) != 0)
                 _sb.Append(" (Server-Sided)");
-
-            return _sb.Take();
+            
+            return _sb.Take().Replace("'", string.Empty);
         }
 
         /// <summary>

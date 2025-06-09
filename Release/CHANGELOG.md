@@ -1,3 +1,8 @@
+## 1.4.2
+
+- Added fix for OnStageLoad invalid key exceptions
+- Config extensions sanitize inputs
+
 ## 1.4.1
 
 - Replace Skin validation with better runtime AsyncOperationHandle validation

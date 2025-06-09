@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 
-namespace MiscFixes.Fixes.Compat
+namespace MiscFixes.ErrorPolice.Harmony.Compat
 {
     [HarmonyPatch]
     public class UnfuckLobbySkins

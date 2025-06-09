@@ -5,11 +5,10 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.ContentManagement;
-using RoR2.SurvivorMannequins;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-namespace MiscFixes.Fixes.ErrorPolice
+namespace MiscFixes.ErrorPolice.Harmony
 {
     [HarmonyPatch]
     internal class SkinFixes
@@ -37,14 +36,11 @@ namespace MiscFixes.Fixes.ErrorPolice
             displaySkins = displayModel.gameObject.AddComponent<ModelSkinController>();
             displaySkins.skins = ArrayUtils.Clone(bodySkins.skins);
         }
+
         /// <summary>
-        ///IL_000e: pop
-        ///IL_000f: ldarg.0
-	    ///IL_0010: call instance valuetype[Unity.ResourceManager] UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle`1<!0> class RoR2.ContentManagement.AssetOrDirectReference`1<!T>::get_loadHandle()
-        ///IL_0015: stloc.0
-	    ///IL_0016: ldloca.s 0
-	    ///IL_0018: call instance !0 valuetype[Unity.ResourceManager] UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle`1<!T>::get_Result()
-        ///IL_001d: ret
+        /// loadHandle should be checked for validity
+        /// directRef ?? loadHandle.Result;
+        /// directRef ?? loadHandle.IsValid() ? loadHandle.Result : null
         /// </summary>
         [HarmonyPatch(typeof(AssetOrDirectReference<Object>), "Result", MethodType.Getter)]
         [HarmonyILManipulator]
@@ -75,17 +71,6 @@ namespace MiscFixes.Fixes.ErrorPolice
             c.Emit(OpCodes.Br, ret);
 
             c.MarkLabel(getResultLabel);
-        }
-
-        ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_003C)
-        ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.RebuildMannequinInstance() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_007C)
-        ///RoR2.SurvivorMannequins.SurvivorMannequinSlotController.Update() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0031)
-        [HarmonyPatch(typeof(SurvivorMannequinSlotController), nameof(SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance))]
-        [HarmonyPrefix]
-        public static bool SurvivorMannequinSlotController_ApplyLoadoutToMannequinInstance(SurvivorMannequinSlotController __instance)
-        {
-            //dont care
-            return __instance.mannequinInstanceTransform && __instance.mannequinInstanceTransform.GetComponentInChildren<ModelSkinController>();
         }
     }
 }

@@ -3,14 +3,14 @@ using System.Security;
 using BepInEx;
 using HarmonyLib;
 using MiscFixes.Modules;
-using MiscFixes.Fixes;
-using MiscFixes.Fixes.Compat;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System;
 using BepInEx.Bootstrap;
-using MiscFixes.Fixes.ErrorPolice;
+using MiscFixes.ErrorPolice;
+using MiscFixes.ErrorPolice.Harmony;
+using MiscFixes.ErrorPolice.Harmony.Compat;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -38,11 +38,15 @@ namespace MiscFixes
 
             AssetFixes.Init();
 
+            // dev note:
+            // do not patch all! patch individual classes always!
+            // PatchAll will trigger an assembly scan, which will throw when it reads the compat classes!
             harmonyPatcher = new Harmony(PluginGUID);
-            harmonyPatcher.CreateClassProcessor(typeof(FixVanilla)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(MemOpFixes)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(PermanentFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
-            harmonyPatcher.CreateClassProcessor(typeof(SimpleFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(SkinFixes)).Patch();
+            harmonyPatcher.CreateClassProcessor(typeof(VanillaFixes)).Patch();
 
             AddCompatPatches();
         }

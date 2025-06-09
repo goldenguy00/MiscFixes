@@ -3,8 +3,21 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>latestMajor</LangVersion>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<Title>RoR2$(AssemblyName)</Title>
+		<PackageId>RoR2$(AssemblyName)</PackageId>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="libs\**" />
+	  <EmbeddedResource Remove="libs\**" />
+	  <None Remove="libs\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="C:\Users\golde\.nuget\packages\krafs.publicizer\2.3.0\contentfiles\cs\any\Publicizer\IgnoresAccessChecksToAttribute.cs" />
+	</ItemGroup>
     
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
@@ -28,9 +41,6 @@
 	  </Reference>
 	  <Reference Include="LobbySkinsFix">
 	    <HintPath>libs\LobbySkinsFix.dll</HintPath>
-	  </Reference>
-	  <Reference Include="Starstorm2">
-	    <HintPath>libs\Starstorm2.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

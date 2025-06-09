@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using Facepunch.Steamworks;
 using HarmonyLib;
 using HG;
@@ -12,23 +11,34 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
-namespace MiscFixes.Fixes.ErrorPolice
+namespace MiscFixes.ErrorPolice.Harmony
 {
     /// <summary>
     /// For things that likely will never change or are otherwise out of place in the other class.
     /// these kinda just live here now and thats ok i guess
     /// </summary>
     [HarmonyPatch]
-    public class SimpleFixes
+    public class PermanentFixes
     {
+        /// <summary>
+        /// call can be suppressed if stuff is null
+        /// </summary>
         [HarmonyPatch(typeof(InspectPanelController), nameof(InspectPanelController.Show))]
         [HarmonyPrefix]
         public static bool InspectPanelController_Show(InspectPanelController __instance) => __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
 
+        /// <summary>
+        /// normalize particles once
+        /// From DOTParticleFix
+        /// </summary>
         [HarmonyPatch(typeof(NormalizeParticleScale), nameof(NormalizeParticleScale.OnEnable))]
         [HarmonyPrefix]
         public static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance) => !__instance.particleSystem;
 
+        /// <summary>
+        /// idk what it does but it works probably
+        /// From DOTParticleFix
+        /// </summary>
         [HarmonyPatch(typeof(BurnEffectController), nameof(BurnEffectController.AddFireParticles))]
         [HarmonyPostfix]
         public static void BurnEffectController_AddFireParticles(NormalizeParticleScale __instance, ref BurnEffectControllerHelper __result, Renderer modelRenderer)
@@ -47,77 +57,6 @@ namespace MiscFixes.Fixes.ErrorPolice
                 }
             }
         }
-
-        /// <summary>
-        /// RoR2.CharacterModel.InstantiateDisplayRuleGroup(RoR2.DisplayRuleGroup displayRuleGroup, RoR2.ItemIndex itemIndex, RoR2.EquipmentIndex equipmentIndex) (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_008B)
-        /// 
-        /// IL_008b: ldloc.1
-        /// IL_008c: ldfld class [Unity.Addressables] UnityEngine.AddressableAssets.AssetReferenceGameObject RoR2.ItemDisplayRule::followerPrefabAddress
-        /// IL_0091: callvirt instance bool[Unity.Addressables] UnityEngine.AddressableAssets.AssetReference::RuntimeKeyIsValid()
-        /// IL_0096: brfalse.s IL_00b7
-        /// </summary>
-        [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.InstantiateDisplayRuleGroup))]
-        [HarmonyILManipulator]
-        public static void CharacterModel_InstantiateDisplayRuleGroup(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            ILLabel label = null;
-            if (!c.TryGotoNext(MoveType.Before,
-                    x => x.MatchLdfld<ItemDisplayRule>(nameof(ItemDisplayRule.followerPrefabAddress)),
-                    x => x.MatchCallOrCallvirt<AssetReference>(nameof(AssetReference.RuntimeKeyIsValid)),
-                    x => x.MatchBrfalse(out label)
-                ))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-
-            c.Index++;
-            var runtimeKeyValidCall = c.Next;
-            c.Emit(OpCodes.Dup);
-            c.Emit(OpCodes.Brtrue_S, runtimeKeyValidCall);
-            c.Emit(OpCodes.Pop);
-            c.Emit(OpCodes.Br, label);
-        }
-        /// <summary>
-        /// 
-        /*
-	// if (!this.<keyAssetRuleGroup>5__3.keyAssetAddress.RuntimeKeyIsValid())
-	IL_008f: ldarg.0
-	IL_0090: ldflda valuetype RoR2.ItemDisplayRuleSet/KeyAssetRuleGroup RoR2.ItemDisplayRuleSet/'<GenerateRuntimeValuesAsync>d__16'::'<keyAssetRuleGroup>5__3'
-	IL_0095: ldfld class RoR2.AddressableAssets.IDRSKeyAssetReference RoR2.ItemDisplayRuleSet/KeyAssetRuleGroup::keyAssetAddress
-	IL_009a: callvirt instance bool [Unity.Addressables]UnityEngine.AddressableAssets.AssetReference::RuntimeKeyIsValid()
-	IL_009f: brtrue.s IL_00c1*/
-        /// </summary>
-        [HarmonyPatch(typeof(ItemDisplayRuleSet), nameof(ItemDisplayRuleSet.GenerateRuntimeValuesAsync), MethodType.Enumerator)]
-        [HarmonyILManipulator]
-        public static void ItemDisplayRuleSet_GenerateRuntimeValuesAsync(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            Instruction instr = null;
-            if (!c.TryGotoNext(MoveType.Before,
-                    x => x.MatchLdflda(out _),
-                    x => x.MatchLdfld<ItemDisplayRuleSet.KeyAssetRuleGroup>(nameof(ItemDisplayRuleSet.KeyAssetRuleGroup.keyAssetAddress)),
-                    x => x.MatchCallOrCallvirt<AssetReference>(nameof(AssetReference.RuntimeKeyIsValid)),
-                    x => x.MatchBrtrue(out _),
-                    x => x.MatchAny(out instr)
-                ))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-
-            c.Index++;
-            c.Index++;
-            var runtimeKeyValidCall = c.Next;
-            c.Emit(OpCodes.Dup);
-            c.Emit(OpCodes.Brtrue_S, runtimeKeyValidCall);
-            c.Emit(OpCodes.Pop);
-            c.Emit(OpCodes.Br, instr);
-        }
-
         /// <summary>
         /// unity explorer can eat my whole ass
         /// </summary>
@@ -186,7 +125,7 @@ namespace MiscFixes.Fixes.ErrorPolice
         [HarmonyPostfix]
         public static void HalcyoniteShrineInteractable_Awake(HalcyoniteShrineInteractable __instance)
         {
-            __instance.goldDrainValue = Math.Max(1, __instance.goldDrainValue);
+            __instance.goldDrainValue = System.Math.Max(1, __instance.goldDrainValue);
         }
 
         /// <summary>
@@ -194,7 +133,7 @@ namespace MiscFixes.Fixes.ErrorPolice
         /// </summary>
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
         [HarmonyFinalizer]
-        public static Exception FixFacepunch() => null;
+        public static System.Exception FixFacepunch() => null;
 
         /// <summary>
         /// blame ss2

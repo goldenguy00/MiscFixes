@@ -9,7 +9,7 @@ using MiscFixes.Modules;
 using HG;
 using RoR2.UI.MainMenu;
 
-namespace MiscFixes.Fixes
+namespace MiscFixes.ErrorPolice
 {
     internal static class AssetFixes
     {
@@ -19,7 +19,7 @@ namespace MiscFixes.Fixes
             FixSaleStarCollider();
             FixFalseSonBossP2NotUsingSpecial();
             MoreHudChildLocEntries();
-            FixHenry();
+            //FixHenry();
 
             MainMenuController.OnMainMenuInitialised += OnLoad;
         }

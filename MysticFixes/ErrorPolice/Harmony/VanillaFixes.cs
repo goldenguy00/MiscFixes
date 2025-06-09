@@ -20,119 +20,43 @@ using RoR2.Stats;
 using RoR2.UI;
 using UnityEngine;
 
-namespace MiscFixes.Fixes.ErrorPolice
+namespace MiscFixes.ErrorPolice.Harmony
 {
     [HarmonyPatch]
-    public class FixVanilla
+    public class VanillaFixes
     {
         /// <summary>
-        /// Never checks the generic skill for null before overriding it, so ill assume all four of these should be handled the same
-        /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState|388_0 (System.Boolean _disable) (at:IL_0040)
+        /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState
+        /// if (NetworkServer.active)
+        ///     this.inventory.SetEquipmentDisabled(_disable);
         /// 
-        /// this.skillLocator.secondary.SetSkillOverride(this, disabledSkill, GenericSkill.SkillOverridePriority.Contextual);
-        /// IL_003a: ldarg.0
-        /// IL_003b: call instance class RoR2.SkillLocator RoR2.CharacterBody::get_skillLocator()
-        /// IL_0040: ldfld class RoR2.GenericSkill RoR2.SkillLocator::secondary
-        /// IL_0045: ldarg.0
-        /// IL_0046: ldloc.0
-        /// IL_0047: ldc.i4.4
-        /// IL_0048: callvirt instance void RoR2.GenericSkill::SetSkillOverride(object, class RoR2.Skills.SkillDef, valuetype RoR2.GenericSkill/SkillOverridePriority)
+        /// inventory shouldnt be null, but jsut in case
         /// </summary>
-        //[HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
-        //[HarmonyILManipulator]
-        public static void CharacterBody_HandleDisableAllSkillsDebuff1(ILContext il)
-        {
-            var c = new ILCursor(il);
-            var cList = new List<ILCursor>();
-
-            //beefy and fragile match because while loops are scary, fail if anything has been modified
-            while (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCall(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.skillLocator))),
-                    x => x.MatchLdfld(out _),
-                    x => x.MatchLdarg(0),
-                    x => x.MatchLdloc(0),
-                    x => x.MatchLdcI4(4),
-                    x => x.MatchCallvirt(out _)
-                ))
-            {
-                if (cList.Count >= 8)
-                {
-                    Log.Error("YO HOMIE YOU BEST NOT BE RECURSING");
-                    Log.PatchFail(il);
-                    return;
-                }
-
-                cList.Add(c.Clone());
-            }
-
-            if (cList.Count != 8)
-            {
-                Log.Warning("Match count did not equal 8!");
-                Log.PatchFail(il);
-                return;
-            }
-
-            for (var i = 0; i < cList.Count; i++)
-            {
-                c = cList[i];
-
-                var endLabel = c.MarkLabel();
-                var callLabel = c.DefineLabel();
-
-                c.GotoPrev(MoveType.After,
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.skillLocator))),
-                    x => x.MatchLdfld(out _));
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, callLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, endLabel);
-
-                c.MarkLabel(callLabel);
-            }
-        }
-        /// <summary>
-        /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState|388_0 (System.Boolean _disable) (at:IL_012D)
-        /// 
-        /// this.inventory.SetEquipmentDisabled(_disable);
-        /// IL_0125: brfalse.s IL_0133
-        /// IL_0127: ldarg.0
-	    /// IL_0128: call instance class RoR2.Inventory RoR2.CharacterBody::get_inventory()
-        /// IL_012d: ldarg.1
-	    /// IL_012e: callvirt instance void RoR2.Inventory::SetEquipmentDisabled(bool)
-        /// </summary>
-        //[HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|388_0")]
-        //[HarmonyILManipulator]
-        public static void CharacterBody_HandleDisableAllSkillsDebuff2(ILContext il)
+        [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|389_0")]
+        [HarmonyILManipulator]
+        public static void CharacterBody_HandleDisableAllSkillsDebuff(ILContext il)
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
 
             ILLabel retLabel = null;
             if (c.TryGotoPrev(MoveType.Before,
+                    x => x.MatchNetworkServerActive(),
                     x => x.MatchBrfalse(out retLabel),
                     x => x.MatchLdarg(0),
                     x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory))),
-                    x => x.MatchLdarg(1),
+                    x => x.MatchLdarg(out _),
                     x => x.MatchCallOrCallvirt<Inventory>(nameof(Inventory.SetEquipmentDisabled))
                 ))
             {
-                c.GotoNext(MoveType.After, x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory))));
+                // c.next == ldarg_0
+                c.Index += 2;
 
-                var callLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory)));
                 c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, callLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, retLabel);
-
-                c.MarkLabel(callLabel);
+                c.Emit(OpCodes.Brfalse, retLabel);
             }
-            else Log.PatchFail(il.Method.Name + "#2");
+            else Log.PatchFail(il);
         }
 
         /// <summary>
@@ -549,7 +473,7 @@ namespace MiscFixes.Fixes.ErrorPolice
                     x => x.MatchLdfld<HurtBox>(nameof(HurtBox.healthComponent)),
                     x => x.MatchLdarg(0),
                     x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(EntityState), nameof(EntityState.healthComponent))),
-                    x => x.MatchOpInequality(),
+                    x => x.MatchCallOrCallvirt<UnityEngine.Object>("op_Inequality"),
                     x => x.MatchBrfalse(out label)))
             {
                 Log.PatchFail(il);
