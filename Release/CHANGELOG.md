@@ -1,7 +1,11 @@
+## 1.4.4
+
+- Fixed edgecase with lobby skin handling
+
 ## 1.4.3
 
 - Affix Aurelionite targeting NRE
-- Removed False Son
+- Removed False Son Boss's AI fix for missing attacks
 - Removed merc evis targetting fix
 - Removed Xi Construct blast fix
   - Thanks to Cap_ for bringing these up!

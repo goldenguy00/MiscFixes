@@ -38,7 +38,7 @@ namespace MiscFixes.ErrorPolice
                         continue;
 
                     var bodySkins = body.GetComponentInChildren<ModelSkinController>();
-                    if (bodySkins?.skins?.Length == 0)
+                    if (bodySkins?.skins?.Any() != true)
                         continue;
 
                     var displayModel = display.GetComponentInChildren<CharacterModel>();
