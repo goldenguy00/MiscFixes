@@ -1,3 +1,7 @@
+## 1.4.6
+
+- Fixed the OnStageLoad hook (thanks Gorakh)
+
 ## 1.4.5
 
 - Fixed identity crisis with config extensions

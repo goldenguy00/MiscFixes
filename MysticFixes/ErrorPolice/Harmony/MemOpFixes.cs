@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using HG;
 using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using MonoMod.Utils;
 using RoR2;
 using RoR2.ContentManagement;
 using UnityEngine;
@@ -86,9 +88,20 @@ namespace MiscFixes.ErrorPolice.Harmony
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
 
-            c.MoveAfterLabels();
-            c.Emit(OpCodes.Ldsfld, AccessTools.Field(typeof(AssetAsyncReferenceManager<Object>), nameof(AssetAsyncReferenceManager<Object>.PreloadedReferences)));
+            ILLabel leave = null;
+            if (!c.TryGotoPrev(MoveType.After, x => x.MatchEndfinally()) ||
+                !c.TryFindPrev(out _, x => x.MatchLeaveS(out leave)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Emit(OpCodes.Ldsfld, AccessTools.Field(typeof(AssetAsyncReferenceManager<Object>), nameof(AssetAsyncReferenceManager<Object>.PreloadedInMenuReferences)));
             c.Emit<List<string>>(OpCodes.Callvirt, nameof(List<string>.Clear));
+            
+            c.Index -= 2;
+            c.MarkLabel(leave);
+            il.Body.ExceptionHandlers.Last().HandlerEnd = leave.Target;
         }
 
         /// <summary>
