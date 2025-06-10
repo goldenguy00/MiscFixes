@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace MiscFixes.Modules
 {
-    public static class Utils
+    internal static class Utils
     {
         internal static void GetModMetaDataSafe(this Assembly assembly, out string guid, out string name)
         {
