@@ -91,7 +91,10 @@ namespace MiscFixes.Modules
             try
             {
                 if (MiscFixesPlugin.RooInstalled)
-                    configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0);
+                {
+                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
+                    configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
+                }
             }
             catch (Exception e)
             {
@@ -115,7 +118,10 @@ namespace MiscFixes.Modules
             try
             {
                 if (MiscFixesPlugin.RooInstalled)
-                    configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0);
+                {
+                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
+                    configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
+                }
             }
             catch (Exception e)
             {
@@ -134,7 +140,10 @@ namespace MiscFixes.Modules
             try
             {
                 if (MiscFixesPlugin.RooInstalled)
-                    configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0);
+                {
+                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
+                    configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
+                }
             }
             catch (Exception e)
             {
@@ -153,7 +162,10 @@ namespace MiscFixes.Modules
             try
             {
                 if (MiscFixesPlugin.RooInstalled)
-                    configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0);
+                {
+                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
+                    configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
+                }
             }
             catch (Exception e)
             {
@@ -175,7 +187,10 @@ namespace MiscFixes.Modules
             try
             {
                 if (MiscFixesPlugin.RooInstalled)
-                    configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0);
+                {
+                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
+                    configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0, guid, modName);
+                }
             }
             catch (Exception e)
             {
@@ -188,8 +203,11 @@ namespace MiscFixes.Modules
 
         #region RoO
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static void TryRegisterOption<T>(this ConfigEntry<T> entry, bool restartRequired = false)
+        public static void TryRegisterOption<T>(this ConfigEntry<T> entry, bool restartRequired = false, string modGuid = null, string modName = null)
         {
+            if (modGuid is null && modName is null)
+                Assembly.GetCallingAssembly().GetModMetaDataSafe(out modGuid, out modName);
+
             if (entry is ConfigEntry<string> stringEntry)
             {
                 RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.StringInputFieldOption(stringEntry, new RiskOfOptions.OptionConfigs.InputFieldConfig
@@ -197,19 +215,19 @@ namespace MiscFixes.Modules
                     lineType = TMPro.TMP_InputField.LineType.SingleLine,
                     submitOn = RiskOfOptions.OptionConfigs.InputFieldConfig.SubmitEnum.OnExitOrSubmit,
                     restartRequired = restartRequired
-                }));
+                }), modGuid, modName);
             }
             else if (entry is ConfigEntry<bool> boolEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.CheckBoxOption(boolEntry, restartRequired));
+                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.CheckBoxOption(boolEntry, restartRequired), modGuid, modName);
             }
             else if (entry is ConfigEntry<KeyboardShortcut> shortCutEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.KeyBindOption(shortCutEntry, restartRequired));
+                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.KeyBindOption(shortCutEntry, restartRequired), modGuid, modName);
             }
             else if (typeof(T).IsEnum)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.ChoiceOption(entry, restartRequired));
+                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.ChoiceOption(entry, restartRequired), modGuid, modName);
             }
             else
             {
@@ -219,8 +237,11 @@ namespace MiscFixes.Modules
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static void TryRegisterOptionSlider<T>(this ConfigEntry<T> entry, bool restartRequired = false)
+        public static void TryRegisterOptionSlider<T>(this ConfigEntry<T> entry, bool restartRequired = false, string modGuid = null, string modName = null)
         {
+            if (modGuid is null && modName is null)
+                Assembly.GetCallingAssembly().GetModMetaDataSafe(out modGuid, out modName);
+
             if (entry is ConfigEntry<int> intEntry)
             {
                 var config = new RiskOfOptions.OptionConfigs.IntSliderConfig
@@ -235,7 +256,7 @@ namespace MiscFixes.Modules
                     config.max = range.MaxValue;
                 }
 
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.IntSliderOption(intEntry, config));
+                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.IntSliderOption(intEntry, config), modGuid, modName);
             }
             else if (entry is ConfigEntry<float> floatEntry)
             {
@@ -251,7 +272,7 @@ namespace MiscFixes.Modules
                     config.max = range.MaxValue;
                 }
 
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.SliderOption(floatEntry, config));
+                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.SliderOption(floatEntry, config), modGuid, modName);
             }
             else
             {
@@ -261,10 +282,13 @@ namespace MiscFixes.Modules
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static void TryRegisterOptionSteppedSlider(this ConfigEntry<float> entry, float increment, float min, float max, bool restartRequired = false)
+        public static void TryRegisterOptionSteppedSlider(this ConfigEntry<float> entry, float increment, float min, float max, bool restartRequired = false, string modGuid = null, string modName = null)
         {
             if (entry is ConfigEntry<float> floatEntry)
             {
+                if (modGuid is null && modName is null)
+                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out modGuid, out modName);
+
                 RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.StepSliderOption(floatEntry, new RiskOfOptions.OptionConfigs.StepSliderConfig
                 {
                     increment = increment,
@@ -272,7 +296,7 @@ namespace MiscFixes.Modules
                     max = max,
                     FormatString = "{0:0.00}",
                     restartRequired = restartRequired,
-                }));
+                }), modGuid, modName);
             }
             else
             {

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection;
 using BepInEx;
 using HG.GeneralSerializer;
-using RiskOfOptions.Lib;
 using RoR2;
 using RoR2.CharacterAI;
 using UnityEngine;
@@ -12,20 +11,22 @@ namespace MiscFixes.Modules
 {
     public static class Utils
     {
-        internal static ModMetaData GetModMetaDataSafe(this Assembly assembly)
+        internal static void GetModMetaDataSafe(this Assembly assembly, out string guid, out string name)
         {
-            ModMetaData result = default;
-            Type[] exportedTypes = assembly.GetExportedTypes();
-            for (int i = 0; i < exportedTypes.Length; i++)
+            guid = "";
+            name = "";
+
+            // safer cuz ror2bepinex hook
+            Type[] types = assembly.GetTypes();
+            for (int i = 0; i < types.Length; i++)
             {
-                BepInPlugin customAttribute = exportedTypes[i].GetCustomAttribute<BepInPlugin>();
+                BepInPlugin customAttribute = types[i].GetCustomAttribute<BepInPlugin>();
                 if (customAttribute != null)
                 {
-                    result.Guid = customAttribute.GUID;
-                    result.Name = customAttribute.Name;
+                    guid = customAttribute.GUID;
+                    guid = customAttribute.Name;
                 }
             }
-            return result;
         }
 
         public static void ReorderSkillDrivers(GameObject master, int targetIdx)
