@@ -73,12 +73,12 @@ namespace MiscFixes.Modules
         /// </summary>
         public static void WipeConfig(this ConfigFile cfg)
         {
-            Log.Debug("Clearing config " + System.IO.Path.GetFileName(cfg.ConfigFilePath));
             var orphanedEntriesProp = typeof(ConfigFile).GetProperty("OrphanedEntries", ~BindingFlags.Default);
-
             if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
+            {
                 orphanedEntries.Clear();
-
+                //Log.Debug("Clearing config " + System.IO.Path.GetFileName(cfg.ConfigFilePath));
+            }
             cfg.Save();
         }
 

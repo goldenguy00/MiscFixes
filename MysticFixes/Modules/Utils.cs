@@ -144,24 +144,35 @@ namespace MiscFixes.Modules
             var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
             var finfos = type.GetFields(flags);
-            foreach (var finfo in finfos)
+            foreach (var info in finfos)
             {
-                finfo.SetValue(obj, finfo.GetValue(other));
-                Log.Debug($"Set field {finfo.Name} to value of {finfo.GetValue(obj)}");
+                if (info.DeclaringType == typeof(UnityEngine.Object) || info.DeclaringType == typeof(UnityEngine.Component))
+                    continue;
+
+                try
+                {
+                    info.SetValue(obj, info.GetValue(other));
+                    Log.Debug($"Set field {info.Name} to value of {info.GetValue(obj)}");
+                }
+                catch (Exception e) { Log.Debug(e); }
             }
 
             var pinfos = type.GetProperties(flags);
-            foreach (var pinfo in pinfos)
+            foreach (var info in pinfos)
             {
-                if (pinfo.CanWrite)
+                if (info.DeclaringType == typeof(UnityEngine.Object) || info.DeclaringType == typeof(UnityEngine.Component))
+                    continue;
+
+                if (!info.CanWrite || info.DeclaringType == typeof(UnityEngine.Object))
+                    continue;
+
+                try
                 {
-                    try
-                    {
-                        pinfo.SetValue(obj, pinfo.GetValue(other));
-                        Log.Debug($"Set property {pinfo.Name} to value of {pinfo.GetValue(obj)}");
-                    }
-                    catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
+                    info.SetValue(obj, info.GetValue(other));
+                    Log.Debug($"Set property {info.Name} to value of {info.GetValue(obj)}");
                 }
+                catch (Exception e) { Log.Debug(e); }   // In case of NotImplementedException being thrown.
+                                                        // For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
             }
 
             return obj;
@@ -182,7 +193,7 @@ namespace MiscFixes.Modules
                 serializedField.fieldValue.stringValue = StringSerializer.Serialize(typeof(T), value);
                 return true;
             }
-            Debug.LogError("Failed to modify field " + fieldName);
+            Log.Error("Failed to modify field " + fieldName);
             return false;
         }
 
@@ -195,9 +206,9 @@ namespace MiscFixes.Modules
                 return true;
             }
             if (!string.IsNullOrEmpty(serializedField.fieldValue.stringValue))
-                Debug.LogError($"Failed to return {fieldName} as an Object, try getting the string value instead.");
+                Log.Error($"Failed to return {fieldName} as an Object, try getting the string value instead.");
             else
-                Debug.LogError("Field is null " + fieldName);
+                Log.Error("Field is null " + fieldName);
             value = default;
             return false;
         }
@@ -212,9 +223,9 @@ namespace MiscFixes.Modules
             }
 
             if (serializedField.fieldValue.objectValue)
-                Debug.LogError($"Failed to return {fieldName} as a string, try getting the Object value instead.");
+                Log.Error($"Failed to return {fieldName} as a string, try getting the Object value instead.");
             else
-                Debug.LogError("Field is null " + fieldName);
+                Log.Error("Field is null " + fieldName);
 
             value = default;
             return false;

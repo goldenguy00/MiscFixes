@@ -36,6 +36,8 @@ namespace MiscFixes
         {
             Log.Init(Logger);
 
+            Config.WipeConfig();
+
             AssetFixes.Init();
 
             // dev note:
