@@ -19,8 +19,22 @@ namespace MiscFixes.ErrorPolice
             FixSaleStarCollider();
             MoreHudChildLocEntries();
             FixHenry();
+            FixScrapper();
 
             MainMenuController.OnMainMenuInitialised += OnLoad;
+        }
+
+        private static void FixScrapper()
+        {
+            Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Toolbot.ToolbotBody_prefab).Completed += delegate (AsyncOperationHandle<GameObject> bodyObjHandle)
+            {
+                Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Scrapper.Scrapper_prefab).Completed += delegate (AsyncOperationHandle<GameObject> scrapperObjHandle)
+                {
+                    var scrapper = scrapperObjHandle.Result;
+                    var toolbot = bodyObjHandle.Result;
+                    var bank = scrapper.CloneComponent(toolbot.GetComponent<AkBank>());
+                };
+            };
         }
 
         private static void OnLoad()
