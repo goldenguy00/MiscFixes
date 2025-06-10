@@ -1,3 +1,8 @@
+## 1.4.5
+
+- Fixed identity crisis with config extensions
+- Added scrapper sounds back
+
 ## 1.4.4
 
 - Fixed edgecase with lobby skin handling
