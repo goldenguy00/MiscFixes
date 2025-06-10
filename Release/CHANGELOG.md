@@ -1,7 +1,7 @@
 ## 1.4.3
 
 - Affix Aurelionite targeting NRE
-- Removed False Son
+- Removed False Son's Boss AI fix
 - Removed merc evis targetting fix
 - Removed Xi Construct blast fix
   - Thanks to Cap_ for bringing these up!
