@@ -20,8 +20,17 @@ namespace MiscFixes.ErrorPolice
             MoreHudChildLocEntries();
             FixHenry();
             FixScrapper();
+            FixVermin();
 
             MainMenuController.OnMainMenuInitialised += OnLoad;
+        }
+
+        private static void FixVermin()
+        {
+            Addressables.LoadAssetAsync<GameObject>(RoR2_DLC1_Vermin.VerminSpawn_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            {
+                obj.Result.GetComponent<EffectComponent>().positionAtReferencedTransform = true;
+            };
         }
 
         private static void FixScrapper()
