@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Linq;
 using Facepunch.Steamworks;
 using HarmonyLib;
 using HG;
@@ -160,19 +161,11 @@ namespace MiscFixes.ErrorPolice.Harmony
                 ))
             {
                 c.Remove();
-                c.EmitDelegate(delegate (ReadOnlyCollection<TeamComponent> teamMembers)
-                {
-                    var count = 0;
-                    foreach (var member in teamMembers)
-                    {
-                        var body = member ? member.body : null;
-                        if (body && body.master && body.healthComponent && body.healthComponent.alive)
-                            count++;
-                    }
-                    return count;
-                });
+                c.EmitDelegate(GetValidTeamCount);
             }
             else Log.PatchFail(il);
         }
+
+        private static int GetValidTeamCount(ReadOnlyCollection<TeamComponent> teamMembers) => teamMembers.Count(t => t?.body && t.body.master && t.body.healthComponent);
     }
 }

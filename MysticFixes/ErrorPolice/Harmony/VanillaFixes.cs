@@ -10,6 +10,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Rewired_Core_NS::Rewired;
 using RoR2;
+using RoR2.Achievements;
 using RoR2.CharacterAI;
 using RoR2.Items;
 using RoR2.Navigation;
@@ -18,12 +19,51 @@ using RoR2.Projectile;
 using RoR2.Stats;
 using RoR2.UI;
 using UnityEngine;
+using RPServer = RoR2.Achievements.Chef.RolyPolyHitFiveAirEnemies.RolyPolyHitFiveAirEnemiesServerAchievement;
 
 namespace MiscFixes.ErrorPolice.Harmony
 {
     [HarmonyPatch]
     public class VanillaFixes
     {
+        /// <summary>
+        ///  cachedCharacterMotor = GetCurrentBody().GetComponent<CharacterMotor>();
+        /// </summary>
+
+        [HarmonyPatch(typeof(RPServer), nameof(RPServer.GetCharacterMotor))]
+        [HarmonyILManipulator]
+        public static void RolyPolyHitFiveAirEnemiesServerAchievement_GetCharacterMotor(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (!c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt<BaseServerAchievement>(nameof(BaseServerAchievement.GetCurrentBody)),
+                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent))
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            
+            c.Index--;
+
+            var getComponentLabel = c.DefineLabel();
+            var skipGetComponentLabel = c.DefineLabel();
+
+            c.Emit(OpCodes.Dup);
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brtrue_S, getComponentLabel);
+
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Ldnull);
+            c.Emit(OpCodes.Br_S, skipGetComponentLabel);
+
+            c.MarkLabel(getComponentLabel);
+            c.Index++;
+            c.MarkLabel(skipGetComponentLabel);
+            
+        }
         /// <summary>
         /// Affix Aurelionite calling transform.position from update
         /// Prevent running update when body is null
@@ -36,7 +76,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(AffixAurelioniteBehavior), nameof(AffixAurelioniteBehavior.Update))]
         [HarmonyPrefix]
-        public static bool AffixAurelioniteBehavior_Update(AffixAurelioniteBehavior __instance) => __instance.body;
+        public static bool AffixAurelioniteBehavior_Update(AffixAurelioniteBehavior __instance) => __instance.body?.coreTransform;
 
         /// <summary>
         /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState
