@@ -5,9 +5,9 @@ using HG;
 using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.Utils;
 using RoR2;
 using RoR2.ContentManagement;
+using RoR2.SurvivorMannequins;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -17,6 +17,30 @@ namespace MiscFixes.ErrorPolice.Harmony
     [HarmonyPatch]
     public class MemOpFixes
     {
+        [HarmonyPatch(typeof(ModelSkinController), nameof(ModelSkinController.ApplySkinAsync), MethodType.Enumerator)]
+        [HarmonyILManipulator]
+        public static void ModelSkinController_ApplySkinAsync(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (!c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt<ModelSkinController>(nameof(ModelSkinController.UnloadCurrentlyLoadedSkinAssets))
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate(UnapplyCurrentSkin);
+        }
+
+        private static void UnapplyCurrentSkin(ModelSkinController self)
+        {
+            self.skins[self.currentSkinIndex]._runtimeSkin = null;
+        }
+
         [HarmonyPatch(typeof(SurvivorCatalog), nameof(SurvivorCatalog.ValidateEntry))]
         [HarmonyPostfix]
         public static void SurvivorCatalog_ValidateEntry(SurvivorDef survivorDef)

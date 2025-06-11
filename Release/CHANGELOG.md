@@ -1,3 +1,12 @@
+## 1.4.8
+
+- Added lobby skins fix!
+- Changed to proper usage of the new loading methods (maybe???)
+- Fixed NRE with PlayerStatsComponent receiving a null body
+- Added entityStateConfiguration extensions
+- Added Component removal and deep cloning extensions
+- Fixed typo in config extensions
+
 ## 1.4.7
 
 - Using new asset loading methods

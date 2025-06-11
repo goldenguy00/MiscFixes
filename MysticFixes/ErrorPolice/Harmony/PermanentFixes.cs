@@ -22,6 +22,13 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// <summary>
         /// call can be suppressed if stuff is null
         /// </summary>
+        [HarmonyPatch("RoR2.Stats.PlayerStatsComponent+<>c, RoR2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", "<Init>b__18_0")]
+        [HarmonyPrefix]
+        public static bool PlayerStatsComponent_Init(DamageReport damageReport) => damageReport.victim;
+
+        /// <summary>
+        /// call can be suppressed if stuff is null
+        /// </summary>
         [HarmonyPatch(typeof(InspectPanelController), nameof(InspectPanelController.Show))]
         [HarmonyPrefix]
         public static bool InspectPanelController_Show(InspectPanelController __instance) => __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;

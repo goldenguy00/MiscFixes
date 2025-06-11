@@ -5,8 +5,10 @@ using MonoMod.Cil;
 using UnityEngine.Networking;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System;
 using System.Text;
+using HG.GeneralSerializer;
+using RoR2;
+using UnityEngine;
 
 namespace MiscFixes.Modules
 {
@@ -39,7 +41,7 @@ namespace MiscFixes.Modules
 
         #region Config Binding
 
-        [Flags]
+        [System.Flags]
         public enum ConfigFlags : byte
         {
             None = 0,
@@ -77,7 +79,6 @@ namespace MiscFixes.Modules
             if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
             {
                 orphanedEntries.Clear();
-                //Log.Debug("Clearing config " + System.IO.Path.GetFileName(cfg.ConfigFilePath));
             }
             cfg.Save();
         }
@@ -96,16 +97,13 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
+            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : IEquatable<T>
+        public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : System.IEquatable<T>
         {
             description = BuildDescription(name, description, defaultValue?.ToString(), flags);
 
@@ -123,10 +121,7 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
+            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -145,16 +140,13 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
+            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : IComparable
+        public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : System.IComparable
         {
             description = BuildDescription(name, description, defaultValue.ToString(), flags);
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, new AcceptableValueRange<T>(min, max)));
@@ -167,10 +159,7 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
+            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -192,10 +181,7 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (Exception e)
-            {
-                Log.Error(e);
-            }
+            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -303,6 +289,148 @@ namespace MiscFixes.Modules
                 Log.Error($"Config entry {entry.Definition.Key} in section {entry.Definition.Section} with type {typeof(float).Name} " +
                     $"could not be registered in Risk Of Options using {nameof(TryRegisterOptionSteppedSlider)}.");
             }
+        }
+        #endregion
+
+        #region Unity Objects
+        public static void TryDestroyComponent<T>(this GameObject obj) where T : MonoBehaviour
+        {
+            if (obj && obj.TryGetComponent<T>(out var component))
+            {
+                MonoBehaviour.Destroy(component);
+            }
+        }
+
+        public static void DestroyComponentsOfType<T>(this GameObject obj) where T : MonoBehaviour
+        {
+            if (!obj)
+                return;
+
+            var coms = obj.GetComponents<T>();
+            for (var i = 0; i < coms.Length; i++)
+            {
+                MonoBehaviour.Destroy(coms[i]);
+            }
+        }
+        public static void TryDestroyComponent<T>(this MonoBehaviour obj) where T : MonoBehaviour
+        {
+            if (obj && obj.TryGetComponent<T>(out var component))
+            {
+                MonoBehaviour.Destroy(component);
+            }
+        }
+
+        public static void DestroyComponentsOfType<T>(this MonoBehaviour obj) where T : MonoBehaviour
+        {
+            if (!obj)
+                return;
+
+            var coms = obj.GetComponents<T>();
+            for (var i = coms.Length - 1; i >= 0; i--)
+            {
+                MonoBehaviour.Destroy(coms[i]);
+            }
+        }
+
+        public static T CloneComponent<T>(this GameObject go, T src) where T : MonoBehaviour => go.AddComponent<T>().CloneFrom(src);
+
+        public static T CloneFrom<T>(this T obj, T other) where T : Object
+        {
+            var type = obj.GetType();
+            if (type != other.GetType())
+                throw new System.TypeAccessException($"Type mismatch of {obj?.GetType()} and {other?.GetType()}");
+
+            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+            var finfos = type.GetFields(flags);
+            foreach (var info in finfos)
+            {
+                if (info.DeclaringType == typeof(Object) || info.DeclaringType == typeof(Component))
+                    continue;
+
+                try
+                {
+                    info.SetValue(obj, info.GetValue(other));
+                    Log.Debug($"Set field {info.Name} to value of {info.GetValue(obj)}");
+                }
+                catch (System.Exception e) { Log.Debug(e); }
+            }
+
+            var pinfos = type.GetProperties(flags);
+            foreach (var info in pinfos)
+            {
+                if (info.DeclaringType == typeof(Object) || info.DeclaringType == typeof(Component))
+                    continue;
+
+                if (!info.CanWrite || info.DeclaringType == typeof(Object))
+                    continue;
+
+                try
+                {
+                    info.SetValue(obj, info.GetValue(other));
+                    Log.Debug($"Set property {info.Name} to value of {info.GetValue(obj)}");
+                }
+                catch (System.Exception e) { Log.Debug(e); }   // In case of NotImplementedException being thrown.
+                                                               // For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
+            }
+
+            return obj;
+        }
+        #endregion
+
+        #region ESConfigs
+        public static bool TryModifyFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, T value)
+        {
+            ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
+            if (serializedField.fieldValue.objectValue && typeof(Object).IsAssignableFrom(typeof(T)))
+            {
+                serializedField.fieldValue.objectValue = value as Object;
+                return true;
+            }
+            else if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
+            {
+                serializedField.fieldValue.stringValue = StringSerializer.Serialize(typeof(T), value);
+                return true;
+            }
+
+            Log.Error("Failed to modify field " + fieldName);
+            return false;
+        }
+
+        public static bool TryGetFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : Object
+        {
+            ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
+            if (serializedField.fieldValue.objectValue && typeof(Object).IsAssignableFrom(typeof(T)))
+            {
+                value = serializedField.fieldValue.objectValue as T;
+                return true;
+            }
+
+            if (!string.IsNullOrEmpty(serializedField.fieldValue.stringValue))
+                Log.Error($"Failed to return {fieldName} as an Object, try getting the string value instead.");
+            else
+                Log.Error("Field is null " + fieldName);
+
+            value = default;
+            return false;
+        }
+
+        public static bool TryGetFieldValueString<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : System.IEquatable<T>
+        {
+            ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
+            if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
+            {
+                value = (T)StringSerializer.Deserialize(typeof(T), serializedField.fieldValue.stringValue);
+                return true;
+            }
+
+            if (serializedField.fieldValue.objectValue)
+                Log.Error($"Failed to return {fieldName} as a string, try getting the Object value instead.");
+            else
+                Log.Error("Field is null " + fieldName);
+
+            value = default;
+            return false;
         }
         #endregion
     }

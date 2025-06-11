@@ -1,6 +1,6 @@
 # Misc Fixes
 
-Designed to comprehensively address the bugs and exceptions that game updates introduce, and attempts to soften the impact that breaking changes have on the existing mod ecosystem, primarily through Harmony based IL hooks. It also applies a small amount of game integrity focused asset updates. 
+Designed to comprehensively address the bugs and exceptions that game updates introduce, and attempts to soften the impact that breaking changes have on the existing mod ecosystem, primarily through Harmony based IL hooks. It also applies a small amount of game integrity focused asset updates, and provides tools to assist with safely developing around error prone aspects of the game code.
 
 Note that these changes are NOT intended to modify the vanilla gameplay experience. If it's even debatable on whether or not it's in line with the "intended" vanilla experience, it doesn't belong here.
 
@@ -8,14 +8,10 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 
 # FOR DEVS:
 
-- HUD ChildLocator Entries
+- ## HUD ChildLocator Entries
   - These are difficult to find normally because they have no identifiable component attached.
-- Extension methods for RiskOfOptions compatible config binding
-- Extension methods for some common ILCursor functions
-  - To gain access, add the MiscFixes.dll as an assembly reference (Nuget package coming soon)
-  - Methods can be found in the MiscFixes.Modules.Extensions class
 
-## New entries:
+### New entries:
 
 > - "SpringCanvas"
 > - "UpperRightCluster"
@@ -33,7 +29,7 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 
 ---
 
-## Existing entries:
+### Existing entries:
 
 > - "BottomLeftCluster"
 > - "TopCenterCluster"
@@ -44,6 +40,15 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 > - "CrosshairExtras"
 > - "BossHealthBar"
 > - "RightInfoBar" -Always null, kept in for compat
+
+- ## Extension Methods 
+  - RiskOfOptions compatible config binding
+  - Common ILCursor functions
+  - Component removal and cloning
+  - EntityStateConfiguration reading and modification
+
+- To gain access, add the MiscFixes.dll as an assembly reference (Nuget package coming soon)
+- Methods can be found in the MiscFixes.Modules.Extensions class
 
 ---
 
@@ -63,6 +68,7 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 - Restores backwards compatibilty for temporary overlays
 
 ---
+
 ## Error handling
 - chef RolyPoly achievement NRE
 - NRE with Aurelionite affix targeting
