@@ -1,3 +1,11 @@
+## 1.4.7
+
+- Using new asset loading methods
+- Added fix for vermin spawn effect
+- Made void seed hooks better, it should behave more akin to vanilla now
+- Fixed chef achievement RolyPolyHitFiveAirEnemies
+- Fixed AffixAurelioniteBehavior NRE hook
+
 ## 1.4.6
 
 - Fixed the OnStageLoad hook (thanks Gorakh)

@@ -8,6 +8,7 @@ using MiscFixes.Modules;
 using HG;
 using RoR2.UI.MainMenu;
 using RoR2BepInExPack.GameAssetPaths;
+using RoR2.ContentManagement;
 
 namespace MiscFixes.ErrorPolice
 {
@@ -21,29 +22,13 @@ namespace MiscFixes.ErrorPolice
             FixHenry();
             FixScrapper();
             FixVermin();
-
+            
             MainMenuController.OnMainMenuInitialised += OnLoad;
         }
 
-        private static void FixVermin()
+        private static AsyncOperationHandle<T> PreloadAsset<T>(string guid) where T : Object
         {
-            Addressables.LoadAssetAsync<GameObject>(RoR2_DLC1_Vermin.VerminSpawn_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
-            {
-                obj.Result.GetComponent<EffectComponent>().positionAtReferencedTransform = true;
-            };
-        }
-
-        private static void FixScrapper()
-        {
-            Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Toolbot.ToolbotBody_prefab).Completed += delegate (AsyncOperationHandle<GameObject> bodyObjHandle)
-            {
-                Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Scrapper.Scrapper_prefab).Completed += delegate (AsyncOperationHandle<GameObject> scrapperObjHandle)
-                {
-                    var scrapper = scrapperObjHandle.Result;
-                    var toolbot = bodyObjHandle.Result;
-                    var bank = scrapper.CloneComponent(toolbot.GetComponent<AkBank>());
-                };
-            };
+            return AssetAsyncReferenceManager<T>.LoadAsset(new AssetReferenceT<T>(guid), AsyncReferenceHandleUnloadType.Preload);
         }
 
         private static void OnLoad()
@@ -90,13 +75,34 @@ namespace MiscFixes.ErrorPolice
                 Log.Error(e);
             }
         }
+        private static void FixVermin()
+        {
+            PreloadAsset<GameObject>(RoR2_DLC1_Vermin.VerminSpawn_prefab).Completed += (obj) => obj.Result.GetComponent<EffectComponent>().positionAtReferencedTransform = true;
+        }
+
+        private static void FixScrapper()
+        {
+            PreloadAsset<GameObject>(RoR2_Base_Toolbot.ToolbotBody_prefab).Completed += delegate (AsyncOperationHandle<GameObject> bodyObjHandle)
+            {
+                Log.Debug("toolbot done");
+                PreloadAsset<GameObject>(RoR2_Base_Scrapper.Scrapper_prefab).Completed += delegate (AsyncOperationHandle<GameObject> scrapperObjHandle)
+                {
+                    Log.Debug("scrap done");
+                    var scrapper = scrapperObjHandle.Result;
+                    var toolbot = bodyObjHandle.Result;
+                    var bank = scrapper.CloneComponent(toolbot.GetComponent<AkBank>());
+                };
+            };
+        }
 
         private static void FixHenry()
         {
-            Addressables.LoadAssetAsync<Material>(RoR2_Base_Commando.matCommandoDualies_mat).Completed += delegate (AsyncOperationHandle<Material> obj0)
+            PreloadAsset<Material>(RoR2_Base_Commando.matCommandoDualies_mat).Completed += delegate (AsyncOperationHandle<Material> obj0)
             {
-                Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Commando.CommandoBody_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
+                Log.Debug("henry done");
+                PreloadAsset<GameObject>(RoR2_Base_Commando.CommandoBody_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
                 {
+                    Log.Debug("mando done");
                     var mdlLoc = obj.Result.GetComponent<ModelLocator>();
                     var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
                     var matCmd = obj0.Result;
@@ -133,7 +139,7 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         public static void FixElderLemurianFootstepEvents()
         {
-            Addressables.LoadAssetAsync<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller).Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
+            PreloadAsset<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller).Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> obj)
             {
                 var anim = obj.Result;
                 PatchClip(4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
@@ -164,7 +170,7 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         public static void FixSaleStarCollider()
         {
-            Addressables.LoadAssetAsync<GameObject>(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            PreloadAsset<GameObject>(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var collider = obj.Result.transform.Find("SaleStar")?.GetComponent<MeshCollider>();
                 if (collider == null || collider.convex)
@@ -180,7 +186,7 @@ namespace MiscFixes.ErrorPolice
 
         public static void MoreHudChildLocEntries()
         {
-            Addressables.LoadAssetAsync<GameObject>(RoR2_Base_UI.HUDSimple_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            PreloadAsset<GameObject>(RoR2_Base_UI.HUDSimple_prefab).Completed += delegate (AsyncOperationHandle<GameObject> obj)
             {
                 var hud = obj.Result.GetComponent<HUD>();
                 var childLoc = hud.GetComponent<ChildLocator>();
