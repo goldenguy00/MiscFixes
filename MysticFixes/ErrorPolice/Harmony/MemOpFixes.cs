@@ -32,14 +32,16 @@ namespace MiscFixes.ErrorPolice.Harmony
             }
 
             c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate(UnapplyCurrentSkin);
+            c.EmitDelegate(RevertSkin);
         }
 
-        private static void UnapplyCurrentSkin(ModelSkinController self)
+        private static void RevertSkin(ModelSkinController modelSkinController)
         {
-            var current = ArrayUtils.GetSafe(self.skins, self.currentSkinIndex);
-            if (current)
-                current._runtimeSkin = null;
+            var previousReverseSkin = modelSkinController.GetComponent<ReverseSkinAsync>();
+            if (previousReverseSkin)
+                previousReverseSkin.Dispose();
+            else
+                modelSkinController.gameObject.AddComponent<ReverseSkinAsync>();
         }
 
         [HarmonyPatch(typeof(SurvivorCatalog), nameof(SurvivorCatalog.ValidateEntry))]
