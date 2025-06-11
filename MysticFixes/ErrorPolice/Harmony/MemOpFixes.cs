@@ -7,7 +7,6 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.ContentManagement;
-using RoR2.SurvivorMannequins;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -38,7 +37,9 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         private static void UnapplyCurrentSkin(ModelSkinController self)
         {
-            self.skins[self.currentSkinIndex]._runtimeSkin = null;
+            var current = ArrayUtils.GetSafe(self.skins, self.currentSkinIndex);
+            if (current)
+                current._runtimeSkin = null;
         }
 
         [HarmonyPatch(typeof(SurvivorCatalog), nameof(SurvivorCatalog.ValidateEntry))]
