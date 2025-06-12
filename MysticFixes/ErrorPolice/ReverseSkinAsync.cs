@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using MiscFixes.Modules;
 using RoR2;
+using RoR2.ContentManagement;
 using UnityEngine;
 
 namespace MiscFixes.ErrorPolice
@@ -9,9 +12,9 @@ namespace MiscFixes.ErrorPolice
         private CharacterModel characterModel;
         private ModelSkinController modelSkinController;
 
-        private readonly List<CharacterModel.RendererInfo> baseRendererInfos = [];
-        private readonly List<SkinDef.GameObjectActivationTemplate> gameObjectActivationTemplates = [];
-        private readonly List<SkinDef.MeshReplacementTemplate> meshReplacementTemplates = [];
+        private IEnumerable<CharacterModel.RendererInfo> baseRendererInfos = [];
+        private IEnumerable<SkinDef.GameObjectActivationTemplate> cachedGameObjectActivationTemplates = [];
+        private IEnumerable<SkinDef.MeshReplacementTemplate> meshReplacementTemplates = [];
 
         private void Awake()
         {
@@ -22,6 +25,7 @@ namespace MiscFixes.ErrorPolice
 
         private void ModelSkinController_onSkinApplied(int newSkinIndex)
         {
+            Log.Error("ON APPLY SKIN FOR INDEX " + newSkinIndex);
             var newSkin = HG.ArrayUtils.GetSafe(modelSkinController.skins, newSkinIndex);
             if (newSkin)
                 Initialize(newSkin);
@@ -29,45 +33,46 @@ namespace MiscFixes.ErrorPolice
 
         private void Initialize(SkinDef skinDef)
         {
-            baseRendererInfos.AddRange(characterModel.baseRendererInfos);
-            foreach (var objectActivation in skinDef.runtimeSkin.gameObjectActivationTemplates)
-            {
-                gameObjectActivationTemplates.Add(new SkinDef.GameObjectActivationTemplate
+            Log.Error("INITIALIZE CALLED FOR " + (skinDef.name ?? skinDef.nameToken));
+
+            baseRendererInfos = HG.ArrayUtils.Clone(characterModel.baseRendererInfos);
+
+            cachedGameObjectActivationTemplates = skinDef.runtimeSkin.gameObjectActivationTemplates
+                .Select(objectActivation => new SkinDef.GameObjectActivationTemplate
                 {
                     transformPath = objectActivation.transformPath,
                     shouldActivate = !objectActivation.shouldActivate
                 });
-            }
 
-            foreach (var meshReplacement in skinDef.runtimeSkin.meshReplacementTemplates)
+            meshReplacementTemplates = skinDef.runtimeSkin.meshReplacementTemplates
+                .Where(meshReplacement => transform.Find(meshReplacement.transformPath))
+                .Select(meshReplacement => new SkinDef.MeshReplacementTemplate
+                {
+                    transformPath = meshReplacement.transformPath,
+                    meshReference = ConvertToReference(meshReplacement)
+                });
+
+            AssetOrDirectReference<Mesh> ConvertToReference(SkinDef.MeshReplacementTemplate meshReplacement)
             {
-                var rendererTransform = transform.Find(meshReplacement.transformPath);
-                if (!rendererTransform)
-                    continue;
-
                 Mesh mesh = null;
-
-                var renderer = rendererTransform.GetComponent<Renderer>();
+                var renderer = transform.Find(meshReplacement.transformPath).GetComponent<Renderer>();
                 if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
                     mesh = skinnedMeshRenderer.sharedMesh;
                 else if (renderer.TryGetComponent<MeshFilter>(out var filter))
                     mesh = filter.sharedMesh;
-
-                meshReplacementTemplates.Add(new SkinDef.MeshReplacementTemplate
-                {
-                    transformPath = meshReplacement.transformPath,
-                    meshReference = new RoR2.ContentManagement.AssetOrDirectReference<Mesh>() { directRef = mesh }
-                });
+                return new AssetOrDirectReference<Mesh>() { directRef = mesh };
             }
         }
 
         public void Dispose()
         {
+            Log.Error("DISPOSE CALLED!!!!!");
             characterModel.baseRendererInfos = [.. baseRendererInfos];
 
-            foreach (var objectActivation in gameObjectActivationTemplates)
+            foreach (var objectActivation in cachedGameObjectActivationTemplates)
             {
                 var gameActivationTransform = transform.Find(objectActivation.transformPath);
+                Log.Info("FUC");
                 if (gameActivationTransform)
                 {
                     gameActivationTransform.gameObject.SetActive(objectActivation.shouldActivate);

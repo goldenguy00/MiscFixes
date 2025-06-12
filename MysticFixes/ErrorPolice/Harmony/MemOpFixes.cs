@@ -7,6 +7,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.ContentManagement;
+using RoR2.SurvivorMannequins;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -16,28 +17,30 @@ namespace MiscFixes.ErrorPolice.Harmony
     [HarmonyPatch]
     public class MemOpFixes
     {
-        [HarmonyPatch(typeof(ModelSkinController), nameof(ModelSkinController.ApplySkinAsync), MethodType.Enumerator)]
+        [HarmonyPatch(typeof(SurvivorMannequinSlotController), nameof(SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance))]
         [HarmonyILManipulator]
         public static void ModelSkinController_ApplySkinAsync(ILContext il)
         {
             var c = new ILCursor(il);
 
+            int modelLoc = 0;
             if (!c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<ModelSkinController>(nameof(ModelSkinController.UnloadCurrentlyLoadedSkinAssets))
+                    x => x.MatchCallOrCallvirt<Transform>(nameof(Transform.GetComponentInChildren)),
+                    x => x.MatchStloc(out modelLoc)
                 ))
             {
                 Log.PatchFail(il);
                 return;
             }
 
-            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, modelLoc);
             c.EmitDelegate(RevertSkin);
         }
 
         private static void RevertSkin(ModelSkinController modelSkinController)
         {
             var previousReverseSkin = modelSkinController.GetComponent<ReverseSkinAsync>();
+            Log.Warning("Calling reverse skin, does component exist? " + (previousReverseSkin != null));
             if (previousReverseSkin)
                 previousReverseSkin.Dispose();
             else
