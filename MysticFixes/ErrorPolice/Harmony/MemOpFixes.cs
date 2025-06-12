@@ -7,7 +7,6 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.ContentManagement;
-using RoR2.SurvivorMannequins;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -17,36 +16,6 @@ namespace MiscFixes.ErrorPolice.Harmony
     [HarmonyPatch]
     public class MemOpFixes
     {
-        [HarmonyPatch(typeof(SurvivorMannequinSlotController), nameof(SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance))]
-        [HarmonyILManipulator]
-        public static void ModelSkinController_ApplySkinAsync(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (!c.TryGotoNext(MoveType.After,
-                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponentInChildren)),
-                    x => x.MatchDup()
-                ))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-
-            c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate(RevertSkin);
-        }
-
-        private static ModelSkinController RevertSkin(ModelSkinController modelSkinController, SurvivorMannequinSlotController slotController)
-        {
-            BodyIndex bodyIndexFromSurvivorIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(slotController.currentSurvivorDef.survivorIndex);
-            int newSkinIndex = (int)slotController.currentLoadout.bodyLoadoutManager.GetSkinIndex(bodyIndexFromSurvivorIndex);
-
-            modelSkinController.GetOrAddComponent<ReverseSkinAsync>().ApplyDelta(newSkinIndex);
-
-            // make IL gods happy
-            return modelSkinController;
-        }
-
         [HarmonyPatch(typeof(SurvivorCatalog), nameof(SurvivorCatalog.ValidateEntry))]
         [HarmonyPostfix]
         public static void SurvivorCatalog_ValidateEntry(SurvivorDef survivorDef)

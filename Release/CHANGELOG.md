@@ -1,3 +1,7 @@
+## 1.4.9
+
+- Removed lobby skins fix o7
+
 ## 1.4.8
 
 - Added lobby skins fix!
