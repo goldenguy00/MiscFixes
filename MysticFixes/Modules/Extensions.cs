@@ -293,6 +293,34 @@ namespace MiscFixes.Modules
         #endregion
 
         #region Unity Objects
+        public static T GetOrAddComponent<T>(this MonoBehaviour obj) where T : MonoBehaviour
+        {
+            T comp = null;
+
+            if (obj)
+            {
+                comp = obj.GetComponent<T>();
+                if (!comp)
+                    comp = obj.gameObject.AddComponent<T>();
+            }
+
+            return comp;
+        }
+
+        public static T GetOrAddComponent<T>(this GameObject obj) where T : MonoBehaviour
+        {
+            T comp = null;
+
+            if (obj)
+            {
+                comp = obj.GetComponent<T>();
+                if (!comp)
+                    comp = obj.AddComponent<T>();
+            }
+
+            return comp;
+        }
+
         public static void TryDestroyComponent<T>(this GameObject obj) where T : MonoBehaviour
         {
             if (obj && obj.TryGetComponent<T>(out var component))

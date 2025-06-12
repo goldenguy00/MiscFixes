@@ -41,12 +41,7 @@ namespace MiscFixes.ErrorPolice.Harmony
             BodyIndex bodyIndexFromSurvivorIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(slotController.currentSurvivorDef.survivorIndex);
             int newSkinIndex = (int)slotController.currentLoadout.bodyLoadoutManager.GetSkinIndex(bodyIndexFromSurvivorIndex);
 
-            var reverseSkin = modelSkinController.GetComponent<ReverseSkinAsync>();
-            Log.Warning("Calling reverse skin, does component exist? " + (reverseSkin != null));
-            if (!reverseSkin)
-                reverseSkin = modelSkinController.gameObject.AddComponent<ReverseSkinAsync>();
-
-            reverseSkin.ApplyDelta(modelSkinController.currentSkinIndex, newSkinIndex);
+            modelSkinController.GetOrAddComponent<ReverseSkinAsync>().ApplyDelta(newSkinIndex);
 
             // make IL gods happy
             return modelSkinController;

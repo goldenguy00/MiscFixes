@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using HG;
-using MiscFixes.Modules;
 using RoR2;
-using RoR2.ContentManagement;
 using UnityEngine;
 
 namespace MiscFixes.ErrorPolice
@@ -14,9 +11,18 @@ namespace MiscFixes.ErrorPolice
         private CharacterModel characterModel;
         private ModelSkinController modelSkinController;
 
-        private IEnumerable<SkinDefParams.GameObjectActivation> cachedGos = [];
-        private IEnumerable<SkinDefParams.MeshReplacement> cachedMeshs = [];
-        private CharacterModel.RendererInfo[] cachedInfos = [];
+        private List<SkinDefParams.GameObjectActivation> cachedGos = [];
+        private List<SkinDefParams.MeshReplacement> cachedMeshs = [];
+        private List<CharacterModel.RendererInfo> cachedInfos = [];
+        private List<CharacterModel.LightInfo> cachedLights = [];
+
+        private static Mesh GetMeshFromRenderer(Renderer rend)
+        {
+            if (rend is SkinnedMeshRenderer skinned)
+                return skinned.sharedMesh;
+            var filter = rend.GetComponent<MeshFilter>();
+            return filter ? filter.sharedMesh : null;
+        }
 
         private void Awake()
         {
@@ -24,11 +30,9 @@ namespace MiscFixes.ErrorPolice
             modelSkinController = GetComponent<ModelSkinController>();
         }
 
-        // UN FUCKING REAdable
-        public void ApplyDelta(int currentSkinIndex, int newSkinIndex)
+        public void ApplyDelta(int newSkinIndex)
         {
-            if (currentSkinIndex == newSkinIndex)
-                return;
+            RevertToOriginals();
 
             var newSkin = ArrayUtils.GetSafe(modelSkinController.skins, newSkinIndex);
             if (!newSkin)
@@ -41,75 +45,95 @@ namespace MiscFixes.ErrorPolice
             if (newRuntime is null)
                 return;
 
-            RevertToOriginals();
+            cachedInfos = 
+            [.. 
+                from temp in newRuntime.rendererInfoTemplates
+                let trans = transform.Find(temp.transformPath)
+                where trans != null
+                let rend = trans.GetComponent<Renderer>()
+                where rend != null
+                select temp.rendererInfoData with { renderer = rend }
+            ];
 
-            cachedInfos =  ArrayUtils.Clone(characterModel.baseRendererInfos);
+            cachedLights = 
+            [.. 
+                from temp in newRuntime.lightReplacementTemplates
+                let trans = transform.Find(temp.transformPath)
+                where trans != null
+                let light = trans.GetComponent<Light>()
+                where light != null
+                select temp.data with { light = light}
+            ];
 
-            cachedGos = from ngo in newRuntime.gameObjectActivationTemplates
-                        let trans = transform.Find(ngo.transformPath)
-                        where trans != null
-                        select new SkinDefParams.GameObjectActivation
-                        {
-                            gameObject = trans.gameObject,
-                            shouldActivate = trans.gameObject.activeSelf
-                        };
+            cachedGos = 
+            [.. 
+                from temp in newRuntime.gameObjectActivationTemplates
+                let trans = transform.Find(temp.transformPath)
+                where trans != null
+                select new SkinDefParams.GameObjectActivation
+                {
+                    gameObject = trans.gameObject,
+                    shouldActivate = trans.gameObject.activeSelf
+                }
+            ];
 
+            cachedMeshs = 
+            [.. 
+                from temp in newRuntime.meshReplacementTemplates
+                let trans = transform.Find(temp.transformPath)
+                where trans != null
+                let rend = trans.GetComponent<Renderer>()
+                where rend != null
+                select new SkinDefParams.MeshReplacement
+                {
+                    renderer = rend,
+                    mesh = GetMeshFromRenderer(rend)
+                }
+            ];
 
-            cachedMeshs = from nm in newRuntime.meshReplacementTemplates
-                        let trans = transform.Find(nm.transformPath)
-                        where trans != null
-                        let rend = trans.GetComponent<Renderer>()
-                        where rend != null
-                        let mesh = GetMeshFromRenderer(rend)
-                        select new SkinDefParams.MeshReplacement
-                        {
-                            renderer = trans.GetComponent<Renderer>(),
-                            mesh = mesh
-                        };
         }
 
-        private void RevertToOriginals()
+        public void RevertToOriginals()
         {
             if (cachedInfos.Any())
-            {
-                characterModel.baseRendererInfos = ArrayUtils.Clone(cachedInfos);
+                characterModel.baseRendererInfos = [.. cachedInfos];
 
-                foreach (var info in cachedInfos)
-                {
-                    Log.Warning($"setting rend {info.renderer.name} to mat {info.defaultMaterial.name}");
+            if (cachedLights.Any())
+                characterModel.baseLightInfos = [.. cachedLights];
+
+            foreach (var info in cachedInfos)
+            {
+                if (info.renderer)
                     info.renderer.material = info.defaultMaterial;
-                }
             }
 
-            if (cachedGos.Any())
+            foreach (var light in cachedLights)
             {
-                foreach (var go in cachedGos)
-                {
-                    Log.Warning($"setting go {go.gameObject.name} to {go.shouldActivate}");
+                if (light.light)
+                    light.light.color = light.defaultColor;
+            }
+
+            foreach (var go in cachedGos)
+            {
+                if (go.gameObject)
                     go.gameObject.SetActive(go.shouldActivate);
-                }
             }
 
-            if  (cachedMeshs.Any())
+            foreach (var rend in cachedMeshs)
             {
-                foreach (var rend in cachedMeshs)
+                if (rend.renderer)
                 {
-                    Log.Warning($"setting rend {rend.renderer.name} to mesh {rend.mesh?.name ?? "null"}");
                     if (rend.renderer is SkinnedMeshRenderer skinned)
                         skinned.sharedMesh = rend.mesh;
                     else if (rend.renderer.TryGetComponent<MeshFilter>(out var filter))
                         filter.sharedMesh = rend.mesh;
                 }
             }
-        }
 
-        private Mesh GetMeshFromRenderer(Renderer trans)
-        {
-            if (trans is SkinnedMeshRenderer skinned)
-                return skinned.sharedMesh;
-            if (trans.TryGetComponent<MeshFilter>(out var filter))
-                return filter.sharedMesh;
-            return null;
+            cachedInfos.Clear();
+            cachedLights.Clear();
+            cachedMeshs.Clear();
+            cachedGos.Clear();
         }
     }
 }
