@@ -32,17 +32,21 @@ namespace MiscFixes.ErrorPolice.Harmony
                 return;
             }
 
+            c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate(RevertSkin);
         }
 
-        private static ModelSkinController RevertSkin(ModelSkinController modelSkinController)
+        private static ModelSkinController RevertSkin(ModelSkinController modelSkinController, SurvivorMannequinSlotController slotController)
         {
-            var previousReverseSkin = modelSkinController.GetComponent<ReverseSkinAsync>();
-            Log.Warning("Calling reverse skin, does component exist? " + (previousReverseSkin != null));
-            if (previousReverseSkin)
-                previousReverseSkin.Dispose();
-            else
-                modelSkinController.gameObject.AddComponent<ReverseSkinAsync>();
+            BodyIndex bodyIndexFromSurvivorIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(slotController.currentSurvivorDef.survivorIndex);
+            int newSkinIndex = (int)slotController.currentLoadout.bodyLoadoutManager.GetSkinIndex(bodyIndexFromSurvivorIndex);
+
+            var reverseSkin = modelSkinController.GetComponent<ReverseSkinAsync>();
+            Log.Warning("Calling reverse skin, does component exist? " + (reverseSkin != null));
+            if (!reverseSkin)
+                reverseSkin = modelSkinController.gameObject.AddComponent<ReverseSkinAsync>();
+
+            reverseSkin.ApplyDelta(modelSkinController.currentSkinIndex, newSkinIndex);
 
             // make IL gods happy
             return modelSkinController;
