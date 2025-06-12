@@ -16,11 +16,11 @@ namespace MiscFixes.ErrorPolice
         private List<CharacterModel.RendererInfo> cachedInfos = [];
         private List<CharacterModel.LightInfo> cachedLights = [];
 
-        private static Mesh GetMeshFromRenderer(Renderer rend)
+        private static Mesh GetMeshFromRenderer(Renderer renderer)
         {
-            if (rend is SkinnedMeshRenderer skinned)
+            if (renderer is SkinnedMeshRenderer skinned)
                 return skinned.sharedMesh;
-            var filter = rend.GetComponent<MeshFilter>();
+            var filter = renderer.GetComponent<MeshFilter>();
             return filter ? filter.sharedMesh : null;
         }
 
