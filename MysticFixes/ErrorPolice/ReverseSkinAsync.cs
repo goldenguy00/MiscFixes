@@ -14,9 +14,9 @@ namespace MiscFixes.ErrorPolice
         private CharacterModel characterModel;
         private ModelSkinController modelSkinController;
 
-        private IEnumerable<SkinDef.GameObjectActivationTemplate> cachedGos = [];
-        private IEnumerable<SkinDef.MeshReplacementTemplate> cachedMeshs = [];
-        private IEnumerable<SkinDef.RendererInfoTemplate> cachedInfos = [];
+        private IEnumerable<SkinDefParams.GameObjectActivation> cachedGos = [];
+        private IEnumerable<SkinDefParams.MeshReplacement> cachedMeshs = [];
+        private CharacterModel.RendererInfo[] cachedInfos = [];
 
         private void Awake()
         {
@@ -43,23 +43,14 @@ namespace MiscFixes.ErrorPolice
 
             RevertToOriginals();
 
-            cachedInfos = from ninfo in newRuntime.rendererInfoTemplates
-                        let trans = transform.Find(ninfo.transformPath)
-                        where trans != null
-                        let rend = trans.GetComponent<Renderer>()
-                        select new SkinDef.RendererInfoTemplate
-                        {
-                            transformPath = ninfo.transformPath,
-                            data = ninfo.data,
-                            materialReference = new AssetOrDirectReference<Material> { directRef = rend.material }
-                        };
+            cachedInfos =  ArrayUtils.Clone(characterModel.baseRendererInfos);
 
             cachedGos = from ngo in newRuntime.gameObjectActivationTemplates
                         let trans = transform.Find(ngo.transformPath)
                         where trans != null
-                        select new SkinDef.GameObjectActivationTemplate
+                        select new SkinDefParams.GameObjectActivation
                         {
-                            transformPath = ngo.transformPath,
+                            gameObject = trans.gameObject,
                             shouldActivate = trans.gameObject.activeSelf
                         };
 
@@ -67,11 +58,13 @@ namespace MiscFixes.ErrorPolice
             cachedMeshs = from nm in newRuntime.meshReplacementTemplates
                         let trans = transform.Find(nm.transformPath)
                         where trans != null
-                        let mesh = GetMeshFromRenderer(transform)
-                        select new SkinDef.MeshReplacementTemplate
+                        let rend = trans.GetComponent<Renderer>()
+                        where rend != null
+                        let mesh = GetMeshFromRenderer(rend)
+                        select new SkinDefParams.MeshReplacement
                         {
-                            transformPath = nm.transformPath,
-                            meshReference = new AssetOrDirectReference<Mesh> { directRef = mesh }
+                            renderer = trans.GetComponent<Renderer>(),
+                            mesh = mesh
                         };
         }
 
@@ -79,54 +72,42 @@ namespace MiscFixes.ErrorPolice
         {
             if (cachedInfos.Any())
             {
-                characterModel.baseRendererInfos = [.. from info in cachedInfos
-                                                       select info.data];
+                characterModel.baseRendererInfos = ArrayUtils.Clone(cachedInfos);
 
-                foreach (var info in from ci in cachedInfos
-                                     let trans = transform.Find(ci.transformPath)
-                                     where trans != null
-                                     let rend = trans.GetComponent<Renderer>()
-                                     where rend != null
-                                     select new { renderer = rend, mat = ci.materialReference.Result })
+                foreach (var info in cachedInfos)
                 {
-                    Log.Warning($"setting rend {info.renderer.name} to mat {info.mat.name}");
-                    info.renderer.material = info.mat;
+                    Log.Warning($"setting rend {info.renderer.name} to mat {info.defaultMaterial.name}");
+                    info.renderer.material = info.defaultMaterial;
                 }
             }
 
             if (cachedGos.Any())
             {
-                foreach (var cgt in from cg in cachedGos
-                                    let trans = transform.Find(cg.transformPath)
-                                    where trans != null
-                                    select new { trans.gameObject, active = cg.shouldActivate })
+                foreach (var go in cachedGos)
                 {
-                    Log.Warning($"setting go {cgt.gameObject.name} to {cgt.active}");
-                    cgt.gameObject.SetActive(cgt.active);
+                    Log.Warning($"setting go {go.gameObject.name} to {go.shouldActivate}");
+                    go.gameObject.SetActive(go.shouldActivate);
                 }
             }
 
             if  (cachedMeshs.Any())
             {
-                foreach (var rend in from cm in cachedMeshs
-                                     let trans = transform.Find(cm.transformPath)
-                                     where trans != null
-                                     select new { trans, mesh = cm.meshReference.Result })
+                foreach (var rend in cachedMeshs)
                 {
-                    Log.Warning($"setting rend {rend.trans.name} to mesh {rend.mesh?.name ?? "null"}");
-                    if (rend.trans.TryGetComponent<SkinnedMeshRenderer>(out var skinned))
+                    Log.Warning($"setting rend {rend.renderer.name} to mesh {rend.mesh?.name ?? "null"}");
+                    if (rend.renderer is SkinnedMeshRenderer skinned)
                         skinned.sharedMesh = rend.mesh;
-                    else if (rend.trans.TryGetComponent<MeshFilter>(out var filter))
+                    else if (rend.renderer.TryGetComponent<MeshFilter>(out var filter))
                         filter.sharedMesh = rend.mesh;
                 }
             }
         }
 
-        private Mesh GetMeshFromRenderer(Transform trans)
+        private Mesh GetMeshFromRenderer(Renderer trans)
         {
-            if (trans.TryGetComponent<SkinnedMeshRenderer>(out var skinned))
+            if (trans is SkinnedMeshRenderer skinned)
                 return skinned.sharedMesh;
-            else if (trans.TryGetComponent<MeshFilter>(out var filter))
+            if (trans.TryGetComponent<MeshFilter>(out var filter))
                 return filter.sharedMesh;
             return null;
         }
