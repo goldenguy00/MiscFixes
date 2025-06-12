@@ -55,7 +55,7 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 # Important Changes
 ### Check the changelog for more info. This list may not include everything.
 
-- Fixes many common Henry prefab creation error
+- Fixes many common Henry prefab creation errors
 - Fixes many of the issues modded characters and skins have in the recent update.
 - Fixes vanilla Asset loading issues introduced in the recent memory optimization update.
 - Prevents spam error for various server methods called on clients

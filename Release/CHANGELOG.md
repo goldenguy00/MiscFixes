@@ -1,3 +1,7 @@
+## 1.4.9
+
+- Moved skin and lobby model validation to R2API
+
 ## 1.4.8
 
 - Added lobby skins fix!
