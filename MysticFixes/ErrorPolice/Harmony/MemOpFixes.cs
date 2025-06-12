@@ -23,21 +23,19 @@ namespace MiscFixes.ErrorPolice.Harmony
         {
             var c = new ILCursor(il);
 
-            int modelLoc = 0;
             if (!c.TryGotoNext(MoveType.After,
-                    x => x.MatchCallOrCallvirt<Transform>(nameof(Transform.GetComponentInChildren)),
-                    x => x.MatchStloc(out modelLoc)
+                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponentInChildren)),
+                    x => x.MatchDup()
                 ))
             {
                 Log.PatchFail(il);
                 return;
             }
 
-            c.Emit(OpCodes.Ldloc, modelLoc);
             c.EmitDelegate(RevertSkin);
         }
 
-        private static void RevertSkin(ModelSkinController modelSkinController)
+        private static ModelSkinController RevertSkin(ModelSkinController modelSkinController)
         {
             var previousReverseSkin = modelSkinController.GetComponent<ReverseSkinAsync>();
             Log.Warning("Calling reverse skin, does component exist? " + (previousReverseSkin != null));
@@ -45,6 +43,9 @@ namespace MiscFixes.ErrorPolice.Harmony
                 previousReverseSkin.Dispose();
             else
                 modelSkinController.gameObject.AddComponent<ReverseSkinAsync>();
+
+            // make IL gods happy
+            return modelSkinController;
         }
 
         [HarmonyPatch(typeof(SurvivorCatalog), nameof(SurvivorCatalog.ValidateEntry))]
