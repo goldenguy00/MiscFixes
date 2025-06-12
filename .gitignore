@@ -23,9 +23,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 
-Release.zip
-MiscFixes.dll
-MiscFixes.pdb
+*.zip
+MiscFixes.*
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
