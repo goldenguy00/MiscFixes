@@ -293,43 +293,42 @@ namespace MiscFixes.Modules
         #endregion
 
         #region Unity Objects
-        public static T GetOrAddComponent<T>(this MonoBehaviour obj) where T : MonoBehaviour
+        public static T GetOrAddComponent<T>(this Component obj) where T : Component
         {
             T comp = null;
 
-            if (obj)
-            {
-                comp = obj.GetComponent<T>();
-                if (!comp)
-                    comp = obj.gameObject.AddComponent<T>();
-            }
+            if (obj && !obj.TryGetComponent(out comp))
+                comp = obj.gameObject.AddComponent<T>();
 
             return comp;
         }
 
-        public static T GetOrAddComponent<T>(this GameObject obj) where T : MonoBehaviour
+        public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
         {
             T comp = null;
 
-            if (obj)
-            {
-                comp = obj.GetComponent<T>();
-                if (!comp)
-                    comp = obj.AddComponent<T>();
-            }
+            if (obj && !obj.TryGetComponent(out comp))
+                comp = obj.AddComponent<T>();
 
             return comp;
         }
 
-        public static void TryDestroyComponent<T>(this GameObject obj) where T : MonoBehaviour
+        public static void TryDestroyComponent<T>(this GameObject obj) where T : Component
         {
             if (obj && obj.TryGetComponent<T>(out var component))
             {
-                MonoBehaviour.Destroy(component);
+                Object.Destroy(component);
+            }
+        }
+        public static void TryDestroyComponent<T>(this Component obj) where T : Component
+        {
+            if (obj && obj.TryGetComponent<T>(out var component))
+            {
+                Object.Destroy(component);
             }
         }
 
-        public static void DestroyComponentsOfType<T>(this GameObject obj) where T : MonoBehaviour
+        public static void TryDestroyAllComponents<T>(this GameObject obj) where T : Component
         {
             if (!obj)
                 return;
@@ -337,18 +336,11 @@ namespace MiscFixes.Modules
             var coms = obj.GetComponents<T>();
             for (var i = 0; i < coms.Length; i++)
             {
-                MonoBehaviour.Destroy(coms[i]);
-            }
-        }
-        public static void TryDestroyComponent<T>(this MonoBehaviour obj) where T : MonoBehaviour
-        {
-            if (obj && obj.TryGetComponent<T>(out var component))
-            {
-                MonoBehaviour.Destroy(component);
+                Object.Destroy(coms[i]);
             }
         }
 
-        public static void DestroyComponentsOfType<T>(this MonoBehaviour obj) where T : MonoBehaviour
+        public static void TryDestroyAllComponents<T>(this Component obj) where T : Component
         {
             if (!obj)
                 return;
@@ -356,11 +348,11 @@ namespace MiscFixes.Modules
             var coms = obj.GetComponents<T>();
             for (var i = coms.Length - 1; i >= 0; i--)
             {
-                MonoBehaviour.Destroy(coms[i]);
+                Object.Destroy(coms[i]);
             }
         }
 
-        public static T CloneComponent<T>(this GameObject go, T src) where T : MonoBehaviour => go.AddComponent<T>().CloneFrom(src);
+        public static T CloneComponent<T>(this GameObject go, T src) where T : Component => go.AddComponent<T>().CloneFrom(src);
 
         public static T CloneFrom<T>(this T obj, T other) where T : Object
         {
@@ -373,6 +365,7 @@ namespace MiscFixes.Modules
             var finfos = type.GetFields(flags);
             foreach (var info in finfos)
             {
+                // ignore stuff like name, transform, etc
                 if (info.DeclaringType == typeof(Object) || info.DeclaringType == typeof(Component))
                     continue;
 
@@ -387,6 +380,7 @@ namespace MiscFixes.Modules
             var pinfos = type.GetProperties(flags);
             foreach (var info in pinfos)
             {
+                // ignore stuff like name, transform, etc
                 if (info.DeclaringType == typeof(Object) || info.DeclaringType == typeof(Component))
                     continue;
 

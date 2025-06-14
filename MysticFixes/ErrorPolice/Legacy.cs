@@ -1,6 +1,52 @@
 ﻿
 /*
 
+        [HarmonyPatch(typeof(SurvivorMannequinSlotController), nameof(SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance))]
+        [HarmonyILManipulator]
+        public static void ModelSkinController_ApplySkinAsync(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (!c.TryGotoNext(MoveType.After,
+                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponentInChildren)),
+                    x => x.MatchDup()
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate(RevertSkin);
+        }
+
+        private static ModelSkinController RevertSkin(ModelSkinController modelSkinController, SurvivorMannequinSlotController slotController)
+        {
+            BodyIndex bodyIndexFromSurvivorIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(slotController.currentSurvivorDef.survivorIndex);
+            int newSkinIndex = (int)slotController.currentLoadout.bodyLoadoutManager.GetSkinIndex(bodyIndexFromSurvivorIndex);
+
+            modelSkinController.GetOrAddComponent<ReverseSkinAsync>().ApplyDelta(newSkinIndex);
+
+            // make IL gods happy
+            return modelSkinController;
+        }
+
+
+        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+        private void AddCompatPatches()
+        {
+            try { PatchLobbySkins("1.2.1"); } catch { }
+        }
+
+        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+        private void PatchLobbySkins(string version)
+        {
+            var targetVersion = new Version(version);
+            var bepinAttribute = typeof(LobbySkinsFix.LobbySkinsFixPlugin).GetCustomAttribute<BepInPlugin>();
+
+            if (bepinAttribute.Version.Equals(targetVersion))
+                harmonyPatcher.CreateClassProcessor(typeof(UnfuckLobbySkins)).Patch();
+        }
 
     /// <summary>
     /// ConVars are not registered as lower case but when submitting them from the console they are converted, leading to a match fail.

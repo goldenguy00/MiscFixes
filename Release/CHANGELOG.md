@@ -1,6 +1,11 @@
+## 1.5.0
+
+- Moved some skin related validation to R2API.Skins
+- Changed some extensions to use Component instead of MonoBehaviour
+
 ## 1.4.9
 
-- Moved skin and lobby model validation to R2API
+- Removed lobby skins fix o7
 
 ## 1.4.8
 

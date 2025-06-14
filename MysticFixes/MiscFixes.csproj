@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 	  <Compile Remove="C:\Users\golde\.nuget\packages\krafs.publicizer\2.3.0\contentfiles\cs\any\Publicizer\IgnoresAccessChecksToAttribute.cs" />
+	  <Compile Remove="ErrorPolice\ReverseSkinAsync.cs" />
 	</ItemGroup>
     
 	<ItemGroup>

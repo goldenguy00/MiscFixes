@@ -27,6 +27,36 @@ namespace MiscFixes.ErrorPolice.Harmony
     public class VanillaFixes
     {
         /// <summary>
+        /// null array elements ig, nullcheck all cuz its not super commonly called
+        /// RoR2.TemporaryVisualEffect.RebuildVisualComponents() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0057)
+        /// RoR2.TemporaryVisualEffect.OnDestroy() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
+        /// </summary>
+        [HarmonyPatch(typeof(TemporaryVisualEffect), nameof(TemporaryVisualEffect.RebuildVisualComponents))]
+        [HarmonyILManipulator]
+        public static void TemporaryVisualEffect_RebuildVisualComponents(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            Instruction instr = null;
+            while (c.TryGotoNext(MoveType.Before,
+                    x => x.MatchLdelemRef(),
+                    x => x.MatchLdcI4(out _),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Behaviour), nameof(Behaviour.enabled))),
+                    x => x.MatchAny(out instr)
+                ))
+            {
+                var setEnabledLabel = c.DefineLabel();
+                c.Index++;
+                c.Emit(OpCodes.Dup);
+                c.EmitOpImplicit();
+                c.Emit(OpCodes.Brfalse_S, instr);
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Br_S, setEnabledLabel);
+                c.MarkLabel(setEnabledLabel);
+            }
+
+        }
+        /// <summary>
         ///  cachedCharacterMotor = GetCurrentBody().GetComponent<CharacterMotor>();
         /// </summary>
 

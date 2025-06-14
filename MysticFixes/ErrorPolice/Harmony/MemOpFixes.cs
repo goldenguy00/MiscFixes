@@ -6,7 +6,6 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.ContentManagement;
-using RoR2.SurvivorMannequins;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -16,36 +15,6 @@ namespace MiscFixes.ErrorPolice.Harmony
     [HarmonyPatch]
     public class MemOpFixes
     {
-        [HarmonyPatch(typeof(SurvivorMannequinSlotController), nameof(SurvivorMannequinSlotController.ApplyLoadoutToMannequinInstance))]
-        [HarmonyILManipulator]
-        public static void SurvivorMannequinSlotController_ApplyLoadoutToMannequinInstance(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (!c.TryGotoNext(MoveType.After,
-                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponentInChildren)),
-                    x => x.MatchDup()
-                ))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-
-            c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate(RevertSkin);
-        }
-
-        private static ModelSkinController RevertSkin(ModelSkinController modelSkinController, SurvivorMannequinSlotController slotController)
-        {
-            BodyIndex bodyIndexFromSurvivorIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(slotController.currentSurvivorDef.survivorIndex);
-            int newSkinIndex = (int)slotController.currentLoadout.bodyLoadoutManager.GetSkinIndex(bodyIndexFromSurvivorIndex);
-
-            modelSkinController.GetOrAddComponent<ReverseSkinAsync>().ApplyDelta(newSkinIndex);
-
-            // make IL gods happy
-            return modelSkinController;
-        }
-
         /// <summary>
         /// loadHandle should be checked for validity
         /// directRef ?? loadHandle.Result;
@@ -89,7 +58,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(AssetAsyncReferenceManager<Object>), nameof(AssetAsyncReferenceManager<Object>.OnSceneChanged))]
         [HarmonyILManipulator]
-        public static void Asset_OnSceneChanged(ILContext il)
+        public static void AssetAsyncReferenceManager_OnSceneChanged(ILContext il)
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
 
@@ -141,6 +110,7 @@ namespace MiscFixes.ErrorPolice.Harmony
             c.Emit(OpCodes.Pop);
             c.Emit(OpCodes.Br, label);
         }
+
         /// <summary>
         /// if (!this.<keyAssetRuleGroup>5__3.keyAssetAddress.RuntimeKeyIsValid())
         /// keyAssetAddress and directRef being null will throw
