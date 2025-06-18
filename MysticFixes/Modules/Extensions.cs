@@ -1,14 +1,14 @@
 ﻿using BepInEx.Configuration;
-using System.Collections.Generic;
+using HG.GeneralSerializer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using UnityEngine.Networking;
+using RoR2;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using HG.GeneralSerializer;
-using RoR2;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace MiscFixes.Modules
 {
@@ -397,6 +397,37 @@ namespace MiscFixes.Modules
             }
 
             return obj;
+        }
+
+        public static GameObject ResolveObjectInNewRoot(this GameObject obj, Transform originalRoot, Transform newRoot)
+        {
+            if (!obj)
+                return null;
+
+            string objectPath = Util.BuildPrefabTransformPath(originalRoot, obj.transform);
+            if (string.IsNullOrEmpty(objectPath))
+                return null;
+
+            Transform newObjectTransform = newRoot.Find(objectPath);
+            if (!newObjectTransform)
+                return null;
+
+            return newObjectTransform.gameObject;
+        }
+
+        public static T ResolveComponentInNewRoot<T>(this T component, Transform originalRoot, Transform newRoot) where T : Component
+        {
+            if (!component)
+                return null;
+
+            GameObject newComponentObject = component.gameObject.ResolveObjectInNewRoot(originalRoot, newRoot);
+            if (!newComponentObject)
+                return null;
+
+            // Intentionally not using GetComponent<T> since it's not guaranteed to be the full type of the component.
+            // eg. if this is called with T=Renderer but component is a SkinnedMeshRenderer,
+            // we need to make sure we still return the right component type
+            return newComponentObject.GetComponent(component.GetType()) as T;
         }
         #endregion
 
