@@ -1,3 +1,9 @@
+## 1.5.1
+
+- Added glass mithrix material fix (thanks Gorakh)
+- Changed visibility of internals
+- 
+
 ## 1.5.0
 
 - Moved some skin related validation to R2API.Skins

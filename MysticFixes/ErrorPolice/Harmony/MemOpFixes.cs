@@ -13,7 +13,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace MiscFixes.ErrorPolice.Harmony
 {
     [HarmonyPatch]
-    public class MemOpFixes
+    internal class MemOpFixes
     {
         /// <summary>
         /// loadHandle should be checked for validity
@@ -22,7 +22,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(AssetOrDirectReference<Object>), "Result", MethodType.Getter)]
         [HarmonyILManipulator]
-        public static void AssetOrDirectReference_Result(ILContext il)
+        internal static void AssetOrDirectReference_Result(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -58,7 +58,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(AssetAsyncReferenceManager<Object>), nameof(AssetAsyncReferenceManager<Object>.OnSceneChanged))]
         [HarmonyILManipulator]
-        public static void AssetAsyncReferenceManager_OnSceneChanged(ILContext il)
+        internal static void AssetAsyncReferenceManager_OnSceneChanged(ILContext il)
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
 
@@ -88,7 +88,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.InstantiateDisplayRuleGroup))]
         [HarmonyILManipulator]
-        public static void CharacterModel_InstantiateDisplayRuleGroup(ILContext il)
+        internal static void CharacterModel_InstantiateDisplayRuleGroup(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -117,7 +117,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(ItemDisplayRuleSet), nameof(ItemDisplayRuleSet.GenerateRuntimeValuesAsync), MethodType.Enumerator)]
         [HarmonyILManipulator]
-        public static void ItemDisplayRuleSet_GenerateRuntimeValuesAsync(ILContext il)
+        internal static void ItemDisplayRuleSet_GenerateRuntimeValuesAsync(ILContext il)
         {
             var c = new ILCursor(il);
 

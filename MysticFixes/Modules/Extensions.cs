@@ -5,7 +5,6 @@ using MonoMod.Cil;
 using UnityEngine.Networking;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using HG.GeneralSerializer;
 using RoR2;
 using UnityEngine;
@@ -48,32 +47,17 @@ namespace MiscFixes.Modules
             RestartRequired = 1,
             ClientSided = 1 << 1,
             ServerSided = 1 << 2,
+            SyncRequired = ClientSided & ServerSided
         }
 
-        private static readonly StringBuilder _sb = new StringBuilder();
-        private static string BuildDescription(string name, string description, string defaultValue, ConfigFlags flags)
-        {
-            if (string.IsNullOrEmpty(description))
-                description = name;
-
-            _sb.Append(description + $" (Default: {defaultValue})");
-
-            if ((flags & ConfigFlags.RestartRequired) != 0)
-                _sb.Append(" (Restart Required)");
-
-            if ((flags & ConfigFlags.ClientSided) != 0)
-                _sb.Append(" (Client-Sided)");
-
-            if ((flags & ConfigFlags.ServerSided) != 0)
-                _sb.Append(" (Server-Sided)");
-            
-            return _sb.Take().Replace("'", string.Empty);
-        }
+        /// <summary>  Use <see cref="ClearOrphanedEntries(ConfigFile)"/> instead. </summary>
+        [System.Obsolete]
+        public static void WipeConfig(this ConfigFile cfg) => cfg.ClearOrphanedEntries();
 
         /// <summary>
-        /// Erases all unbound config extries from the config file. Call this after all your ConfigEntries are bound!
+        /// Erases all unbound (orphaned) config extries from the config file. Only call this after all your ConfigEntries are bound!
         /// </summary>
-        public static void WipeConfig(this ConfigFile cfg)
+        public static void ClearOrphanedEntries(this ConfigFile cfg)
         {
             var orphanedEntriesProp = typeof(ConfigFile).GetProperty("OrphanedEntries", ~BindingFlags.Default);
             if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
@@ -86,18 +70,17 @@ namespace MiscFixes.Modules
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, ConfigFlags flags = ConfigFlags.None)
         {
-            description = BuildDescription(name, description, defaultValue?.ToString(), flags);
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue?.ToString(), flags);
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description));
 
-            try
+            if (MiscFixesPlugin.RooInstalled)
             {
-                if (MiscFixesPlugin.RooInstalled)
-                {
-                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
-                    configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
-                }
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+
+                configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
-            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -105,7 +88,7 @@ namespace MiscFixes.Modules
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : System.IEquatable<T>
         {
-            description = BuildDescription(name, description, defaultValue?.ToString(), flags);
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue?.ToString(), flags);
 
             AcceptableValueBase valuesList = null;
             if (acceptableValues?.Length > 0)
@@ -113,15 +96,14 @@ namespace MiscFixes.Modules
 
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, valuesList));
 
-            try
+            if (MiscFixesPlugin.RooInstalled)
             {
-                if (MiscFixesPlugin.RooInstalled)
-                {
-                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
-                    configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
-                }
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+
+                configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
-            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -129,18 +111,17 @@ namespace MiscFixes.Modules
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, ConfigFlags flags = ConfigFlags.None)
         {
-            description = BuildDescription(name, description, defaultValue.ToString(), flags);
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description));
 
-            try
+            if (MiscFixesPlugin.RooInstalled)
             {
-                if (MiscFixesPlugin.RooInstalled)
-                {
-                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
-                    configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
-                }
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+
+                configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
-            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -148,18 +129,17 @@ namespace MiscFixes.Modules
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : System.IComparable
         {
-            description = BuildDescription(name, description, defaultValue.ToString(), flags);
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, new AcceptableValueRange<T>(min, max)));
 
-            try
+            if (MiscFixesPlugin.RooInstalled)
             {
-                if (MiscFixesPlugin.RooInstalled)
-                {
-                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
-                    configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
-                }
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+
+                configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
-            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -170,29 +150,33 @@ namespace MiscFixes.Modules
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<float> BindOptionSteppedSlider(this ConfigFile myConfig, string section, string name, string description, float defaultValue, float increment, float min = 0, float max = 100, ConfigFlags flags = ConfigFlags.None)
         {
-            description = BuildDescription(name, description, defaultValue.ToString(), flags);
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, new AcceptableValueRange<float>(min, max)));
 
-            try
+            if (MiscFixesPlugin.RooInstalled)
             {
-                if (MiscFixesPlugin.RooInstalled)
-                {
-                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out var guid, out var modName);
-                    configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0, guid, modName);
-                }
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+
+                configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
-            catch (System.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
         #endregion
 
         #region RoO
+
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static void TryRegisterOption<T>(this ConfigEntry<T> entry, bool restartRequired = false, string modGuid = null, string modName = null)
         {
             if (modGuid is null && modName is null)
-                Assembly.GetCallingAssembly().GetModMetaDataSafe(out modGuid, out modName);
+            {
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out modGuid, out modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+            }
 
             if (entry is ConfigEntry<string> stringEntry)
             {
@@ -226,13 +210,17 @@ namespace MiscFixes.Modules
         public static void TryRegisterOptionSlider<T>(this ConfigEntry<T> entry, bool restartRequired = false, string modGuid = null, string modName = null)
         {
             if (modGuid is null && modName is null)
-                Assembly.GetCallingAssembly().GetModMetaDataSafe(out modGuid, out modName);
+            {
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out modGuid, out modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+            }
 
             if (entry is ConfigEntry<int> intEntry)
             {
                 var config = new RiskOfOptions.OptionConfigs.IntSliderConfig
                 {
-                    formatString = "{0:0.00}",
+                    formatString = "{0}",
                     restartRequired = restartRequired,
                 };
 
@@ -270,11 +258,15 @@ namespace MiscFixes.Modules
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static void TryRegisterOptionSteppedSlider(this ConfigEntry<float> entry, float increment, float min, float max, bool restartRequired = false, string modGuid = null, string modName = null)
         {
+            if (modGuid is null && modName is null)
+            {
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out modGuid, out modName);
+                Utils.InitRoO(callingAssembly, modGuid, modName);
+            }
+
             if (entry is ConfigEntry<float> floatEntry)
             {
-                if (modGuid is null && modName is null)
-                    Assembly.GetCallingAssembly().GetModMetaDataSafe(out modGuid, out modName);
-
                 RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.StepSliderOption(floatEntry, new RiskOfOptions.OptionConfigs.StepSliderConfig
                 {
                     increment = increment,

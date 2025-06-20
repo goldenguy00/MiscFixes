@@ -1,4 +1,4 @@
-﻿extern alias Rewired_Core_NS;
+﻿ extern alias Rewired_Core_NS;
 
 using System;
 using System.Collections.Generic;
@@ -24,7 +24,7 @@ using RPServer = RoR2.Achievements.Chef.RolyPolyHitFiveAirEnemies.RolyPolyHitFiv
 namespace MiscFixes.ErrorPolice.Harmony
 {
     [HarmonyPatch]
-    public class VanillaFixes
+    internal class VanillaFixes
     {
         /// <summary>
         /// null array elements ig, nullcheck all cuz its not super commonly called
@@ -33,7 +33,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(TemporaryVisualEffect), nameof(TemporaryVisualEffect.RebuildVisualComponents))]
         [HarmonyILManipulator]
-        public static void TemporaryVisualEffect_RebuildVisualComponents(ILContext il)
+        internal static void TemporaryVisualEffect_RebuildVisualComponents(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -62,7 +62,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(RPServer), nameof(RPServer.GetCharacterMotor))]
         [HarmonyILManipulator]
-        public static void RolyPolyHitFiveAirEnemiesServerAchievement_GetCharacterMotor(ILContext il)
+        internal static void RolyPolyHitFiveAirEnemiesServerAchievement_GetCharacterMotor(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -106,7 +106,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(AffixAurelioniteBehavior), nameof(AffixAurelioniteBehavior.Update))]
         [HarmonyPrefix]
-        public static bool AffixAurelioniteBehavior_Update(AffixAurelioniteBehavior __instance) => __instance.body?.coreTransform;
+        internal static bool AffixAurelioniteBehavior_Update(AffixAurelioniteBehavior __instance) => __instance.body?.coreTransform;
 
         /// <summary>
         /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState
@@ -117,7 +117,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|389_0")]
         [HarmonyILManipulator]
-        public static void CharacterBody_HandleDisableAllSkillsDebuff(ILContext il)
+        internal static void CharacterBody_HandleDisableAllSkillsDebuff(ILContext il)
         {
             var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
 
@@ -150,7 +150,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
         [HarmonyILManipulator]
-        public static void CharacterBody_FreeFortniteCard(ILContext il)
+        internal static void CharacterBody_FreeFortniteCard(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -181,7 +181,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(VineOrb), nameof(VineOrb.OnArrival))]
         [HarmonyILManipulator]
-        public static void VineOrb_OnArrival(ILContext il, ILLabel retLabel)
+        internal static void VineOrb_OnArrival(ILContext il, ILLabel retLabel)
         {
             var c = new ILCursor(il);
             c.Emit(OpCodes.Ldarg_0);
@@ -226,7 +226,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
         [HarmonyILManipulator]
-        public static void ProjectileController_Start(ILContext il)
+        internal static void ProjectileController_Start(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -260,7 +260,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(StatManager), nameof(StatManager.ProcessGoldEvents))]
         [HarmonyILManipulator]
-        public static void StatManager_ProcessGoldEvents(ILContext il)
+        internal static void StatManager_ProcessGoldEvents(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -407,7 +407,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(FogDamageController), nameof(FogDamageController.EvaluateTeam))]
         [HarmonyILManipulator]
-        public static void FogDamageController_EvaluateTeam(ILContext il)
+        internal static void FogDamageController_EvaluateTeam(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -440,7 +440,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(DeathState), nameof(DeathState.FixedUpdate))]
         [HarmonyILManipulator]
-        public static void DeathState_FixedUpdate(ILContext il)
+        internal static void DeathState_FixedUpdate(ILContext il)
         {
             if (new ILCursor(il).TryFindNext(out var c,
                     x => x.MatchCallOrCallvirt<DeathState>(nameof(DeathState.FireExplosion)),
@@ -469,7 +469,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(RouletteChestController.Idle), nameof(RouletteChestController.Idle.OnEnter))]
         [HarmonyILManipulator]
-        public static void RouletteChestController_Idle_OnEnter(ILContext il)
+        internal static void RouletteChestController_Idle_OnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             if (c.TryGotoNext(
@@ -502,7 +502,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(Interactor), nameof(Interactor.FindBestInteractableObject))]
         [HarmonyILManipulator]
-        public static void Interactor_FindBestInteractableObject(ILContext il)
+        internal static void Interactor_FindBestInteractableObject(ILContext il)
         {
             var c = new ILCursor(il);
 
@@ -542,7 +542,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
         [HarmonyILManipulator]
-        public static void Duplicating_DropDroplet(ILContext il)
+        internal static void Duplicating_DropDroplet(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(x => x.MatchCallOrCallvirt(typeof(EffectManager), nameof(EffectManager.SimpleMuzzleFlash))))
@@ -572,7 +572,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(DetachParticleOnDestroyAndEndEmission), nameof(DetachParticleOnDestroyAndEndEmission.OnDisable))]
         [HarmonyILManipulator]
-        public static void DetachParticleOnDestroyAndEndEmission_OnDisable(ILContext il)
+        internal static void DetachParticleOnDestroyAndEndEmission_OnDisable(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel returnLabel = null;
@@ -601,7 +601,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.Awake))]
         [HarmonyILManipulator]
-        public static void CharacterModel_Awake(ILContext il)
+        internal static void CharacterModel_Awake(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(MoveType.After,
@@ -629,7 +629,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(OutsideInteractableLocker), nameof(OutsideInteractableLocker.LockLemurianEgg))]
         [HarmonyILManipulator]
-        public static void OutsideInteractableLocker_LockLemurianEgg(ILContext il)
+        internal static void OutsideInteractableLocker_LockLemurianEgg(ILContext il)
         {
             var c = new ILCursor(il);
             var nextInstr = c.Next;
@@ -647,7 +647,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(PositionIndicator), nameof(PositionIndicator.UpdatePositions))]
         [HarmonyILManipulator]
-        public static void PositionIndicator_UpdatePositions(ILContext il)
+        internal static void PositionIndicator_UpdatePositions(ILContext il)
         {
             var c = new ILCursor(il);
             var locVarIndex = 0;
@@ -674,7 +674,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(Indicator), nameof(Indicator.SetVisibleInternal))]
         [HarmonyILManipulator]
-        public static void Indicator_SetVisibleInternal(ILContext il)
+        internal static void Indicator_SetVisibleInternal(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction ifInstr = null;
@@ -700,7 +700,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(CrosshairUtils.CrosshairOverrideBehavior), nameof(CrosshairUtils.CrosshairOverrideBehavior.OnDestroy))]
         [HarmonyILManipulator]
-        public static void CrosshairUtils_CrosshairOverrideBehavior_OnDestroy(ILContext il)
+        internal static void CrosshairUtils_CrosshairOverrideBehavior_OnDestroy(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(
@@ -719,7 +719,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
         [HarmonyILManipulator]
-        public static void RuleChoiceController_FindNetworkUser(ILContext il)
+        internal static void RuleChoiceController_FindNetworkUser(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(
@@ -751,7 +751,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(RewiredIntegrationManager), nameof(RewiredIntegrationManager.RefreshJoystickAssignment))]
         [HarmonyPrefix]
-        public static bool RewiredIntegrationManager_RefreshJoystickAssignment()
+        internal static bool RewiredIntegrationManager_RefreshJoystickAssignment()
         {
             return ReInput.initialized && ReInput.controllers != null;
         }
@@ -761,7 +761,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(MeridianEventTriggerInteraction), nameof(MeridianEventTriggerInteraction.Awake))]
         [HarmonyPrefix]
-        public static void MeridianEventTriggerInteraction_Awake(MeridianEventTriggerInteraction __instance)
+        internal static void MeridianEventTriggerInteraction_Awake(MeridianEventTriggerInteraction __instance)
         {
             var esm = EntityStateMachine.FindByCustomName(__instance.gameObject, "");
             if (esm != null && esm.initialStateType.stateType == typeof(TestState1))
@@ -780,7 +780,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.ChildMonster.Frolic), nameof(EntityStates.ChildMonster.Frolic.TeleportAroundPlayer))]
         [HarmonyILManipulator]
-        public static void Frolic_TeleportAroundPlayer(ILContext il)
+        internal static void Frolic_TeleportAroundPlayer(ILContext il)
         {
             var c = new ILCursor(il);
             int listVar = 0, vectorVar = 0, boolVar = 0;
@@ -817,7 +817,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(TeamManager), nameof(TeamManager.LongstandingSolitudesInParty))]
         [HarmonyILManipulator]
-        public static void TeamManager_LongstandingSolitudesInParty(ILContext il)
+        internal static void TeamManager_LongstandingSolitudesInParty(ILContext il)
         {
             var c = new ILCursor(il);
             var pcmcVarIndex = 0;
@@ -875,7 +875,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(Util), nameof(Util.HealthComponentToTransform))]
         [HarmonyILManipulator]
-        public static void Util_HealthComponentToTransform(ILContext il)
+        internal static void Util_HealthComponentToTransform(ILContext il)
         {
             var c = new ILCursor(il);
             if (!c.TryGotoNext(x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.coreTransform)))))
@@ -893,7 +893,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Halcyonite.WhirlWindPersuitCycle), nameof(EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDecelerate))]
         [HarmonyILManipulator]
-        public static void WhirlWindPersuitCycle_UpdateDecelerate(ILContext il, ILLabel retLabel)
+        internal static void WhirlWindPersuitCycle_UpdateDecelerate(ILContext il, ILLabel retLabel)
         {
             var c = new ILCursor(il);
             // In theory all we want is to convert `if (age > duration) { A(); return; } B();` into
@@ -919,7 +919,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.InitializePullInfo))]
         [HarmonyILManipulator]
-        public static void MeridiansWillFire_InitializePullInfo(ILContext il)
+        internal static void MeridiansWillFire_InitializePullInfo(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel label = null;
@@ -945,7 +945,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.ApplyForce))]
         [HarmonyILManipulator]
-        public static void MeridiansWillFire_ApplyForce(ILContext il)
+        internal static void MeridiansWillFire_ApplyForce(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;

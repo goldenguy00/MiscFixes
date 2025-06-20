@@ -12,11 +12,11 @@ namespace MiscFixes.ErrorPolice.Harmony
     /// A collection of patches that skip Server method calls on a client preventing log spam.
     /// </summary>
     [HarmonyPatch]
-    public class ServerCommandsOnClient
+    internal class ServerCommandsOnClient
     {
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.EnterSkyLeap), nameof(EntityStates.BrotherMonster.EnterSkyLeap.OnEnter))]
         [HarmonyILManipulator]
-        public static void FixEnterSkyLeapOnEnter(ILContext il)
+        internal static void FixEnterSkyLeapOnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -37,7 +37,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.ExitSkyLeap), nameof(EntityStates.BrotherMonster.ExitSkyLeap.OnEnter))]
         [HarmonyILManipulator]
-        public static void FixExitSkyLeapOnEnter(ILContext il)
+        internal static void FixExitSkyLeapOnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -58,7 +58,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.HoldSkyLeap), nameof(EntityStates.BrotherMonster.HoldSkyLeap.OnEnter))]
         [HarmonyILManipulator]
-        public static void FixHoldSkyLeapOnEnter(ILContext il)
+        internal static void FixHoldSkyLeapOnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -90,7 +90,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.HoldSkyLeap), nameof(EntityStates.BrotherMonster.HoldSkyLeap.OnExit))]
         [HarmonyILManipulator]
-        public static void FixHoldSkyLeapOnExit(ILContext il)
+        internal static void FixHoldSkyLeapOnExit(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -122,7 +122,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.SpellChannelState), nameof(EntityStates.BrotherMonster.SpellChannelState.OnEnter))]
         [HarmonyILManipulator]
-        public static void FixSpellChannelStateOnEnter(ILContext il)
+        internal static void FixSpellChannelStateOnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -154,7 +154,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.BrotherMonster.SpellChannelState), nameof(EntityStates.BrotherMonster.SpellChannelState.OnExit))]
         [HarmonyILManipulator]
-        public static void SpellChannelState_OnExit(ILContext il)
+        internal static void SpellChannelState_OnExit(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -174,7 +174,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
         [HarmonyILManipulator]
-        public static void FixDuplicatingDropDroplet(ILContext il)
+        internal static void FixDuplicatingDropDroplet(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -193,7 +193,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.Huntress.Weapon.FireArrowSnipe), nameof(EntityStates.Huntress.Weapon.FireArrowSnipe.FireBullet))]
         [HarmonyILManipulator]
-        public static void FixFireArrowSnipeFireBullet(ILContext il)
+        internal static void FixFireArrowSnipeFireBullet(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -218,7 +218,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.MinorConstruct.Hidden), nameof(EntityStates.MinorConstruct.Hidden.OnEnter))]
         [HarmonyILManipulator]
-        public static void FixHiddenOnEnter(ILContext il)
+        internal static void FixHiddenOnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel nextLabel = null;
@@ -238,7 +238,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.MinorConstruct.Hidden), nameof(EntityStates.MinorConstruct.Hidden.OnExit))]
         [HarmonyILManipulator]
-        public static void FixHiddenOnExit(ILContext il)
+        internal static void FixHiddenOnExit(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel nextLabel = null;
@@ -258,7 +258,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(EntityStates.Scrapper.ScrapperBaseState), nameof(EntityStates.Scrapper.ScrapperBaseState.OnEnter))]
         [HarmonyILManipulator]
-        public static void FixScrapperBaseStateOnEnter(ILContext il)
+        internal static void FixScrapperBaseStateOnEnter(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -279,7 +279,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(BuffPassengerWhileSeated), nameof(BuffPassengerWhileSeated.OnDisable))]
         [HarmonyILManipulator]
-        public static void FixBuffPassengerWhileSeatedOnDisable(ILContext il)
+        internal static void FixBuffPassengerWhileSeatedOnDisable(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel nextLabel = null;
@@ -299,7 +299,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(BuffPassengerWhileSeated), nameof(BuffPassengerWhileSeated.OnEnable))]
         [HarmonyILManipulator]
-        public static void FixBuffPassengerWhileSeatedOnEnable(ILContext il)
+        internal static void FixBuffPassengerWhileSeatedOnEnable(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel nextLabel = null;
@@ -319,7 +319,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(DelusionChestController), nameof(DelusionChestController.ResetChestForDelusion))]
         [HarmonyILManipulator]
-        public static void FixDelusionChestControllerResetChestForDelusion(ILContext il)
+        internal static void FixDelusionChestControllerResetChestForDelusion(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -339,7 +339,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(DelusionChestController), nameof(DelusionChestController.Start))]
         [HarmonyILManipulator]
-        public static void FixDelusionChestControllerStart(ILContext il)
+        internal static void FixDelusionChestControllerStart(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -359,7 +359,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(DevotionInventoryController), nameof(DevotionInventoryController.Awake))]
         [HarmonyILManipulator]
-        public static void FixDevotionInventoryControllerAwake(ILContext il)
+        internal static void FixDevotionInventoryControllerAwake(ILContext il)
         {
             var c = new ILCursor(il);
             Instruction nextInstr = null;
@@ -380,7 +380,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(MasterDropDroplet), nameof(MasterDropDroplet.DropItems))]
         [HarmonyILManipulator]
-        public static void FixMasterDropDropletDropItems(ILContext il)
+        internal static void FixMasterDropDropletDropItems(ILContext il)
         {
             var c = new ILCursor(il);
             var nextInstr = c.Instrs[c.Instrs.Count - 1];
@@ -390,7 +390,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.AddMinion))]
         [HarmonyILManipulator]
-        public static void FixMinionGroupAddMinion(ILContext il)
+        internal static void FixMinionGroupAddMinion(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel nextLabel = null;
@@ -409,7 +409,7 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.RemoveMinion))]
         [HarmonyILManipulator]
-        public static void FixMinionGroupRemoveMinion(ILContext il)
+        internal static void FixMinionGroupRemoveMinion(ILContext il)
         {
             var c = new ILCursor(il);
             ILLabel nextLabel = null;

@@ -96,7 +96,7 @@ namespace MiscFixes.ErrorPolice
         /// <summary>
         /// Fix two Elder Lemurian footstep events to play sound and not spam Layer Index -1.
         /// </summary>
-        public static void FixElderLemurianFootstepEvents()
+        private static void FixElderLemurianFootstepEvents()
         {
             var animRef = new AssetReferenceT<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller);
             Utils.PreloadAsset(animRef).Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> animHandle)
@@ -130,7 +130,7 @@ namespace MiscFixes.ErrorPolice
         /// <summary>
         /// Prevent Sale Star's pickup from complaining about its collider's settings.
         /// </summary>
-        public static void FixSaleStarCollider()
+        private static void FixSaleStarCollider()
         {
             var objRef = new AssetReferenceGameObject(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab);
             Utils.PreloadAsset(objRef).Completed += delegate (AsyncOperationHandle<GameObject> objHandle)
@@ -148,7 +148,7 @@ namespace MiscFixes.ErrorPolice
             };
         }
 
-        public static void MoreHudChildLocEntries()
+        private static void MoreHudChildLocEntries()
         {
             var objRef = new AssetReferenceGameObject(RoR2_Base_UI.HUDSimple_prefab);
             Utils.PreloadAsset(objRef).Completed += delegate (AsyncOperationHandle<GameObject> objHandle)

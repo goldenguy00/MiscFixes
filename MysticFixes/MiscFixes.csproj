@@ -10,28 +10,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="libs\**" />
-	  <EmbeddedResource Remove="libs\**" />
-	  <None Remove="libs\**" />
+	  <Compile Remove="C:\Users\golde\.nuget\packages\krafs.publicizer\2.3.0\contentfiles\cs\any\Publicizer\IgnoresAccessChecksToAttribute.cs" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Compile Remove="C:\Users\golde\.nuget\packages\krafs.publicizer\2.3.0\contentfiles\cs\any\Publicizer\IgnoresAccessChecksToAttribute.cs" />
-	  <Compile Remove="ErrorPolice\ReverseSkinAsync.cs" />
-	</ItemGroup>
-    
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
-		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 		<PackageReference Include="RoR2BepInExPack" Version="1.31.0" />
-		<PackageReference Include="Rune580.Mods.RiskOfRain2.RiskOfOptions" Version="2.8.3" />
 		<PackageReference Include="UnityEngine.Modules" Version="2021.3.33" IncludeAssets="compile" />
 		<PackageReference Include="RiskOfRain2.GameLibs" Version="1.3.9-r.0" />
 	</ItemGroup>
@@ -40,8 +28,8 @@
 	  <Reference Include="Facepunch.Steamworks">
 	    <HintPath>libs\Facepunch.Steamworks.dll</HintPath>
 	  </Reference>
-	  <Reference Include="LobbySkinsFix">
-	    <HintPath>libs\LobbySkinsFix.dll</HintPath>
+	  <Reference Include="RiskOfOptions">
+	    <HintPath>libs\RiskOfOptions-nstrip.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

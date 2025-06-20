@@ -17,21 +17,21 @@ namespace MiscFixes.ErrorPolice.Harmony
     /// these kinda just live here now and thats ok i guess
     /// </summary>
     [HarmonyPatch]
-    public class PermanentFixes
+    internal class PermanentFixes
     {
         /// <summary>
         /// call can be suppressed if stuff is null
         /// </summary>
         [HarmonyPatch("RoR2.Stats.PlayerStatsComponent+<>c, RoR2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", "<Init>b__18_0")]
         [HarmonyPrefix]
-        public static bool PlayerStatsComponent_Init(DamageReport damageReport) => damageReport.victim;
+        internal static bool PlayerStatsComponent_Init(DamageReport damageReport) => damageReport.victim;
 
         /// <summary>
         /// call can be suppressed if stuff is null
         /// </summary>
         [HarmonyPatch(typeof(InspectPanelController), nameof(InspectPanelController.Show))]
         [HarmonyPrefix]
-        public static bool InspectPanelController_Show(InspectPanelController __instance) => __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
+        internal static bool InspectPanelController_Show(InspectPanelController __instance) => __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
 
         /// <summary>
         /// normalize particles once
@@ -39,7 +39,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(NormalizeParticleScale), nameof(NormalizeParticleScale.OnEnable))]
         [HarmonyPrefix]
-        public static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance) => !__instance.particleSystem;
+        internal static bool NormalizeParticleScale_OnEnable(NormalizeParticleScale __instance) => !__instance.particleSystem;
 
         /// <summary>
         /// idk what it does but it works probably
@@ -47,7 +47,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(BurnEffectController), nameof(BurnEffectController.AddFireParticles))]
         [HarmonyPostfix]
-        public static void BurnEffectController_AddFireParticles(NormalizeParticleScale __instance, ref BurnEffectControllerHelper __result, Renderer modelRenderer)
+        internal static void BurnEffectController_AddFireParticles(NormalizeParticleScale __instance, ref BurnEffectControllerHelper __result, Renderer modelRenderer)
         {
             if (__result && modelRenderer)
             {
@@ -68,7 +68,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(SurvivorIconController), nameof(SurvivorIconController.GetLocalUser))]
         [HarmonyPrefix]
-        public static bool SurvivorIconController_GetLocalUser(SurvivorIconController __instance, ref LocalUser __result)
+        internal static bool SurvivorIconController_GetLocalUser(SurvivorIconController __instance, ref LocalUser __result)
         {
             if (EventSystem.current is MPEventSystem)
                 return true;
@@ -94,7 +94,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(TemporaryOverlayInstance), nameof(TemporaryOverlayInstance.SetupMaterial))]
         [HarmonyPrefix]
-        public static void TemporaryOverlayInstance_SetupMaterial(TemporaryOverlayInstance __instance)
+        internal static void TemporaryOverlayInstance_SetupMaterial(TemporaryOverlayInstance __instance)
         {
             if (!__instance.originalMaterial && __instance.componentReference && __instance.ValidateOverlay())
                 __instance.componentReference.CopyDataFromPrefabToInstance();
@@ -106,7 +106,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(HalcyoniteShrineInteractable), nameof(HalcyoniteShrineInteractable.Awake))]
         [HarmonyPostfix]
-        public static void HalcyoniteShrineInteractable_Awake(HalcyoniteShrineInteractable __instance)
+        internal static void HalcyoniteShrineInteractable_Awake(HalcyoniteShrineInteractable __instance)
         {
             __instance.goldDrainValue = System.Math.Max(1, __instance.goldDrainValue);
         }
@@ -116,14 +116,14 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// </summary>
         [HarmonyPatch(typeof(BaseSteamworks), nameof(BaseSteamworks.RunUpdateCallbacks))]
         [HarmonyFinalizer]
-        public static System.Exception FixFacepunch() => null;
+        internal static System.Exception FixFacepunch() => null;
 
         /// <summary>
         /// blame ss2
         /// </summary>
         [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.OnEnable))]
         [HarmonyPrefix]
-        public static void Ugh(FlickerLight __instance)
+        internal static void Ugh(FlickerLight __instance)
         {
             if (!__instance.light)
                 __instance.enabled = false;
@@ -138,7 +138,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// <param name="il"></param>
         [HarmonyPatch(typeof(MPEventSystem), nameof(MPEventSystem.Update))]
         [HarmonyILManipulator]
-        public static void FixThisFuckingBullshitGearbox(ILContext il)
+        internal static void FixThisFuckingBullshitGearbox(ILContext il)
         {
             ILCursor[] c = null;
             if (new ILCursor(il).TryFindNext(out c,
@@ -159,7 +159,7 @@ namespace MiscFixes.ErrorPolice.Harmony
         [HarmonyPatch(typeof(EntityStates.VoidCamp.Idle), nameof(EntityStates.VoidCamp.Idle.FixedUpdate))]
         [HarmonyPatch(typeof(EntityStates.VoidCamp.Idle.VoidCampObjectiveTracker), nameof(EntityStates.VoidCamp.Idle.VoidCampObjectiveTracker.GenerateString))]
         [HarmonyILManipulator]
-        public static void FixVoidSeed(ILContext il)
+        internal static void FixVoidSeed(ILContext il)
         {
             var c = new ILCursor(il);
 
