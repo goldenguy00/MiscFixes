@@ -258,144 +258,142 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         private static void FixGlassMithrixMaterials()
         {
-            // Intentionally not loading any assets async, since other mods might access or duplicate the model during load,
-            // at which point the material fixes needs to already be in place.
-
-            AssetReferenceGameObject brotherGlassBodyRef = new AssetReferenceGameObject(RoR2_Junk_BrotherGlass.BrotherGlassBody_prefab);
-            GameObject brotherGlassBody = Utils.PreloadAsset(brotherGlassBodyRef).WaitForCompletion();
-
-            Transform modelTransform = null;
-            if (brotherGlassBody.TryGetComponent(out ModelLocator modelLocator))
+            var brotherGlassBodyRef = new AssetReferenceGameObject(RoR2_Junk_BrotherGlass.BrotherGlassBody_prefab);
+            Utils.PreloadAsset(brotherGlassBodyRef).Completed += delegate (AsyncOperationHandle<GameObject> objHandle)
             {
-                modelTransform = modelLocator.modelTransform;
-            }
-
-            if (modelTransform)
-            {
-                AssetReferenceT<SkinDef> originalSkinRef = new AssetReferenceT<SkinDef>(RoR2_Base_Brother.skinBrotherBodyDefault_asset);
-                SkinDef originalSkin = Utils.PreloadAsset(originalSkinRef).WaitForCompletion();
-
-                ModelSkinController modelSkinController = modelTransform.gameObject.EnsureComponent<ModelSkinController>();
-                int replacementSkinIndex = Array.IndexOf(modelSkinController.skins, originalSkin);
-
-                SkinDef skinDef = GameObject.Instantiate(originalSkin);
-                skinDef.name = "skinBrotherGlassBodyDefault";
-                Transform originalSkinRoot = skinDef.rootObject.transform;
-                skinDef.rootObject = modelTransform.gameObject;
-
-                (AssetReferenceT<SkinDefParams> paramsAddress, SkinDefParams paramsDirect) = skinDef.GetSkinParams();
-                AssetOrDirectReference<SkinDefParams> skinDefParamsReference = new AssetOrDirectReference<SkinDefParams>
+                Transform modelTransform = null;
+                if (objHandle.Result.TryGetComponent(out ModelLocator modelLocator))
                 {
-                    address = paramsAddress,
-                    directRef = paramsDirect
-                };
+                    modelTransform = modelLocator.modelTransform;
+                }
 
-                SkinDefParams skinDefParams = GameObject.Instantiate(skinDefParamsReference.WaitForCompletion());
-                skinDefParams.name = $"{skinDef.name}_params";
-                skinDef.skinDefParams = skinDefParams;
-                skinDef.skinDefParamsAddress = new AssetReferenceT<SkinDefParams>(string.Empty);
-                skinDef.optimizedSkinDefParams = skinDefParams;
-                skinDef.optimizedSkinDefParamsAddress = new AssetReferenceT<SkinDefParams>(string.Empty);
-
-                List<CharacterModel.RendererInfo> rendererInfos = [.. skinDefParams.rendererInfos];
-                List<SkinDefParams.GameObjectActivation> gameObjectActivations = [.. skinDefParams.gameObjectActivations];
-                List<SkinDefParams.MeshReplacement> meshReplacements = [.. skinDefParams.meshReplacements];
-                List<CharacterModel.LightInfo> lightReplacements = [.. skinDefParams.lightReplacements];
-
-                for (int i = rendererInfos.Count - 1; i >= 0; i--)
+                if (modelTransform)
                 {
-                    CharacterModel.RendererInfo rendererInfo = rendererInfos[i];
+                    AssetReferenceT<SkinDef> originalSkinRef = new AssetReferenceT<SkinDef>(RoR2_Base_Brother.skinBrotherBodyDefault_asset);
+                    SkinDef originalSkin = Utils.PreloadAsset(originalSkinRef).WaitForCompletion();
 
-                    rendererInfo.renderer = rendererInfo.renderer.ResolveComponentInNewRoot(originalSkinRoot, modelTransform);
+                    ModelSkinController modelSkinController = modelTransform.gameObject.EnsureComponent<ModelSkinController>();
+                    int replacementSkinIndex = Array.IndexOf(modelSkinController.skins, originalSkin);
 
-                    if (rendererInfo.renderer)
+                    SkinDef skinDef = GameObject.Instantiate(originalSkin);
+                    skinDef.name = "skinBrotherGlassBodyDefault";
+                    Transform originalSkinRoot = skinDef.rootObject.transform;
+                    skinDef.rootObject = modelTransform.gameObject;
+
+                    (AssetReferenceT<SkinDefParams> paramsAddress, SkinDefParams paramsDirect) = skinDef.GetSkinParams();
+                    AssetOrDirectReference<SkinDefParams> skinDefParamsReference = new AssetOrDirectReference<SkinDefParams>
                     {
-                        switch (rendererInfo.renderer.name)
+                        address = paramsAddress,
+                        directRef = paramsDirect
+                    };
+
+                    SkinDefParams skinDefParams = GameObject.Instantiate(skinDefParamsReference.WaitForCompletion());
+                    skinDefParams.name = $"{skinDef.name}_params";
+                    skinDef.skinDefParams = skinDefParams;
+                    skinDef.skinDefParamsAddress = new AssetReferenceT<SkinDefParams>(string.Empty);
+                    skinDef.optimizedSkinDefParams = skinDefParams;
+                    skinDef.optimizedSkinDefParamsAddress = new AssetReferenceT<SkinDefParams>(string.Empty);
+
+                    List<CharacterModel.RendererInfo> rendererInfos = [.. skinDefParams.rendererInfos];
+                    List<SkinDefParams.GameObjectActivation> gameObjectActivations = [.. skinDefParams.gameObjectActivations];
+                    List<SkinDefParams.MeshReplacement> meshReplacements = [.. skinDefParams.meshReplacements];
+                    List<CharacterModel.LightInfo> lightReplacements = [.. skinDefParams.lightReplacements];
+
+                    for (int i = rendererInfos.Count - 1; i >= 0; i--)
+                    {
+                        CharacterModel.RendererInfo rendererInfo = rendererInfos[i];
+
+                        rendererInfo.renderer = rendererInfo.renderer.ResolveComponentInNewRoot(originalSkinRoot, modelTransform);
+
+                        if (rendererInfo.renderer)
                         {
-                            case "BrotherHammerConcrete":
-                            case "BrotherBodyMesh":
-                                rendererInfo.defaultMaterial = null;
-                                rendererInfo.defaultMaterialAddress = new AssetReferenceT<Material>(RoR2_Base_Brother.maBrotherGlassOverlay_mat);
-                                break;
+                            switch (rendererInfo.renderer.name)
+                            {
+                                case "BrotherHammerConcrete":
+                                case "BrotherBodyMesh":
+                                    rendererInfo.defaultMaterial = null;
+                                    rendererInfo.defaultMaterialAddress = new AssetReferenceT<Material>(RoR2_Base_Brother.maBrotherGlassOverlay_mat);
+                                    break;
+                            }
+
+                            rendererInfos[i] = rendererInfo;
                         }
+                        else
+                        {
+                            rendererInfos.RemoveAt(i);
+                        }
+                    }
 
-                        rendererInfos[i] = rendererInfo;
+                    for (int i = gameObjectActivations.Count - 1; i >= 0; i--)
+                    {
+                        SkinDefParams.GameObjectActivation gameObjectActivation = gameObjectActivations[i];
+
+                        gameObjectActivation.gameObject = gameObjectActivation.gameObject.ResolveObjectInNewRoot(originalSkinRoot, modelTransform);
+
+                        if (gameObjectActivation.gameObject)
+                        {
+                            gameObjectActivations[i] = gameObjectActivation;
+                        }
+                        else
+                        {
+                            gameObjectActivations.RemoveAt(i);
+                        }
+                    }
+
+                    for (int i = meshReplacements.Count - 1; i >= 0; i--)
+                    {
+                        SkinDefParams.MeshReplacement meshReplacement = meshReplacements[i];
+
+                        meshReplacement.renderer = meshReplacement.renderer.ResolveComponentInNewRoot(originalSkinRoot, modelTransform);
+
+                        if (meshReplacement.renderer)
+                        {
+                            meshReplacements[i] = meshReplacement;
+                        }
+                        else
+                        {
+                            meshReplacements.RemoveAt(i);
+                        }
+                    }
+
+                    for (int i = lightReplacements.Count - 1; i >= 0; i--)
+                    {
+                        CharacterModel.LightInfo lightReplacement = lightReplacements[i];
+
+                        lightReplacement.light = lightReplacement.light.ResolveComponentInNewRoot(originalSkinRoot, modelTransform);
+
+                        if (lightReplacement.light)
+                        {
+                            lightReplacements[i] = lightReplacement;
+                        }
+                        else
+                        {
+                            lightReplacements.RemoveAt(i);
+                        }
+                    }
+
+                    skinDefParams.rendererInfos = [.. rendererInfos];
+                    skinDefParams.gameObjectActivations = [.. gameObjectActivations];
+                    skinDefParams.meshReplacements = [.. meshReplacements];
+                    skinDefParams.lightReplacements = [.. lightReplacements];
+
+                    if (ArrayUtils.IsInBounds(modelSkinController.skins, replacementSkinIndex))
+                    {
+                        modelSkinController.skins[replacementSkinIndex] = skinDef;
                     }
                     else
                     {
-                        rendererInfos.RemoveAt(i);
+                        ArrayUtils.ArrayAppend(ref modelSkinController.skins, skinDef);
                     }
+
+                    var persistentOverlay = modelTransform.gameObject.AddComponent<PersistentOverlay>();
+                    persistentOverlay.OverlayMaterialReference = new AssetReferenceT<Material>(RoR2_Base_Brother.matBrotherGlassDistortion_mat);
+
+                    Utils.UnloadAsset(originalSkinRef);
                 }
 
-                for (int i = gameObjectActivations.Count - 1; i >= 0; i--)
-                {
-                    SkinDefParams.GameObjectActivation gameObjectActivation = gameObjectActivations[i];
-
-                    gameObjectActivation.gameObject = gameObjectActivation.gameObject.ResolveObjectInNewRoot(originalSkinRoot, modelTransform);
-
-                    if (gameObjectActivation.gameObject)
-                    {
-                        gameObjectActivations[i] = gameObjectActivation;
-                    }
-                    else
-                    {
-                        gameObjectActivations.RemoveAt(i);
-                    }
-                }
-
-                for (int i = meshReplacements.Count - 1; i >= 0; i--)
-                {
-                    SkinDefParams.MeshReplacement meshReplacement = meshReplacements[i];
-
-                    meshReplacement.renderer = meshReplacement.renderer.ResolveComponentInNewRoot(originalSkinRoot, modelTransform);
-
-                    if (meshReplacement.renderer)
-                    {
-                        meshReplacements[i] = meshReplacement;
-                    }
-                    else
-                    {
-                        meshReplacements.RemoveAt(i);
-                    }
-                }
-
-                for (int i = lightReplacements.Count - 1; i >= 0; i--)
-                {
-                    CharacterModel.LightInfo lightReplacement = lightReplacements[i];
-
-                    lightReplacement.light = lightReplacement.light.ResolveComponentInNewRoot(originalSkinRoot, modelTransform);
-
-                    if (lightReplacement.light)
-                    {
-                        lightReplacements[i] = lightReplacement;
-                    }
-                    else
-                    {
-                        lightReplacements.RemoveAt(i);
-                    }
-                }
-
-                skinDefParams.rendererInfos = [.. rendererInfos];
-                skinDefParams.gameObjectActivations = [.. gameObjectActivations];
-                skinDefParams.meshReplacements = [.. meshReplacements];
-                skinDefParams.lightReplacements = [.. lightReplacements];
-
-                if (ArrayUtils.IsInBounds(modelSkinController.skins, replacementSkinIndex))
-                {
-                    modelSkinController.skins[replacementSkinIndex] = skinDef;
-                }
-                else
-                {
-                    ArrayUtils.ArrayAppend(ref modelSkinController.skins, skinDef);
-                }
-
-                PersistentOverlay persistentOverlay = modelTransform.gameObject.AddComponent<PersistentOverlay>();
-                persistentOverlay.OverlayMaterialReference = new AssetReferenceT<Material>(RoR2_Base_Brother.matBrotherGlassDistortion_mat);
-
-                Utils.UnloadAsset(originalSkinRef);
-            }
-
-            Utils.UnloadAsset(brotherGlassBodyRef);
+                Utils.UnloadAsset(brotherGlassBodyRef);
+            };
         }
     }
 }
