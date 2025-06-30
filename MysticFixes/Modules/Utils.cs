@@ -14,6 +14,19 @@ namespace MiscFixes.Modules
 {
     internal static class Utils
     {
+        #region Assets
+        internal static AsyncOperationHandle<T> PreloadAsset<T>(AssetReferenceT<T> reference) where T : Object
+        {
+            return AssetAsyncReferenceManager<T>.LoadAsset(reference, AsyncReferenceHandleUnloadType.Preload);
+        }
+
+        internal static void UnloadAsset<T>(AssetReferenceT<T> reference) where T : Object
+        {
+            AssetAsyncReferenceManager<T>.UnloadAsset(reference);
+        }
+        #endregion
+
+        #region Config
         private static readonly List<string> _invalidConfigChars = ["=", "[", "]", "\n", "\t", "\\", "\'", "\""];
 
         private static void CheckInvalidConfigChars(ref string item)
@@ -54,15 +67,21 @@ namespace MiscFixes.Modules
                     description += " (Server-Sided)";
             }
         }
-        internal static AsyncOperationHandle<T> PreloadAsset<T>(AssetReferenceT<T> reference) where T : Object
-        {
-            return AssetAsyncReferenceManager<T>.LoadAsset(reference, AsyncReferenceHandleUnloadType.Preload);
-        }
 
-        internal static void UnloadAsset<T>(AssetReferenceT<T> reference) where T : Object
-        {
-            AssetAsyncReferenceManager<T>.UnloadAsset(reference);
-        }
+        //fuck
+        internal static bool CanBeFloat(SYS.Type type) =>
+            type == typeof(float) ||
+            type == typeof(double) ||
+            type == typeof(decimal);
+        internal static bool CanBeInt(SYS.Type type) =>
+            type == typeof(int) ||
+            type == typeof(uint) ||
+            type == typeof(byte) ||
+            type == typeof(sbyte) ||
+            type == typeof(short) ||
+            type == typeof(ushort) ||
+            type == typeof(long) ||
+            type == typeof(ulong);
 
         internal static void GetModMetaDataSafe(Assembly assembly, out string guid, out string name)
         {
@@ -77,12 +96,16 @@ namespace MiscFixes.Modules
                 {
                     guid = customAttribute.GUID;
                     name = customAttribute.Name;
+                    break;
                 }
             }
+
+            if (MiscFixesPlugin.RooInstalled)
+                InitRoO(guid, name);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        internal static void InitRoO(Assembly assembly, string guid, string name)
+        internal static void InitRoO(string guid, string name)
         {
             if (RiskOfOptions.ModSettingsManager.OptionCollection.ContainsModGuid(guid))
                 return;
@@ -150,5 +173,6 @@ namespace MiscFixes.Modules
 
             return File.Exists(path);
         }
+        #endregion
     }
 }

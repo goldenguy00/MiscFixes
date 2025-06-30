@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using HG.GeneralSerializer;
 using RoR2;
 using UnityEngine;
+using System;
 
 namespace MiscFixes.Modules
 {
@@ -50,9 +51,8 @@ namespace MiscFixes.Modules
             SyncRequired = ClientSided & ServerSided
         }
 
-        /// <summary>  Use <see cref="ClearOrphanedEntries(ConfigFile)"/> instead. </summary>
         [System.Obsolete]
-        public static void WipeConfig(this ConfigFile cfg) => cfg.ClearOrphanedEntries();
+        public static void WipeConfig(this ConfigFile cfg) => ClearOrphanedEntries(cfg);
 
         /// <summary>
         /// Erases all unbound (orphaned) config extries from the config file. Only call this after all your ConfigEntries are bound!
@@ -77,7 +77,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
 
                 configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
@@ -86,13 +85,18 @@ namespace MiscFixes.Modules
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : System.IEquatable<T>
+        public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : IEquatable<T>
         {
             Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue?.ToString(), flags);
 
             AcceptableValueBase valuesList = null;
             if (acceptableValues?.Length > 0)
-                valuesList = new AcceptableValueList<T>();
+            {
+                if (typeof(T).IsEnum)
+                    valuesList = new AcceptableValueList<string>(Enum.GetNames(typeof(T)));
+                else
+                    valuesList = new AcceptableValueList<T>(acceptableValues);
+            }
 
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, valuesList));
 
@@ -100,7 +104,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
 
                 configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
@@ -118,7 +121,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
 
                 configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
@@ -136,7 +138,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
 
                 configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
@@ -157,7 +158,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
 
                 configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
@@ -175,7 +175,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out modGuid, out modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
             }
 
             if (entry is ConfigEntry<string> stringEntry)
@@ -186,6 +185,10 @@ namespace MiscFixes.Modules
                     submitOn = RiskOfOptions.OptionConfigs.InputFieldConfig.SubmitEnum.OnExitOrSubmit,
                     restartRequired = restartRequired
                 }), modGuid, modName);
+            }
+            else if (Utils.CanBeInt(typeof(T)))
+            {
+                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.FloatFieldOption(entry, restartRequired), modGuid, modName);
             }
             else if (entry is ConfigEntry<bool> boolEntry)
             {
@@ -213,7 +216,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out modGuid, out modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
             }
 
             if (entry is ConfigEntry<int> intEntry)
@@ -262,7 +264,6 @@ namespace MiscFixes.Modules
             {
                 var callingAssembly = Assembly.GetCallingAssembly();
                 Utils.GetModMetaDataSafe(callingAssembly, out modGuid, out modName);
-                Utils.InitRoO(callingAssembly, modGuid, modName);
             }
 
             if (entry is ConfigEntry<float> floatEntry)
@@ -309,14 +310,14 @@ namespace MiscFixes.Modules
         {
             if (obj && obj.TryGetComponent<T>(out var component))
             {
-                Object.Destroy(component);
+                Component.Destroy(component);
             }
         }
         public static void TryDestroyComponent<T>(this Component obj) where T : Component
         {
             if (obj && obj.TryGetComponent<T>(out var component))
             {
-                Object.Destroy(component);
+                Component.Destroy(component);
             }
         }
 
@@ -326,9 +327,9 @@ namespace MiscFixes.Modules
                 return;
 
             var coms = obj.GetComponents<T>();
-            for (var i = 0; i < coms.Length; i++)
+            for (var i = coms.Length - 1; i >= 0; i--)
             {
-                Object.Destroy(coms[i]);
+                Component.Destroy(coms[i]);
             }
         }
 
@@ -340,13 +341,13 @@ namespace MiscFixes.Modules
             var coms = obj.GetComponents<T>();
             for (var i = coms.Length - 1; i >= 0; i--)
             {
-                Object.Destroy(coms[i]);
+                Component.Destroy(coms[i]);
             }
         }
 
         public static T CloneComponent<T>(this GameObject go, T src) where T : Component => go.AddComponent<T>().CloneFrom(src);
 
-        public static T CloneFrom<T>(this T obj, T other) where T : Object
+        public static T CloneFrom<T>(this T obj, T other) where T : UnityEngine.Object
         {
             var type = obj.GetType();
             if (type != other.GetType())
@@ -358,7 +359,7 @@ namespace MiscFixes.Modules
             foreach (var info in finfos)
             {
                 // ignore stuff like name, transform, etc
-                if (info.DeclaringType == typeof(Object) || info.DeclaringType == typeof(Component))
+                if (info.DeclaringType == typeof(UnityEngine.Object) || info.DeclaringType == typeof(Component))
                     continue;
 
                 try
@@ -372,11 +373,11 @@ namespace MiscFixes.Modules
             var pinfos = type.GetProperties(flags);
             foreach (var info in pinfos)
             {
-                // ignore stuff like name, transform, etc
-                if (info.DeclaringType == typeof(Object) || info.DeclaringType == typeof(Component))
+                if (!info.CanWrite)
                     continue;
 
-                if (!info.CanWrite || info.DeclaringType == typeof(Object))
+                // ignore stuff like name, transform, etc
+                if (info.DeclaringType == typeof(UnityEngine.Object) || info.DeclaringType == typeof(Component))
                     continue;
 
                 try
@@ -396,9 +397,9 @@ namespace MiscFixes.Modules
         public static bool TryModifyFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, T value)
         {
             ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
-            if (serializedField.fieldValue.objectValue && typeof(Object).IsAssignableFrom(typeof(T)))
+            if (serializedField.fieldValue.objectValue && typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)))
             {
-                serializedField.fieldValue.objectValue = value as Object;
+                serializedField.fieldValue.objectValue = value as UnityEngine.Object;
                 return true;
             }
             else if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
@@ -411,10 +412,10 @@ namespace MiscFixes.Modules
             return false;
         }
 
-        public static bool TryGetFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : Object
+        public static bool TryGetFieldValue<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : UnityEngine.Object
         {
             ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
-            if (serializedField.fieldValue.objectValue && typeof(Object).IsAssignableFrom(typeof(T)))
+            if (serializedField.fieldValue.objectValue && typeof(UnityEngine.Object).IsAssignableFrom(typeof(T)))
             {
                 value = serializedField.fieldValue.objectValue as T;
                 return true;
