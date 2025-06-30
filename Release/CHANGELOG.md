@@ -1,3 +1,9 @@
+## 1.5.1
+
+- Added fix for mithrix clone materials
+- Added MiscPatches
+- Added SkinDef.Bake redirect to MiscPatches
+
 ## 1.5.0
 
 - Moved some skin related validation to R2API.Skins
