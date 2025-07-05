@@ -27,13 +27,17 @@ namespace MiscFixes
 
         private Harmony harmonyPatcher;
         internal static bool RooInstalled => Chainloader.PluginInfos.ContainsKey("com.rune580.riskofoptions");
-
+        public enum test
+        {
+            d = 0,
+            w = 1
+        }
         private void Awake()
         {
             Log.Init(Logger);
 
             AssetFixes.Init();
-
+            Config.BindOptionEnum<test>("","","",test.w,test.w, test.d);
             // dev note:
             // do not patch all! patch individual classes always!
             // PatchAll will trigger an assembly scan, which will throw when it reads the compat classes!
@@ -42,11 +46,6 @@ namespace MiscFixes
             harmonyPatcher.CreateClassProcessor(typeof(PermanentFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(VanillaFixes)).Patch();
-        }
-
-        private void OnDestroy()
-        {
-            harmonyPatcher?.UnpatchSelf();
         }
     }
 }

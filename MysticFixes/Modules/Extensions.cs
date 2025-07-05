@@ -1,5 +1,4 @@
 ﻿using BepInEx.Configuration;
-using System.Collections.Generic;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine.Networking;
@@ -9,6 +8,10 @@ using HG.GeneralSerializer;
 using RoR2;
 using UnityEngine;
 using System;
+using ROO = RiskOfOptions;
+using OPT = RiskOfOptions.Options;
+using CONF = RiskOfOptions.OptionConfigs;
+using Facepunch.Steamworks;
 
 namespace MiscFixes.Modules
 {
@@ -41,7 +44,7 @@ namespace MiscFixes.Modules
 
         #region Config Binding
 
-        [System.Flags]
+        [Flags]
         public enum ConfigFlags : byte
         {
             None = 0,
@@ -51,7 +54,7 @@ namespace MiscFixes.Modules
             SyncRequired = ClientSided & ServerSided
         }
 
-        [System.Obsolete]
+        [Obsolete]
         public static void WipeConfig(this ConfigFile cfg) => ClearOrphanedEntries(cfg);
 
         /// <summary>
@@ -59,11 +62,7 @@ namespace MiscFixes.Modules
         /// </summary>
         public static void ClearOrphanedEntries(this ConfigFile cfg)
         {
-            var orphanedEntriesProp = typeof(ConfigFile).GetProperty("OrphanedEntries", ~BindingFlags.Default);
-            if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
-            {
-                orphanedEntries.Clear();
-            }
+            cfg.OrphanedEntries.Clear();
             cfg.Save();
         }
 
@@ -71,7 +70,8 @@ namespace MiscFixes.Modules
         public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, ConfigFlags flags = ConfigFlags.None)
         {
             Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue?.ToString(), flags);
-            var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description));
+
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description));
 
             if (MiscFixesPlugin.RooInstalled)
             {
@@ -91,14 +91,9 @@ namespace MiscFixes.Modules
 
             AcceptableValueBase valuesList = null;
             if (acceptableValues?.Length > 0)
-            {
-                if (typeof(T).IsEnum)
-                    valuesList = new AcceptableValueList<string>(Enum.GetNames(typeof(T)));
-                else
-                    valuesList = new AcceptableValueList<T>(acceptableValues);
-            }
+                valuesList = new AcceptableValueList<T>(acceptableValues);
 
-            var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, valuesList));
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description, valuesList));
 
             if (MiscFixesPlugin.RooInstalled)
             {
@@ -115,7 +110,7 @@ namespace MiscFixes.Modules
         public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, ConfigFlags flags = ConfigFlags.None)
         {
             Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
-            var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description));
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description));
 
             if (MiscFixesPlugin.RooInstalled)
             {
@@ -129,10 +124,10 @@ namespace MiscFixes.Modules
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : System.IComparable
+        public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : IComparable
         {
             Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
-            var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, new AcceptableValueRange<T>(min, max)));
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description, new AcceptableValueRange<T>(min, max)));
 
             if (MiscFixesPlugin.RooInstalled)
             {
@@ -140,19 +135,36 @@ namespace MiscFixes.Modules
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
 
                 configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
+            }
+
+            return configEntry;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        public static ConfigEntry<T> BindOptionEnum<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptablValues = null, ConfigFlags flags = ConfigFlags.None) where T : Enum
+        {
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description, new AcceptableValueEnum<T>(acceptablValues)));
+
+            if (MiscFixesPlugin.RooInstalled)
+            {
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+
+                configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
 
             return configEntry;
         }
 
         /// <summary>
-        /// For use with RiskOfOptions. <see cref="BindOptionSlider{T}(ConfigFile, string, string, string, T, T, T, ConfigFlags)"/>
+        /// For use with floats in RiskOfOptions. <inheritdoc cref="BindOptionSlider{T}(ConfigFile, string, string, string, T, T, T, ConfigFlags)"/>
         /// </summary>
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<float> BindOptionSteppedSlider(this ConfigFile myConfig, string section, string name, string description, float defaultValue, float increment, float min = 0, float max = 100, ConfigFlags flags = ConfigFlags.None)
         {
             Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
-            var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, new AcceptableValueRange<float>(min, max)));
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description, new AcceptableValueRange<float>(min, max)));
 
             if (MiscFixesPlugin.RooInstalled)
             {
@@ -179,28 +191,54 @@ namespace MiscFixes.Modules
 
             if (entry is ConfigEntry<string> stringEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.StringInputFieldOption(stringEntry, new RiskOfOptions.OptionConfigs.InputFieldConfig
+                ROO.ModSettingsManager.AddOption(new OPT.StringInputFieldOption(stringEntry, new CONF.InputFieldConfig
                 {
                     lineType = TMPro.TMP_InputField.LineType.SingleLine,
-                    submitOn = RiskOfOptions.OptionConfigs.InputFieldConfig.SubmitEnum.OnExitOrSubmit,
+                    submitOn = CONF.InputFieldConfig.SubmitEnum.OnExitOrSubmit,
                     restartRequired = restartRequired
                 }), modGuid, modName);
             }
-            else if (Utils.CanBeInt(typeof(T)))
+            else if (entry is ConfigEntry<int> intEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.FloatFieldOption(entry, restartRequired), modGuid, modName);
+                var config = new CONF.IntFieldConfig
+                {
+                    restartRequired = restartRequired,
+                };
+
+                if (entry.Description.AcceptableValues is AcceptableValueRange<int> range)
+                {
+                    config.Min = range.MinValue;
+                    config.Max = range.MaxValue;
+                }
+
+                ROO.ModSettingsManager.AddOption(new OPT.IntFieldOption(intEntry, config), modGuid, modName);
+            }
+            else if (entry is ConfigEntry<float> floatEntry)
+            {
+                var config = new CONF.FloatFieldConfig
+                {
+                    restartRequired = restartRequired,
+                };
+
+                if (entry.Description.AcceptableValues is AcceptableValueRange<float> range)
+                {
+                    config.Min = range.MinValue;
+                    config.Max = range.MaxValue;
+                }
+
+                ROO.ModSettingsManager.AddOption(new OPT.FloatFieldOption(floatEntry, config), modGuid, modName);
             }
             else if (entry is ConfigEntry<bool> boolEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.CheckBoxOption(boolEntry, restartRequired), modGuid, modName);
+                ROO.ModSettingsManager.AddOption(new OPT.CheckBoxOption(boolEntry, restartRequired), modGuid, modName);
             }
             else if (entry is ConfigEntry<KeyboardShortcut> shortCutEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.KeyBindOption(shortCutEntry, restartRequired), modGuid, modName);
+                ROO.ModSettingsManager.AddOption(new OPT.KeyBindOption(shortCutEntry, restartRequired), modGuid, modName);
             }
             else if (typeof(T).IsEnum)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.ChoiceOption(entry, restartRequired), modGuid, modName);
+                ROO.ModSettingsManager.AddOption(new OPT.ChoiceOption(entry, restartRequired), modGuid, modName);
             }
             else
             {
@@ -220,7 +258,7 @@ namespace MiscFixes.Modules
 
             if (entry is ConfigEntry<int> intEntry)
             {
-                var config = new RiskOfOptions.OptionConfigs.IntSliderConfig
+                var config = new CONF.IntSliderConfig
                 {
                     formatString = "{0}",
                     restartRequired = restartRequired,
@@ -232,11 +270,11 @@ namespace MiscFixes.Modules
                     config.max = range.MaxValue;
                 }
 
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.IntSliderOption(intEntry, config), modGuid, modName);
+                ROO.ModSettingsManager.AddOption(new OPT.IntSliderOption(intEntry, config), modGuid, modName);
             }
             else if (entry is ConfigEntry<float> floatEntry)
             {
-                var config = new RiskOfOptions.OptionConfigs.SliderConfig
+                var config = new CONF.SliderConfig
                 {
                     FormatString = "{0:0.00}",
                     restartRequired = restartRequired,
@@ -248,7 +286,7 @@ namespace MiscFixes.Modules
                     config.max = range.MaxValue;
                 }
 
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.SliderOption(floatEntry, config), modGuid, modName);
+                ROO.ModSettingsManager.AddOption(new OPT.SliderOption(floatEntry, config), modGuid, modName);
             }
             else
             {
@@ -268,7 +306,7 @@ namespace MiscFixes.Modules
 
             if (entry is ConfigEntry<float> floatEntry)
             {
-                RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.StepSliderOption(floatEntry, new RiskOfOptions.OptionConfigs.StepSliderConfig
+                ROO.ModSettingsManager.AddOption(new OPT.StepSliderOption(floatEntry, new CONF.StepSliderConfig
                 {
                     increment = increment,
                     min = min,
@@ -310,14 +348,14 @@ namespace MiscFixes.Modules
         {
             if (obj && obj.TryGetComponent<T>(out var component))
             {
-                Component.Destroy(component);
+                UnityEngine.Object.Destroy(component);
             }
         }
         public static void TryDestroyComponent<T>(this Component obj) where T : Component
         {
             if (obj && obj.TryGetComponent<T>(out var component))
             {
-                Component.Destroy(component);
+                UnityEngine.Object.Destroy(component);
             }
         }
 
@@ -329,7 +367,7 @@ namespace MiscFixes.Modules
             var coms = obj.GetComponents<T>();
             for (var i = coms.Length - 1; i >= 0; i--)
             {
-                Component.Destroy(coms[i]);
+                UnityEngine.Object.Destroy(coms[i]);
             }
         }
 
@@ -341,7 +379,7 @@ namespace MiscFixes.Modules
             var coms = obj.GetComponents<T>();
             for (var i = coms.Length - 1; i >= 0; i--)
             {
-                Component.Destroy(coms[i]);
+                UnityEngine.Object.Destroy(coms[i]);
             }
         }
 
@@ -351,7 +389,7 @@ namespace MiscFixes.Modules
         {
             var type = obj.GetType();
             if (type != other.GetType())
-                throw new System.TypeAccessException($"Type mismatch of {obj?.GetType()} and {other?.GetType()}");
+                throw new TypeAccessException($"Type mismatch of {obj?.GetType()} and {other?.GetType()}");
 
             var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -367,7 +405,7 @@ namespace MiscFixes.Modules
                     info.SetValue(obj, info.GetValue(other));
                     Log.Debug($"Set field {info.Name} to value of {info.GetValue(obj)}");
                 }
-                catch (System.Exception e) { Log.Debug(e); }
+                catch (Exception e) { Log.Debug(e); }
             }
 
             var pinfos = type.GetProperties(flags);
@@ -385,7 +423,7 @@ namespace MiscFixes.Modules
                     info.SetValue(obj, info.GetValue(other));
                     Log.Debug($"Set property {info.Name} to value of {info.GetValue(obj)}");
                 }
-                catch (System.Exception e) { Log.Debug(e); }   // In case of NotImplementedException being thrown.
+                catch (Exception e) { Log.Debug(e); }   // In case of NotImplementedException being thrown.
                                                                // For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
             }
 
@@ -430,7 +468,7 @@ namespace MiscFixes.Modules
             return false;
         }
 
-        public static bool TryGetFieldValueString<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : System.IEquatable<T>
+        public static bool TryGetFieldValueString<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : IEquatable<T>
         {
             ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
             if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
