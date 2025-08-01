@@ -41,9 +41,8 @@ namespace MiscFixes.Modules
 
         public override bool IsValid(object value)
         {
-            if (value is T)
+            if (value is T v)
             {
-                T v = (T)value;
                 return AcceptableValues.Any((T x) => x.Equals(v));
             }
 

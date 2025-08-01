@@ -11,7 +11,6 @@ using System;
 using ROO = RiskOfOptions;
 using OPT = RiskOfOptions.Options;
 using CONF = RiskOfOptions.OptionConfigs;
-using Facepunch.Steamworks;
 
 namespace MiscFixes.Modules
 {
@@ -107,6 +106,23 @@ namespace MiscFixes.Modules
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        public static ConfigEntry<T> BindOptionEnum<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues = null, ConfigFlags flags = ConfigFlags.None) where T : Enum
+        {
+            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
+            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description, new AcceptableValueEnum<T>(acceptableValues)));
+
+            if (MiscFixesPlugin.RooInstalled)
+            {
+                var callingAssembly = Assembly.GetCallingAssembly();
+                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
+
+                configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
+            }
+
+            return configEntry;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, ConfigFlags flags = ConfigFlags.None)
         {
             Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
@@ -135,23 +151,6 @@ namespace MiscFixes.Modules
                 Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
 
                 configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
-            }
-
-            return configEntry;
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOptionEnum<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptablValues = null, ConfigFlags flags = ConfigFlags.None) where T : Enum
-        {
-            Utils.BuildValidConfigEntry(ref section, ref name, ref description, defaultValue.ToString(), flags);
-            var configEntry = myConfig.Bind(new ConfigDefinition(section, name), defaultValue, new ConfigDescription(description, new AcceptableValueEnum<T>(acceptablValues)));
-
-            if (MiscFixesPlugin.RooInstalled)
-            {
-                var callingAssembly = Assembly.GetCallingAssembly();
-                Utils.GetModMetaDataSafe(callingAssembly, out var modGuid, out var modName);
-
-                configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, modGuid, modName);
             }
 
             return configEntry;
@@ -236,6 +235,10 @@ namespace MiscFixes.Modules
             {
                 ROO.ModSettingsManager.AddOption(new OPT.KeyBindOption(shortCutEntry, restartRequired), modGuid, modName);
             }
+            else if (entry is ConfigEntry<Color> colorEntry)
+            {
+                ROO.ModSettingsManager.AddOption(new OPT.ColorOption(colorEntry, restartRequired), modGuid, modName);
+            }
             else if (typeof(T).IsEnum)
             {
                 ROO.ModSettingsManager.AddOption(new OPT.ChoiceOption(entry, restartRequired), modGuid, modName);
@@ -276,7 +279,7 @@ namespace MiscFixes.Modules
             {
                 var config = new CONF.SliderConfig
                 {
-                    FormatString = "{0:0.00}",
+                    FormatString = "{0:0.##}",
                     restartRequired = restartRequired,
                 };
 

@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using BepInEx.Bootstrap;
 using MiscFixes.ErrorPolice;
 using MiscFixes.ErrorPolice.Harmony;
+using RoR2;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -37,7 +38,7 @@ namespace MiscFixes
             Log.Init(Logger);
 
             AssetFixes.Init();
-            Config.BindOptionEnum<test>("","","",test.w,test.w, test.d);
+
             // dev note:
             // do not patch all! patch individual classes always!
             // PatchAll will trigger an assembly scan, which will throw when it reads the compat classes!

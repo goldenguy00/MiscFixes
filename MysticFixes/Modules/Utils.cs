@@ -68,21 +68,6 @@ namespace MiscFixes.Modules
             }
         }
 
-        //fuck
-        internal static bool CanBeFloat(SYS.Type type) =>
-            type == typeof(float) ||
-            type == typeof(double) ||
-            type == typeof(decimal);
-        internal static bool CanBeInt(SYS.Type type) =>
-            type == typeof(int) ||
-            type == typeof(uint) ||
-            type == typeof(byte) ||
-            type == typeof(sbyte) ||
-            type == typeof(short) ||
-            type == typeof(ushort) ||
-            type == typeof(long) ||
-            type == typeof(ulong);
-
         internal static void GetModMetaDataSafe(Assembly assembly, out string guid, out string name)
         {
             guid = "";
@@ -96,12 +81,15 @@ namespace MiscFixes.Modules
                 {
                     guid = customAttribute.GUID;
                     name = customAttribute.Name;
-                    break;
+
+                    if (MiscFixesPlugin.RooInstalled)
+                        InitRoO(guid, name);
+
+                    return;
                 }
             }
 
-            if (MiscFixesPlugin.RooInstalled)
-                InitRoO(guid, name);
+            Log.Error($"No BepInPlugin attribute could be found for {assembly.FullName}");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
@@ -124,8 +112,7 @@ namespace MiscFixes.Modules
             if (!FindPath(directory, "icon.png", out string path))
                 return;
 
-            const int size = 256, scale = 2;
-            var texture = new Texture2D(size, size, TextureFormat.ARGB32, mipCount: scale + 1, linear: false);
+            var texture = new Texture2D(256, 256, TextureFormat.ARGB32, mipCount: 3, linear: false);
 
             try
             {
