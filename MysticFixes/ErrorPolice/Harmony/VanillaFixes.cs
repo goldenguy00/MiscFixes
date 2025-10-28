@@ -10,16 +10,12 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Rewired_Core_NS::Rewired;
 using RoR2;
-using RoR2.Achievements;
-using RoR2.CharacterAI;
-using RoR2.Items;
 using RoR2.Navigation;
 using RoR2.Orbs;
 using RoR2.Projectile;
 using RoR2.Stats;
 using RoR2.UI;
 using UnityEngine;
-using RPServer = RoR2.Achievements.Chef.RolyPolyHitFiveAirEnemies.RolyPolyHitFiveAirEnemiesServerAchievement;
 
 namespace MiscFixes.ErrorPolice.Harmony
 {
@@ -57,44 +53,6 @@ namespace MiscFixes.ErrorPolice.Harmony
 
         }
         /// <summary>
-        ///  cachedCharacterMotor = GetCurrentBody().GetComponent<CharacterMotor>();
-        /// </summary>
-
-        [HarmonyPatch(typeof(RPServer), nameof(RPServer.GetCharacterMotor))]
-        [HarmonyILManipulator]
-        public static void RolyPolyHitFiveAirEnemiesServerAchievement_GetCharacterMotor(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (!c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<BaseServerAchievement>(nameof(BaseServerAchievement.GetCurrentBody)),
-                    x => x.MatchCallOrCallvirt<Component>(nameof(Component.GetComponent))
-                ))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            
-            c.Index--;
-
-            var getComponentLabel = c.DefineLabel();
-            var skipGetComponentLabel = c.DefineLabel();
-
-            c.Emit(OpCodes.Dup);
-            c.EmitOpImplicit();
-            c.Emit(OpCodes.Brtrue_S, getComponentLabel);
-
-            c.Emit(OpCodes.Pop);
-            c.Emit(OpCodes.Ldnull);
-            c.Emit(OpCodes.Br_S, skipGetComponentLabel);
-
-            c.MarkLabel(getComponentLabel);
-            c.Index++;
-            c.MarkLabel(skipGetComponentLabel);
-            
-        }
-        /// <summary>
         /// Affix Aurelionite calling transform.position from update
         /// Prevent running update when body is null
         /// 
@@ -107,73 +65,6 @@ namespace MiscFixes.ErrorPolice.Harmony
         [HarmonyPatch(typeof(AffixAurelioniteBehavior), nameof(AffixAurelioniteBehavior.Update))]
         [HarmonyPrefix]
         public static bool AffixAurelioniteBehavior_Update(AffixAurelioniteBehavior __instance) => __instance.body?.coreTransform;
-
-        /// <summary>
-        /// RoR2.CharacterBody.HandleDisableAllSkillsDebuffg__HandleSkillDisableState
-        /// if (NetworkServer.active)
-        ///     this.inventory.SetEquipmentDisabled(_disable);
-        /// 
-        /// inventory shouldnt be null, but jsut in case
-        /// </summary>
-        [HarmonyPatch(typeof(CharacterBody), "<HandleDisableAllSkillsDebuff>g__HandleSkillDisableState|389_0")]
-        [HarmonyILManipulator]
-        public static void CharacterBody_HandleDisableAllSkillsDebuff(ILContext il)
-        {
-            var c = new ILCursor(il) { Index = il.Instrs.Count - 1 };
-
-            ILLabel retLabel = null;
-            if (c.TryGotoPrev(MoveType.Before,
-                    x => x.MatchNetworkServerActive(),
-                    x => x.MatchBrfalse(out retLabel),
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory))),
-                    x => x.MatchLdarg(out _),
-                    x => x.MatchCallOrCallvirt<Inventory>(nameof(Inventory.SetEquipmentDisabled))
-                ))
-            {
-                // c.next == ldarg_0
-                c.Index += 2;
-
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit(OpCodes.Call, AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory)));
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, retLabel);
-            }
-            else Log.PatchFail(il);
-        }
-
-        /// <summary>
-        /// NullReferenceException:
-        /// RoR2.CharacterBody.TryGiveFreeUnlockWhenLevelUp() (at:IL_0006)
-        /// RoR2.CharacterBody.OnLevelUp() (at:IL_0006)
-        /// RoR2.CharacterBody.OnCalculatedLevelChanged(System.Single oldLevel, System.Single newLevel) (at:IL_0017)
-        /// </summary>
-        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.TryGiveFreeUnlockWhenLevelUp))]
-        [HarmonyILManipulator]
-        public static void CharacterBody_FreeFortniteCard(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            ILLabel retLabel = null;
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory)))) &&
-                c.TryFindNext(out _,
-                    x => x.MatchBle(out retLabel)
-                ))
-            {
-                var callLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, callLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, retLabel);
-
-                c.MarkLabel(callLabel);
-            }
-            else Log.PatchFail(il);
-        }
 
         /// <summary>
         /// The method never null checks target, which can lead to multiple body.gameObject NREs.
@@ -224,8 +115,8 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// NullReferenceException:
         /// (wrapper dynamic-method) RoR2.Projectile.ProjectileController.DMDRoR2.Projectile.ProjectileController::Start(RoR2.Projectile.ProjectileController)
         /// </summary>
-        [HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(ProjectileController), nameof(ProjectileController.Start))]
+        //[HarmonyILManipulator]
         public static void ProjectileController_Start(ILContext il)
         {
             var c = new ILCursor(il);
@@ -289,96 +180,6 @@ namespace MiscFixes.ErrorPolice.Harmony
             else Log.PatchFail(il.Method.Name + " 2");
         }
 
-        /// <summary>
-        /// SceneInfo.instance.sceneDef.cachedName getting called from OnDisable is just never gonna be error proof
-        /// </summary>
-        [HarmonyPatch(typeof(MinionLeashBodyBehavior), nameof(MinionLeashBodyBehavior.OnDisable))]
-        [HarmonyILManipulator]
-        private static void MinionLeashBodyBehavior_OnDisable(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            if (new ILCursor(il).TryGotoNext(
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(SceneInfo), nameof(SceneInfo.instance))),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(SceneInfo), nameof(SceneInfo.sceneDef))),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(SceneDef), nameof(SceneDef.cachedName)))
-                ))
-            {
-                c.Index++;
-
-                var compareLabel = c.DefineLabel();
-                var getSceneDefLabel = c.DefineLabel();
-                var getCachedNameLabel = c.DefineLabel();
-
-                // prev = SceneInfo.instance
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, getSceneDefLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit<string>(OpCodes.Ldsfld, nameof(string.Empty));
-                c.Emit(OpCodes.Br, compareLabel);
-
-                c.MarkLabel(getSceneDefLabel);
-                c.Index++;
-
-                // prev = SceneInfo.instance?.sceneDef
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, getCachedNameLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit<string>(OpCodes.Ldsfld, nameof(string.Empty));
-                c.Emit(OpCodes.Br, compareLabel);
-
-                c.MarkLabel(getCachedNameLabel);
-                c.Index++;
-
-                // prev = SceneInfo.instance?.sceneDef?.cachedName
-                c.MarkLabel(compareLabel);
-            }
-            else Log.PatchFail(il);
-        }
-
-        /// <summary>
-        /// ownerbody is null, also gameObject.transform sucks
-        /// 
-        /// Vector3 position = ownerBody.gameObject.transform.position;
-        /// </summary>
-        [HarmonyPatch(typeof(ElusiveAntlersPickup), nameof(ElusiveAntlersPickup.FixedUpdate))]
-        [HarmonyILManipulator]
-        private static void ElusiveAntlersPickup_FixedUpdate(ILContext il)
-        {
-            var c = new ILCursor(il);
-            if (c.TryGotoNext(
-                    x => x.MatchLdfld<ElusiveAntlersPickup>(nameof(ElusiveAntlersPickup.ownerBody)),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.transform))),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.position))),
-                    x => x.MatchStloc(out _)
-                ))
-            {
-                c.Index++;
-
-                var stLocLabel = c.DefineLabel();
-                var getGameObjectLabel = c.DefineLabel();
-
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue, getGameObjectLabel);
-
-                c.Emit(OpCodes.Pop);
-                c.Emit<Vector3>(OpCodes.Ldsfld, nameof(Vector3.zeroVector));
-                c.Emit(OpCodes.Br, stLocLabel);
-
-                c.MarkLabel(getGameObjectLabel);
-
-                c.GotoNext(x => x.MatchStloc(out _));
-
-                c.MarkLabel(stLocLabel);
-            }
-            else Log.PatchFail(il);
-        }
 
         /// <summary>
         /// Fixes an NRE when picking up an Elusive Antlers orb from a respawned/dead character.
@@ -498,50 +299,10 @@ namespace MiscFixes.ErrorPolice.Harmony
         }
 
         /// <summary>
-        /// gold coast plus revived chest is fucked, and that's like the only time ive ever seen it
-        /// </summary>
-        [HarmonyPatch(typeof(Interactor), nameof(Interactor.FindBestInteractableObject))]
-        [HarmonyILManipulator]
-        public static void Interactor_FindBestInteractableObject(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            var loc = 0;
-            ILLabel label = null;
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdloca(out loc),
-                    x => x.MatchCall<EntityLocator>(nameof(EntityLocator.HasEntityLocator)),
-                    x => x.MatchBrfalse(out label)
-                ))
-            {
-                c.Emit(OpCodes.Ldloc, loc);
-                c.Emit<EntityLocator>(OpCodes.Ldfld, nameof(EntityLocator.entity));
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, label);
-            }
-            else Log.PatchFail(il.Method.Name + " 1");
-
-            var loc2 = 0;
-            ILLabel label2 = null;
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdloca(out loc2),
-                    x => x.MatchCall<EntityLocator>(nameof(EntityLocator.HasEntityLocator)),
-                    x => x.MatchBrfalse(out label2)
-                ))
-            {
-                c.Emit(OpCodes.Ldloc, loc2);
-                c.Emit<EntityLocator>(OpCodes.Ldfld, nameof(EntityLocator.entity));
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse, label2);
-            }
-            else Log.PatchFail(il.Method.Name + " 2");
-        }
-
-        /// <summary>
         /// The printer uses EffectManager for VFX without an EffectComponent, use Object.Instantiate instead.
         /// </summary>
-        [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
+        //[HarmonyILManipulator]
         public static void Duplicating_DropDroplet(ILContext il)
         {
             var c = new ILCursor(il);
@@ -625,77 +386,6 @@ namespace MiscFixes.ErrorPolice.Harmony
         }
 
         /// <summary>
-        /// The OutsideInteractableLocker does not check if a Lemurian Egg lock already exists before creating the VFX.
-        /// </summary>
-        [HarmonyPatch(typeof(OutsideInteractableLocker), nameof(OutsideInteractableLocker.LockLemurianEgg))]
-        [HarmonyILManipulator]
-        public static void OutsideInteractableLocker_LockLemurianEgg(ILContext il)
-        {
-            var c = new ILCursor(il);
-            var nextInstr = c.Next;
-            c.Emit(OpCodes.Ldarg_0);
-            c.Emit<OutsideInteractableLocker>(OpCodes.Ldfld, nameof(OutsideInteractableLocker.eggLockInfoMap));
-            c.Emit(OpCodes.Ldarg_1);
-            c.Emit<Dictionary<LemurianEggController, OutsideInteractableLocker.LockInfo>>(OpCodes.Callvirt, "get_Item");
-            c.Emit<OutsideInteractableLocker.LockInfo>(OpCodes.Callvirt, nameof(OutsideInteractableLocker.LockInfo.IsLocked));
-            c.Emit(OpCodes.Brfalse_S, nextInstr);
-            c.Emit(OpCodes.Ret);
-        }
-
-        /// <summary>
-        /// PositionIndicator.alwaysVisibleObject is not null checked before every access (is null with hidden UI).
-        /// </summary>
-        [HarmonyPatch(typeof(PositionIndicator), nameof(PositionIndicator.UpdatePositions))]
-        [HarmonyILManipulator]
-        public static void PositionIndicator_UpdatePositions(ILContext il)
-        {
-            var c = new ILCursor(il);
-            var locVarIndex = 0;
-            ILLabel nextLabel = null;
-            if (!c.TryGotoNext(
-                x => x.MatchLdloc(out locVarIndex),
-                x => x.MatchLdfld<PositionIndicator>(nameof(PositionIndicator.alwaysVisibleObject)),
-                x => x.MatchLdcI4(0),
-                x => x.MatchCallOrCallvirt<GameObject>(nameof(GameObject.SetActive)),
-                x => x.MatchBr(out nextLabel)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.Index += 2;
-            c.EmitOpImplicit();
-            c.Emit(OpCodes.Brfalse, nextLabel.Target);
-            c.Emit(OpCodes.Ldloc, locVarIndex);
-            c.Emit<PositionIndicator>(OpCodes.Ldfld, nameof(PositionIndicator.alwaysVisibleObject));
-        }
-
-        /// <summary>
-        /// Some Renderers in the collection can be null.
-        /// </summary>
-        [HarmonyPatch(typeof(Indicator), nameof(Indicator.SetVisibleInternal))]
-        [HarmonyILManipulator]
-        public static void Indicator_SetVisibleInternal(ILContext il)
-        {
-            var c = new ILCursor(il);
-            Instruction ifInstr = null;
-            Instruction nextInstr = null;
-            if (!c.TryGotoNext(
-                x => x.MatchLdarg(1),
-                x => x.MatchCallOrCallvirt<Renderer>("set_enabled"),
-                x => x.MatchAny(out nextInstr)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            ifInstr = c.Next;
-            c.Emit(OpCodes.Dup);
-            c.EmitOpImplicit();
-            c.Emit(OpCodes.Brtrue_S, ifInstr);
-            c.Emit(OpCodes.Pop);
-            c.Emit(OpCodes.Br_S, nextInstr);
-        }
-
-        /// <summary>
         /// Iterating a list while modifying it raises an error, iterate on a copy of it instead. Occurs when Seeker respawns.
         /// </summary>
         [HarmonyPatch(typeof(CrosshairUtils.CrosshairOverrideBehavior), nameof(CrosshairUtils.CrosshairOverrideBehavior.OnDestroy))]
@@ -714,37 +404,6 @@ namespace MiscFixes.ErrorPolice.Harmony
             c.EmitDelegate<Func<List<CrosshairUtils.OverrideRequest>, List<CrosshairUtils.OverrideRequest>>>(requestList => [.. requestList]);
         }
 
-        /// <summary>
-        /// Null check EventSystem.current, occurs when exiting a lobby.
-        /// </summary>
-        [HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
-        [HarmonyILManipulator]
-        public static void RuleChoiceController_FindNetworkUser(ILContext il)
-        {
-            var c = new ILCursor(il);
-            if (!c.TryGotoNext(
-                x => x.MatchPop(),
-                x => x.MatchLdnull(),
-                // Harmony replaces ret with custom br operations for internal reasons
-                x => x.Match(OpCodes.Br)))
-            {
-                Log.PatchFail(il.Method.Name + " #1");
-                return;
-            }
-            var instr = c.Next;
-            if (!c.TryGotoPrev(
-                MoveType.After,
-                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(UnityEngine.EventSystems.EventSystem), nameof(UnityEngine.EventSystems.EventSystem.current)))))
-            {
-                Log.PatchFail(il.Method.Name + " #2");
-                return;
-            }
-            c.Remove();
-            c.Emit(OpCodes.Isinst, typeof(MPEventSystem));
-            c.Emit(OpCodes.Dup);
-            c.EmitOpImplicit();
-            c.Emit(OpCodes.Brfalse, instr);
-        }
 
         /// <summary>
         /// Prevent RewiredIntegration from running if not initialised, occurs when exiting the game.
@@ -936,33 +595,6 @@ namespace MiscFixes.ErrorPolice.Harmony
                 c.Emit(OpCodes.Pop);
                 c.Emit(OpCodes.Ldc_R4, 0f);
                 c.Emit(OpCodes.Br, label);
-            }
-            else Log.PatchFail(il);
-        }
-
-        /// <summary>
-        /// Fix Meridian's Will NRE for targets without a rigid body, e.g. Grandparent
-        /// </summary>
-        [HarmonyPatch(typeof(EntityStates.FalseSon.MeridiansWillFire), nameof(EntityStates.FalseSon.MeridiansWillFire.ApplyForce))]
-        [HarmonyILManipulator]
-        public static void MeridiansWillFire_ApplyForce(ILContext il)
-        {
-            var c = new ILCursor(il);
-            Instruction nextInstr = null;
-            if (c.TryGotoNext(
-                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.rigidbody))),
-                x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.zero))),
-                x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(Rigidbody), nameof(Rigidbody.velocity))),
-                x => x.MatchAny(out nextInstr)
-                ))
-            {
-                c.Index++;
-                var continueWithSetVelocity = c.Next;
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brtrue_S, continueWithSetVelocity);
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br, nextInstr);
             }
             else Log.PatchFail(il);
         }

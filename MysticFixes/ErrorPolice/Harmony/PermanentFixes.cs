@@ -20,20 +20,6 @@ namespace MiscFixes.ErrorPolice.Harmony
     public class PermanentFixes
     {
         /// <summary>
-        /// call can be suppressed if stuff is null
-        /// </summary>
-        [HarmonyPatch("RoR2.Stats.PlayerStatsComponent+<>c, RoR2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", "<Init>b__18_0")]
-        [HarmonyPrefix]
-        public static bool PlayerStatsComponent_Init(DamageReport damageReport) => damageReport.victim;
-
-        /// <summary>
-        /// call can be suppressed if stuff is null
-        /// </summary>
-        [HarmonyPatch(typeof(InspectPanelController), nameof(InspectPanelController.Show))]
-        [HarmonyPrefix]
-        public static bool InspectPanelController_Show(InspectPanelController __instance) => __instance.eventSystem && __instance.eventSystem.localUser?.userProfile is not null;
-
-        /// <summary>
         /// normalize particles once
         /// From DOTParticleFix
         /// </summary>
@@ -63,6 +49,7 @@ namespace MiscFixes.ErrorPolice.Harmony
                 }
             }
         }
+
         /// <summary>
         /// unity explorer can eat my whole ass
         /// </summary>
@@ -76,6 +63,21 @@ namespace MiscFixes.ErrorPolice.Harmony
             __result = LocalUserManager.GetFirstLocalUser();
             return false;
         }
+
+        /// <summary>
+        /// Null check EventSystem.current, occurs when exiting a lobby.
+        /// </summary>
+        [HarmonyPatch(typeof(RuleChoiceController), nameof(RuleChoiceController.FindNetworkUser))]
+        [HarmonyPrefix]
+        public static bool RuleChoiceController_FindNetworkUser(RuleChoiceController __instance, ref NetworkUser __result)
+        {
+            if (EventSystem.current is MPEventSystem)
+                return true;
+
+            __result = LocalUserManager.GetFirstLocalUser()?.currentNetworkUser;
+            return false;
+        }
+
         /// <summary>
         /// Checks if the component exists, which should be the case for pre-sots overlay code
         /// If true, it creates a temporary overlay instance from the component for backwards compatibility 
@@ -136,8 +138,8 @@ namespace MiscFixes.ErrorPolice.Harmony
         /// forces game restart to recover.
         /// </summary>
         /// <param name="il"></param>
-        [HarmonyPatch(typeof(MPEventSystem), nameof(MPEventSystem.Update))]
-        [HarmonyILManipulator]
+        //[HarmonyPatch(typeof(MPEventSystem), nameof(MPEventSystem.Update))]
+        //[HarmonyILManipulator]
         public static void FixThisFuckingBullshitGearbox(ILContext il)
         {
             ILCursor[] c = null;

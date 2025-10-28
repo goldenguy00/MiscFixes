@@ -38,15 +38,9 @@ namespace MiscFixes
             // do not patch all! patch individual classes always!
             // PatchAll will trigger an assembly scan, which will throw when it reads the compat classes!
             harmonyPatcher = new Harmony(PluginGUID);
-            harmonyPatcher.CreateClassProcessor(typeof(MemOpFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(PermanentFixes)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(ServerCommandsOnClient)).Patch();
             harmonyPatcher.CreateClassProcessor(typeof(VanillaFixes)).Patch();
-        }
-
-        private void OnDestroy()
-        {
-            harmonyPatcher?.UnpatchSelf();
         }
     }
 }

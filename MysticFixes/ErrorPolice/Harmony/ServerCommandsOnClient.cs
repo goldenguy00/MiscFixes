@@ -172,25 +172,6 @@ namespace MiscFixes.ErrorPolice.Harmony
             c.Emit(OpCodes.Brfalse_S, nextInstr);
         }
 
-        [HarmonyPatch(typeof(EntityStates.Duplicator.Duplicating), nameof(EntityStates.Duplicator.Duplicating.DropDroplet))]
-        [HarmonyILManipulator]
-        public static void FixDuplicatingDropDroplet(ILContext il)
-        {
-            var c = new ILCursor(il);
-            Instruction nextInstr = null;
-            if (!c.TryGotoNext(
-                x => x.MatchLdarg(0),
-                x => x.MatchCallOrCallvirt<EntityState>(nameof(EntityState.GetComponent)),
-                x => x.MatchCallOrCallvirt<ShopTerminalBehavior>(nameof(ShopTerminalBehavior.DropPickup)),
-                x => x.MatchAny(out nextInstr)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.EmitNetworkServerActive();
-            c.Emit(OpCodes.Brfalse_S, nextInstr);
-        }
-
         [HarmonyPatch(typeof(EntityStates.Huntress.Weapon.FireArrowSnipe), nameof(EntityStates.Huntress.Weapon.FireArrowSnipe.FireBullet))]
         [HarmonyILManipulator]
         public static void FixFireArrowSnipeFireBullet(ILContext il)
@@ -386,44 +367,6 @@ namespace MiscFixes.ErrorPolice.Harmony
             var nextInstr = c.Instrs[c.Instrs.Count - 1];
             c.EmitNetworkServerActive();
             c.Emit(OpCodes.Brfalse_S, nextInstr);
-        }
-
-        [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.AddMinion))]
-        [HarmonyILManipulator]
-        public static void FixMinionGroupAddMinion(ILContext il)
-        {
-            var c = new ILCursor(il);
-            ILLabel nextLabel = null;
-            if (!c.TryGotoNext(
-                MoveType.After,
-                x => x.MatchLdloc(1),
-                x => x.MatchOpImplicit(),
-                x => x.MatchBrfalse(out nextLabel)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.EmitNetworkServerActive();
-            c.Emit(OpCodes.Brfalse_S, nextLabel);
-        }
-
-        [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.RemoveMinion))]
-        [HarmonyILManipulator]
-        public static void FixMinionGroupRemoveMinion(ILContext il)
-        {
-            var c = new ILCursor(il);
-            ILLabel nextLabel = null;
-            if (!c.TryGotoNext(
-                MoveType.After,
-                x => x.MatchLdloc(0),
-                x => x.MatchOpImplicit(),
-                x => x.MatchBrfalse(out nextLabel)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-            c.EmitNetworkServerActive();
-            c.Emit(OpCodes.Brfalse_S, nextLabel);
         }
     }
 }
