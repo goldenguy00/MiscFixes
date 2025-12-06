@@ -22,6 +22,37 @@ namespace MiscFixes.ErrorPolice.Harmony
     [HarmonyPatch]
     public class VanillaFixes
     {
+        [HarmonyPatch(typeof(ItemDef), nameof(ItemDef.AttemptGrant))]
+        [HarmonyILManipulator]
+        public static void ItemDef_AttemptGrant(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(
+                    x => x.MatchLdcI4(1),
+                    x => x.MatchCallOrCallvirt<Inventory>(nameof(Inventory.GiveItemTemp))))
+            {
+                c.Index++;
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Func<float, PickupDef.GrantContext, float>>((_, context) => context.pickup.decayValue);
+            }
+            else Log.PatchFail(il);
+        }
+
+        [HarmonyPatch(typeof(ItemDef), "<AttemptGrant>g__HandleDuplicator|0_0")]
+        [HarmonyILManipulator]
+        public static void ItemDef_AttemptGrant_HandleDuplicator(ILContext il)
+        {
+            var c = new ILCursor(il);
+            while (c.TryGotoNext(
+                    x => x.MatchLdcI4(1),
+                    x => x.MatchCallOrCallvirt<Inventory>(nameof(Inventory.GiveItemTemp))))
+            {
+                c.Index++;
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Func<float, PickupDef.GrantContext, float>>((_, context) => context.pickup.decayValue);
+            }
+            else Log.PatchFail(il);
+        }
         /// <summary>
         /// null array elements ig, nullcheck all cuz its not super commonly called
         /// RoR2.TemporaryVisualEffect.RebuildVisualComponents() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0057)

@@ -25,7 +25,7 @@ REM del Weaver\%Target%.pdb.prepatch
 REM that's it. This is meant to pretend we just built a dll like any other time except this one is networked
 REM add your postbuilds in vs like it's any other project
 
-robocopy    %Output%    %Store%\plugins     %Target%.dll %Target%.pdb     /log+:%Log%
+robocopy    %Output%    %Store%     %Target%.dll %Target%.pdb     /log+:%Log%
 
 REM delete old zip
 if exist %Zip% Del %Zip%
