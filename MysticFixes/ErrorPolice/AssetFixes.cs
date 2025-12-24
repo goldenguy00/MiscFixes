@@ -1,11 +1,10 @@
 ﻿using MiscFixes.Modules;
 using RoR2;
 using RoR2.UI;
-using RoR2BepInExPack.GameAssetPathsBetter;
+using RoR2BepInExPack.GameAssetPaths.Version_1_39_0;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace MiscFixes.ErrorPolice
 {
@@ -13,227 +12,162 @@ namespace MiscFixes.ErrorPolice
     {
         internal static void Init()
         {
-            FixElderLemurianFootstepEvents();
-            FixSaleStarCollider();
+            //FixElderLemurianFootstepEvents();
+            //FixSaleStarCollider();
             MoreHudChildLocEntries();
             FixHenry();
-            FixVermin();
+            //FixVermin();
             FixGlassMithrixMaterials();
+
+            BodyCatalog.availability.CallWhenAvailable(FixBodies);
         }
 
-        private static void FixVermin()
+        private static void FixBodies()
         {
-            var ref1 = new AssetReferenceGameObject(RoR2_DLC1_Vermin.VerminSpawn_prefab);
-
-            Utils.PreloadAsset(ref1).Completed += delegate (AsyncOperationHandle<GameObject> obj)
+            for (int i = 0; i < BodyCatalog.bodyPrefabBodyComponents.Length; ++i)
             {
-                var ec = obj.Result.GetComponent<EffectComponent>();
-                if (ec && !ec.positionAtReferencedTransform)
-                    ec.positionAtReferencedTransform = true;
-                else
-                    Log.PatchFail("Vermin spawn effect");
+                var body = BodyCatalog.bodyPrefabBodyComponents[i];
+                if (ReferenceEquals(body.vehicleIdleStateMachine, null))
+                {
+                    Log.Error(BodyCatalog.bodyNames[i] + " | Null vehicleIdleStateMachine array!");
+                    body.vehicleIdleStateMachine = [];
+                }
 
-                Utils.UnloadAsset(ref1);
-            };
+                for (int j = body.vehicleIdleStateMachine.Length - 1; j >= 0; --j)
+                {
+                    if (body.vehicleIdleStateMachine[j] == null)
+                    {
+                        Log.Error(BodyCatalog.bodyNames[i] + " | Null vehicleIdleStateMachine at index " + j);
+                        HG.ArrayUtils.ArrayRemoveAtAndResize(ref body.vehicleIdleStateMachine, j);
+                    }
+                }
+            }
         }
 
         private static void FixHenry()
         {
-            var bodyRef = new AssetReferenceGameObject(RoR2_Base_Commando.CommandoBody_prefab);
-            var matRef = new AssetReferenceT<Material>(RoR2_Base_Commando.matCommandoDualies_mat);
+            var bodyRef = Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Commando.CommandoBody_prefab).WaitForCompletion();
+            var matRef = Addressables.LoadAssetAsync<Material>(RoR2_Base_Commando.matCommandoDualies_mat).WaitForCompletion();
 
-            Utils.PreloadAsset(bodyRef).Completed += delegate (AsyncOperationHandle<GameObject> bodyHandle)
-            {
-                Utils.PreloadAsset(matRef).Completed += delegate (AsyncOperationHandle<Material> matHandle)
+            var mdlLoc = bodyRef.GetComponent<ModelLocator>();
+            var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
+
+            mdlLoc.modelTransform.GetComponent<CharacterModel>().baseRendererInfos =
+            [
+                new CharacterModel.RendererInfo
                 {
-                    var mdlLoc = bodyHandle.Result.GetComponent<ModelLocator>();
-                    var childLoc = mdlLoc.modelTransform.GetComponent<ChildLocator>();
-                    var matCmd = matHandle.Result;
-
-                    mdlLoc.modelTransform.GetComponent<CharacterModel>().baseRendererInfos =
-                    [
-                        new CharacterModel.RendererInfo
-                        {
-                            renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshL"),
-                            defaultMaterial = matCmd,
-                            defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
-                        },
-                        new CharacterModel.RendererInfo
-                        {
-                            renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshR"),
-                            defaultMaterial = matCmd,
-                            defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
-                        },
-                        new CharacterModel.RendererInfo
-                        {
-                            renderer = mdlLoc.modelTransform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
-                            defaultMaterial = matCmd,
-                            defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
-                        }
-                    ];
-
-                    Log.Debug("Commando baseRendererInfos done");
-
-                    Utils.UnloadAsset(bodyRef);
-                    Utils.UnloadAsset(matRef);
-                };
-            };
-        }
-
-        /// <summary>
-        /// Fix two Elder Lemurian footstep events to play sound and not spam Layer Index -1.
-        /// </summary>
-        public static void FixElderLemurianFootstepEvents()
-        {
-            var animRef = new AssetReferenceT<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller);
-            Utils.PreloadAsset(animRef).Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> animHandle)
-            {
-                var anim = animHandle.Result;
-                PatchClip(4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
-                PatchClip(12, "LemurianBruiserArmature|Death", 2, "MouthMuzzle", "MuzzleMouth");
-
-                Log.Debug("Elder lemurian footsteps done");
-
-                void PatchClip(int clipIndex, string clipName, int eventIndex, string oldEventString, string newEventString)
+                    renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshL"),
+                    defaultMaterial = matRef,
+                    defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                },
+                new CharacterModel.RendererInfo
                 {
-                    if (anim.animationClips.Length > clipIndex && anim.animationClips[clipIndex].name == clipName)
-                    {
-                        var clip = anim.animationClips[clipIndex];
-                        if (clip.events.Length > eventIndex && clip.events[eventIndex].stringParameter == oldEventString)
-                        {
-                            var events = clip.events;
-                            events[eventIndex].stringParameter = newEventString;
-                            clip.events = events;
-                            return;
-                        }
-                    }
-                    Log.PatchFail(anim.name + " - " + clipName);
+                    renderer = childLoc.FindChildComponent<MeshRenderer>("GunMeshR"),
+                    defaultMaterial = matRef,
+                    defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                },
+                new CharacterModel.RendererInfo
+                {
+                    renderer = mdlLoc.modelTransform.Find("CommandoMesh").GetComponent<SkinnedMeshRenderer>(),
+                    defaultMaterial = matRef,
+                    defaultShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
                 }
-
-                Utils.UnloadAsset(animRef);
-            };
-        }
-
-        /// <summary>
-        /// Prevent Sale Star's pickup from complaining about its collider's settings.
-        /// </summary>
-        public static void FixSaleStarCollider()
-        {
-            var objRef = new AssetReferenceGameObject(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab);
-            Utils.PreloadAsset(objRef).Completed += delegate (AsyncOperationHandle<GameObject> objHandle)
-            {
-                var collider = objHandle.Result.transform.Find("SaleStar")?.GetComponent<MeshCollider>();
-                if (collider == null || collider.convex)
-                {
-                    Log.PatchFail("collider of SaleStar");
-                }
-                else
-                {
-                    collider.convex = true;
-                    Log.Debug("SaleStar Collider done");
-                }
-                Utils.UnloadAsset(objRef);
-            };
+            ];
         }
 
         public static void MoreHudChildLocEntries()
         {
-            var objRef = new AssetReferenceGameObject(RoR2_Base_UI.HUDSimple_prefab);
-            Utils.PreloadAsset(objRef).Completed += delegate (AsyncOperationHandle<GameObject> objHandle)
-            {
-                var hud = objHandle.Result.GetComponent<HUD>();
-                var childLoc = hud.GetComponent<ChildLocator>();
-                var springCanvas = hud.mainUIPanel.transform.Find("SpringCanvas");
+            var objRef = Addressables.LoadAssetAsync<GameObject>(RoR2_Base_UI.HUDSimple_prefab).WaitForCompletion();
 
-                var newChildLoc = childLoc.transformPairs.ToList();
-                newChildLoc.AddRange(
-                [
-                    // main clusters
-                    // exists:
-                    // BottomLeftCluster
-                    // TopCenterCluster
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "SpringCanvas",
-                        transform = springCanvas
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "UpperRightCluster",
-                        transform = springCanvas.Find("UpperRightCluster")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "BottomRightCluster",
-                        transform = springCanvas.Find("BottomRightCluster")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "UpperLeftCluster",
-                        transform = springCanvas.Find("UpperLeftCluster")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "BottomCenterCluster",
-                        transform = springCanvas.Find("BottomCenterCluster")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "LeftCluster",
-                        transform = springCanvas.Find("LeftCluster")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "RightCluster",
-                        transform = springCanvas.Find("RightCluster")
-                    },
+            var hud = objRef.GetComponent<HUD>();
+            var childLoc = hud.GetComponent<ChildLocator>();
+            var springCanvas = hud.mainUIPanel.transform.Find("SpringCanvas");
 
-                    // extra stuff
-                    // exists:
-                    // RightUtilityArea
-                    // RightInfoBar
-                    // ScopeContainer
-                    // CrosshairExtras
-                    // BossHealthBar
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "NotificationArea",
-                        transform = hud.mainContainer.transform.Find("NotificationArea")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "ScoreboardPanel",
-                        transform = springCanvas.Find("ScoreboardPanel")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "SkillDisplayRoot",
-                        transform = springCanvas.Find("BottomRightCluster/Scaler")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "BuffDisplayRoot",
-                        transform = springCanvas.Find("BottomLeftCluster/BarRoots/LevelDisplayCluster/BuffDisplayRoot")
-                    },
-                    new ChildLocator.NameTransformPair
-                    {
-                        name = "InventoryDisplayRoot",
-                        transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
-                    }
-                    // riskUI is the only REAL full UI overhaul so this should alleviate some of the differences
-                ]);
+            var newChildLoc = childLoc.transformPairs.ToList();
+            newChildLoc.AddRange(
+            [
+                // main clusters
+                // exists:
+                // BottomLeftCluster
+                // TopCenterCluster
+                new ChildLocator.NameTransformPair
+                {
+                    name = "SpringCanvas",
+                    transform = springCanvas
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "UpperRightCluster",
+                    transform = springCanvas.Find("UpperRightCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "BottomRightCluster",
+                    transform = springCanvas.Find("BottomRightCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "UpperLeftCluster",
+                    transform = springCanvas.Find("UpperLeftCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "BottomCenterCluster",
+                    transform = springCanvas.Find("BottomCenterCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "LeftCluster",
+                    transform = springCanvas.Find("LeftCluster")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "RightCluster",
+                    transform = springCanvas.Find("RightCluster")
+                },
 
-                // shouldnt happen, but any duplicates can get removed
-                childLoc.transformPairs =
-                [
-                    ..newChildLoc
-                    .GroupBy(pair => pair.name)
-                    .Select(group => group.First())
-                ];
+                // extra stuff
+                // exists:
+                // RightUtilityArea
+                // RightInfoBar
+                // ScopeContainer
+                // CrosshairExtras
+                // BossHealthBar
+                new ChildLocator.NameTransformPair
+                {
+                    name = "NotificationArea",
+                    transform = hud.mainContainer.transform.Find("NotificationArea")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "ScoreboardPanel",
+                    transform = springCanvas.Find("ScoreboardPanel")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "SkillDisplayRoot",
+                    transform = springCanvas.Find("BottomRightCluster/Scaler")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "BuffDisplayRoot",
+                    transform = springCanvas.Find("BottomLeftCluster/BarRoots/LevelDisplayCluster/BuffDisplayRoot")
+                },
+                new ChildLocator.NameTransformPair
+                {
+                    name = "InventoryDisplayRoot",
+                    transform = springCanvas.Find("TopCenterCluster/ItemInventoryDisplayRoot")
+                }
+                // riskUI is the only REAL full UI overhaul so this should alleviate some of the differences
+            ]);
 
-                Log.Debug("HUD Childlocator updated");
-                Utils.UnloadAsset(objRef);
-            };
+            // shouldnt happen, but any duplicates can get removed
+            childLoc.transformPairs =
+            [
+                ..newChildLoc
+                .GroupBy(pair => pair.name)
+                .Select(group => group.First())
+            ];
         }
 
         /// <summary>
@@ -241,24 +175,10 @@ namespace MiscFixes.ErrorPolice
         /// </summary>
         private static void FixGlassMithrixMaterials()
         {
-            var brotherGlassBodyRef = new AssetReferenceGameObject(RoR2_Junk_BrotherGlass.BrotherGlassBody_prefab);
-            var originalSkinRef = new AssetReferenceT<SkinDef>(RoR2_Base_Brother.skinBrotherBodyDefault_asset);
-            var originalSkinParamsRef = new AssetReferenceT<SkinDefParams>(RoR2_Base_Brother.skinBrotherBodyDefault_params_asset);
-
-            Utils.PreloadAsset(brotherGlassBodyRef).Completed += delegate (AsyncOperationHandle<GameObject> bodyHandle)
-            {
-                Utils.PreloadAsset(originalSkinRef).Completed += delegate (AsyncOperationHandle<SkinDef> skinHandle)
-                {
-                    Utils.PreloadAsset(originalSkinParamsRef).Completed += delegate (AsyncOperationHandle<SkinDefParams> skinParamsHandle)
-                    {
-                        PersistentOverlay.Init(bodyHandle.Result, skinHandle.Result, skinParamsHandle.Result);
-
-                        Utils.UnloadAsset(originalSkinParamsRef);
-                        Utils.UnloadAsset(originalSkinRef);
-                        Utils.UnloadAsset(brotherGlassBodyRef);
-                    };
-                };
-            };
+            var brotherGlassBodyRef = Addressables.LoadAssetAsync<GameObject>(RoR2_Junk_BrotherGlass.BrotherGlassBody_prefab).WaitForCompletion();
+            var originalSkinRef = Addressables.LoadAssetAsync<SkinDef>(RoR2_Base_Brother.skinBrotherBodyDefault_asset).WaitForCompletion();
+            var originalSkinParamsRef = Addressables.LoadAssetAsync<SkinDefParams>(RoR2_Base_Brother.skinBrotherBodyDefault_params_asset).WaitForCompletion();
+            PersistentOverlay.Init(brotherGlassBodyRef, originalSkinRef, originalSkinParamsRef);
         }
     }
 }

@@ -1,8 +1,17 @@
+## 1.5.3
+
+- Re-added flicker light fix for SS2
+- Added PsuedoCharacterMotor.velocity setter
+
+## 1.5.2
+
+- Removed a lot of changes that were implemented in vanilla
+- Fixed issues with vehicle seats
+- Disabled SS2 santa hats
+
 ## 1.5.1
 
 - Added fix for mithrix clone materials
-- Added MiscPatches
-- Added SkinDef.Bake redirect to MiscPatches
 
 ## 1.5.0
 

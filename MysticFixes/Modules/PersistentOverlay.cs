@@ -16,7 +16,7 @@ namespace MiscFixes.Modules
 
         public static void Init(GameObject modelObject, SkinDef originalSkinDef, SkinDefParams originalSkinDefParams)
         {
-            if (!modelObject.TryGetComponent(out ModelLocator modelLocator))
+            if (!modelObject || !modelObject.TryGetComponent(out ModelLocator modelLocator))
             {
                 Log.Error("modelLocator is null");
                 return;
