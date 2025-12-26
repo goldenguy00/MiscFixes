@@ -14,18 +14,12 @@
 
 # Build results
 [Dd]ebug/
-[Dd]ebugPublic/
-[Rr]eleases/
 x64/
 x86/
 bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
-
-Release/*.zip
-Release/*.pdb
-Release/*.dll
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -61,6 +55,9 @@ artifacts/
 StyleCopReport.xml
 
 # Files built by Visual Studio
+*.zip
+*.pdb
+*.dll
 *_i.c
 *_p.c
 *_i.h

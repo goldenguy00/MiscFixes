@@ -56,51 +56,15 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 ### Check the changelog for more info. This list may not include everything.
 
 - Fixes many common Henry prefab creation errors
-- Fixes many of the issues modded characters and skins have in the recent update.
 - Fixes vanilla Asset loading issues introduced in the recent memory optimization update.
-- Prevents spam error for various server methods called on clients
-- Restores some failing Elder Lemurian footstep sounds
-- Fixes an error message for Sale's Star pickup
-- Corrects misplaced vermin spawn particle effects
-- Restores printer VFX
-- Restores scrapper sounds
-- Prevents pointless error spam when destroying some objects, e.g., killing a Stone Titan
 - Restores backwards compatibilty for temporary overlays
-
----
-
-## Error handling
-- chef RolyPoly achievement NRE
-- NRE with Aurelionite affix targeting
-- NRE when masterless bodies level up (TryGiveFreeUnlockWhenLevelUp)
-- various NREs with VineOrb (dead target on arrival, null dotDef)
-- Prevents an error when spawning some projectiles, probably because they lack a model
-- Some ProcessGoldEvents error
-- an NRE when leaving the stage with drones (MinionLeashBodyBehavior.OnDisable)
-- any Antler NREs
-- rare FogDamageController NRE when targeting teammates
-- Lunar exploder killed by void death error
-- the roulette check NRE
-- Gilded Coast chest interaction error
-- an error for objects that have null HurtBoxes (only seen it for the hanging mushrooms in Golden Dieback)
-- Lemurian Eggs constantly creating new lock VFX when charging the teleporter which don't get cleared upon completion
-- NRE spam for arrow indicators when playing with the HUD disabled (teleporter boss, void seed, etc)
-- Equipment indicator error
-- a crosshair error when Seeker respawns
-- a Rewired error when quiting the game
-- the TestState1 - TestState2 log spam on Prime Meridian
-- an error when the Child fails to teleport near your location
-- an NRE when spawning close to a chest
-- NREs related to TetherVfxOrigin.AddTether and TetherVfxOrigin.RemoveTetherAt for the twisted elite
-- Halcyonite's Whirlwind NRE spam when its target is killed during the skill
-- Meridian's Will failing to pull monsters in when a stationary target is hit
-- The dreadful Facepunch exception that can occur, which randomly prevented loading (3% bug)
-- Flicker light error
-- an unrecoverable error caused by having multiple event systems (thanks Bubbet)
+- Overscaled burn particles fix - thanks to Nuxlar
+- Misc Unity Explorer fixes
+- Facepunch exception that can occur randomly, preventing loading
 - Incompletable void seed bug
-- (temporarily removed) Fixes ConVars with uppercase letters not working, e.g, egsToggle
-
-
+- Incompletable Halcyonite Shrine due to drain value being calculated at <1 gold
+- Lunar exploder killed by void death error
+- an error for objects that have null HurtBoxes (only seen it for the hanging mushrooms in Golden Dieback)
 
 ---
 
