@@ -1,3 +1,8 @@
+## 1.5.4
+- Fixed PsuedoCharacterMotor.velocity*Authority* setter
+- Reorg hook management so that broken hooks are self contained
+- Removed more unnecessary hooks to minimize this mod's presence
+
 ## 1.5.3
 
 - Re-added flicker light fix for SS2

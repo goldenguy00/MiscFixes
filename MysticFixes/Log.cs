@@ -1,7 +1,7 @@
 ﻿using BepInEx.Logging;
 using MonoMod.Cil;
 
-namespace MiscFixes.Modules
+namespace MiscFixes
 {
     internal static class Log
     {

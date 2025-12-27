@@ -3,10 +3,6 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>latestMajor</LangVersion>
-		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-		<Title>RoR2$(AssemblyName)</Title>
-		<PackageId>RoR2$(AssemblyName)</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

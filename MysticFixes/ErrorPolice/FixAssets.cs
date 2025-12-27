@@ -8,15 +8,12 @@ using UnityEngine.AddressableAssets;
 
 namespace MiscFixes.ErrorPolice
 {
-    internal static class AssetFixes
+    internal static class FixAssets
     {
         internal static void Init()
         {
-            //FixElderLemurianFootstepEvents();
-            //FixSaleStarCollider();
             MoreHudChildLocEntries();
             FixHenry();
-            //FixVermin();
             FixGlassMithrixMaterials();
 
             BodyCatalog.availability.CallWhenAvailable(FixBodies);

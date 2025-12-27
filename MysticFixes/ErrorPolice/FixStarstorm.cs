@@ -1,10 +1,10 @@
 ﻿using HarmonyLib;
 using SS2.Items;
 
-namespace MiscFixes.ErrorPolice.Harmony
+namespace MiscFixes.ErrorPolice
 {
     [HarmonyPatch]
-    internal class StarstormFix
+    internal class FixStarstorm
     {
         [HarmonyPatch(typeof(SantaHat), nameof(SantaHat.IsAvailable))]
         [HarmonyPrefix]

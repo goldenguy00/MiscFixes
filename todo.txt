@@ -1,12 +1,2 @@
-Doesnt throw errors but it removed items from a destroyed object which results in OnInventoryChanged nre's from some mods
-
-        RoR2.MinionOwnership+MinionGroup.SetMinionOwner (RoR2.MinionOwnership minion, UnityEngine.Networking.NetworkInstanceId ownerId) (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0022)
-        RoR2.MinionOwnership.OnDestroy () (at <f7443728c4d4442b8c2db9f6c21a6e92>:IL_0000)
-
-
-There is an elusive error initially observed with scorchling's fire projectile where when it lands TakeDamageProcess throws NRE, the projectile isn't destroyed and the whole process repeats.
-I've gone on looped runs to try and replicate it, but I forgot that bepinex patches that method for the expose log spam so the stack trace hasn't been useful.
-I'm now try-catching orig(self) and dumping items/buffs/etc for both victim and attacker to figure out where in the method the null is. But so far I haven't encountered it again.
-
-
-need to investigate convar stuff, egsToggle breaks with current hook. commenting out for now.
+fix TemporaryVisualEffect_RebuildVisualComponents
+fix OnSkillActivated not nullchecking inventory

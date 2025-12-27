@@ -1,19 +1,32 @@
-﻿using BepInEx.Configuration;
+﻿using SYS = System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+using BepInEx;
+using BepInEx.Configuration;
 using HG.GeneralSerializer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using HG;
 
 namespace MiscFixes.Modules
 {
     public static class Extensions
     {
+        [SYS.Flags]
+        public enum ConfigFlags : byte
+        {
+            None = 0,
+            RestartRequired = 1,
+            ClientSided = 1 << 1,
+            ServerSided = 1 << 2,
+        }
+
         #region IL
         /// <summary> Emits call to UnityEngine's NetworkServer.active. Places bool on the stack. </summary>
         public static void EmitNetworkServerActive(this ILCursor cursor) => cursor.Emit<NetworkServer>(OpCodes.Call, "get_active");
@@ -41,15 +54,7 @@ namespace MiscFixes.Modules
 
         #region Config Binding
 
-        [System.Flags]
-        public enum ConfigFlags : byte
-        {
-            None = 0,
-            RestartRequired = 1,
-            ClientSided = 1 << 1,
-            ServerSided = 1 << 2,
-        }
-
+        #region Internal
         private static readonly StringBuilder _sb = new StringBuilder();
         private static string BuildDescription(string name, string description, string defaultValue, ConfigFlags flags)
         {
@@ -70,10 +75,48 @@ namespace MiscFixes.Modules
             return _sb.Take().Replace("'", string.Empty);
         }
 
+        private static bool GetModMetaDataSafe(this Assembly assembly, out string guid, out string name)
+        {
+            guid = "";
+            name = "";
+
+            foreach (var type in assembly.GetLoadableTypes())
+            {
+                BepInPlugin customAttribute = type.GetCustomAttribute<BepInPlugin>();
+                if (customAttribute != null)
+                {
+                    guid = customAttribute.GUID;
+                    name = customAttribute.Name;
+                    return true;
+                }
+            }
+
+            Log.Error("Unable to associate config assembly " + assembly.FullName);
+            return false;
+        }
+
+        // https://haacked.com/archive/2012/07/23/get-all-types-in-an-assembly.aspx/
+        private static IEnumerable<SYS.Type> GetLoadableTypes(this Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                return e.Types.Where(t => t != null);
+            }
+        }
+        #endregion
+
+        /// <summary> Use DeleteOrphanedEntries instead </summary>
+        [SYS.Obsolete]
+        public static void WipeConfig(this ConfigFile cfg) => cfg.DeleteOrphanedEntries();
+
         /// <summary>
         /// Erases all unbound config extries from the config file. Call this after all your ConfigEntries are bound!
         /// </summary>
-        public static void WipeConfig(this ConfigFile cfg)
+        public static void DeleteOrphanedEntries(this ConfigFile cfg)
         {
             var orphanedEntriesProp = typeof(ConfigFile).GetProperty("OrphanedEntries", ~BindingFlags.Default);
             if (orphanedEntriesProp?.GetValue(cfg) is Dictionary<ConfigDefinition, string> orphanedEntries)
@@ -97,13 +140,13 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (System.Exception e) { Log.Error(e); }
+            catch (SYS.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : System.IEquatable<T>
+        public static ConfigEntry<T> BindOption<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T[] acceptableValues, ConfigFlags flags = ConfigFlags.None) where T : SYS.IEquatable<T>
         {
             description = BuildDescription(name, description, defaultValue?.ToString(), flags);
 
@@ -121,7 +164,7 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOption((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (System.Exception e) { Log.Error(e); }
+            catch (SYS.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -140,13 +183,13 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (System.Exception e) { Log.Error(e); }
+            catch (SYS.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : System.IComparable
+        public static ConfigEntry<T> BindOptionSlider<T>(this ConfigFile myConfig, string section, string name, string description, T defaultValue, T min, T max, ConfigFlags flags = ConfigFlags.None) where T : SYS.IComparable
         {
             description = BuildDescription(name, description, defaultValue.ToString(), flags);
             var configEntry = myConfig.Bind(section, name, defaultValue, new ConfigDescription(description, new AcceptableValueRange<T>(min, max)));
@@ -159,7 +202,7 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOptionSlider((flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (System.Exception e) { Log.Error(e); }
+            catch (SYS.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -181,7 +224,7 @@ namespace MiscFixes.Modules
                     configEntry.TryRegisterOptionSteppedSlider(increment, min, max, (flags & ConfigFlags.RestartRequired) != 0, guid, modName);
                 }
             }
-            catch (System.Exception e) { Log.Error(e); }
+            catch (SYS.Exception e) { Log.Error(e); }
 
             return configEntry;
         }
@@ -198,7 +241,7 @@ namespace MiscFixes.Modules
             {
                 RiskOfOptions.ModSettingsManager.AddOption(new RiskOfOptions.Options.StringInputFieldOption(stringEntry, new RiskOfOptions.OptionConfigs.InputFieldConfig
                 {
-                    lineType = TMPro.TMP_InputField.LineType.SingleLine,
+                    lineType = TMPro.TMP_InputField.LineType.MultiLineNewline,
                     submitOn = RiskOfOptions.OptionConfigs.InputFieldConfig.SubmitEnum.OnExitOrSubmit,
                     restartRequired = restartRequired
                 }), modGuid, modName);
@@ -293,63 +336,37 @@ namespace MiscFixes.Modules
         #endregion
 
         #region Unity Objects
-        public static T GetOrAddComponent<T>(this Component obj) where T : Component
-        {
-            T comp = null;
 
-            if (obj && !obj.TryGetComponent(out comp))
-                comp = obj.gameObject.AddComponent<T>();
+        /// <summary> Use HG.EnsureComponent instead</summary>
+        public static T GetOrAddComponent<T>(this GameObject obj) where T : Component => obj.EnsureComponent<T>();
 
-            return comp;
-        }
-
-        public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
-        {
-            T comp = null;
-
-            if (obj && !obj.TryGetComponent(out comp))
-                comp = obj.AddComponent<T>();
-
-            return comp;
-        }
+        /// <summary> Use HG.EnsureComponent instead</summary>
+        public static T GetOrAddComponent<T>(this Component obj) where T : Component => obj.EnsureComponent<T>();
 
         public static void TryDestroyComponent<T>(this GameObject obj) where T : Component
         {
-            if (obj && obj.TryGetComponent<T>(out var component))
-            {
+            if (obj.TryGetComponent<T>(out var component))
                 Object.Destroy(component);
-            }
         }
+
         public static void TryDestroyComponent<T>(this Component obj) where T : Component
         {
-            if (obj && obj.TryGetComponent<T>(out var component))
-            {
+            if (obj.TryGetComponent<T>(out var component))
                 Object.Destroy(component);
-            }
         }
 
         public static void TryDestroyAllComponents<T>(this GameObject obj) where T : Component
         {
-            if (!obj)
-                return;
-
-            var coms = obj.GetComponents<T>();
-            for (var i = 0; i < coms.Length; i++)
-            {
-                Object.Destroy(coms[i]);
-            }
+            var components = obj.GetComponents<T>();
+            for (var i = components.Length - 1; i >= 0; i--)
+                Object.Destroy(components[i]);
         }
 
         public static void TryDestroyAllComponents<T>(this Component obj) where T : Component
         {
-            if (!obj)
-                return;
-
-            var coms = obj.GetComponents<T>();
-            for (var i = coms.Length - 1; i >= 0; i--)
-            {
-                Object.Destroy(coms[i]);
-            }
+            var components = obj.GetComponents<T>();
+            for (var i = components.Length - 1; i >= 0; i--)
+                Object.Destroy(components[i]);
         }
 
         public static T CloneComponent<T>(this GameObject go, T src) where T : Component => go.AddComponent<T>().CloneFrom(src);
@@ -358,7 +375,7 @@ namespace MiscFixes.Modules
         {
             var type = obj.GetType();
             if (type != other.GetType())
-                throw new System.TypeAccessException($"Type mismatch of {obj?.GetType()} and {other?.GetType()}");
+                throw new SYS.TypeAccessException($"Type mismatch of {obj?.GetType()} and {other?.GetType()}");
 
             var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -372,9 +389,9 @@ namespace MiscFixes.Modules
                 try
                 {
                     info.SetValue(obj, info.GetValue(other));
-                    Log.Debug($"Set field {info.Name} to value of {info.GetValue(obj)}");
+                    Log.Info($"Set field {info.Name} to value of {info.GetValue(obj)}");
                 }
-                catch (System.Exception e) { Log.Debug(e); }
+                catch (SYS.Exception e) { Log.Warning(e); }
             }
 
             var pinfos = type.GetProperties(flags);
@@ -390,9 +407,9 @@ namespace MiscFixes.Modules
                 try
                 {
                     info.SetValue(obj, info.GetValue(other));
-                    Log.Debug($"Set property {info.Name} to value of {info.GetValue(obj)}");
+                    Log.Info($"Set property {info.Name} to value of {info.GetValue(obj)}");
                 }
-                catch (System.Exception e) { Log.Debug(e); }   // In case of NotImplementedException being thrown.
+                catch (SYS.Exception e) { Log.Warning(e); }   // In case of NotImplementedException being thrown.
                                                                // For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
             }
 
@@ -468,7 +485,7 @@ namespace MiscFixes.Modules
             return false;
         }
 
-        public static bool TryGetFieldValueString<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : System.IEquatable<T>
+        public static bool TryGetFieldValueString<T>(this EntityStateConfiguration entityStateConfiguration, string fieldName, out T value) where T : SYS.IEquatable<T>
         {
             ref var serializedField = ref entityStateConfiguration.serializedFieldsCollection.GetOrCreateField(fieldName);
             if (serializedField.fieldValue.stringValue != null && StringSerializer.CanSerializeType(typeof(T)))
@@ -484,6 +501,33 @@ namespace MiscFixes.Modules
 
             value = default;
             return false;
+        }
+
+        public static void PrintAllSerializedValues(this EntityStateConfiguration esc)
+        {
+            Log.Info("Printing: " + esc.targetType.assemblyQualifiedName);
+            for (var i = 0; i < esc.serializedFieldsCollection.serializedFields.Length; i++)
+            {
+                ref var serializedField = ref esc.serializedFieldsCollection.serializedFields[i];
+                
+                var fieldName = serializedField.fieldName;
+                var fieldType = "Unknown";
+                var fieldValue = "<Null>";
+
+                if (serializedField.fieldValue.objectValue)
+                {
+                    fieldType = nameof(Object);
+                    fieldValue = serializedField.fieldValue.objectValue.name;
+                }
+                else if (serializedField.fieldValue.stringValue is not null)
+                {
+                    fieldType = nameof(SYS.String);
+                    fieldValue = serializedField.fieldValue.stringValue;
+                }
+
+                Log.Info(string.Format("\tName: {0}\t|\t Field Type: {1}" + SYS.Environment.NewLine
+                    + "{2}", fieldName, fieldType, fieldValue));
+            }
         }
         #endregion
     }
