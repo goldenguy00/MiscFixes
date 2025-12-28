@@ -50,6 +50,18 @@ namespace MiscFixes.Modules
             instruction = instr;
             return true;
         }
+
+        public static void EmitNullConditional(this ILCursor c, ILLabel notNullBranch, ILLabel nullBranch)
+        {
+            c.Emit(OpCodes.Dup);
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brtrue, notNullBranch);
+            c.Emit(OpCodes.Pop);
+            c.Emit(OpCodes.Br, nullBranch);
+        }
+
+        public static void EmitNullConditional(this ILCursor c, Instruction notNullBranch, Instruction nullBranch) => c.EmitNullConditional(c.Context.DefineLabel(notNullBranch), c.Context.DefineLabel(nullBranch));
+        public static void EmitNullConditional(this ILCursor c, Instruction notNullBranch, ILLabel nullBranch) => c.EmitNullConditional(c.Context.DefineLabel(notNullBranch), nullBranch);
         #endregion
 
         #region Config Binding
@@ -96,7 +108,7 @@ namespace MiscFixes.Modules
         }
 
         // https://haacked.com/archive/2012/07/23/get-all-types-in-an-assembly.aspx/
-        private static IEnumerable<SYS.Type> GetLoadableTypes(this Assembly assembly)
+        public static IEnumerable<SYS.Type> GetLoadableTypes(this Assembly assembly)
         {
             try
             {

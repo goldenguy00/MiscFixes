@@ -1,3 +1,14 @@
+## 1.5.6
+- Null checks
+    - CharacterDeathBehavior_OnDeath
+    - ModelSkinController_ApplySkinAsync
+    - CharacterBody_OnSkillActivated
+    - JumpDamageStrikeBodyBehavior_UpdateDisplayInstances
+    - TemporaryVisualEffect_RebuildVisualComponents
+
+## 1.5.5
+- Removed SS2 fix
+
 ## 1.5.4
 - Fixed PsuedoCharacterMotor.velocity*Authority* setter
 - Reorg hook management so that broken hooks are self contained

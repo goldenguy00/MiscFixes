@@ -19,6 +19,13 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 - <>
 - Filters out null HurtBoxes on CharacterModels
 - Filters out null vehicleIdleStateMachines on CharacterBodies
+- <>
+- Null checks
+    - CharacterDeathBehavior_OnDeath
+    - ModelSkinController_ApplySkinAsync
+    - CharacterBody_OnSkillActivated
+    - JumpDamageStrikeBodyBehavior_UpdateDisplayInstances
+    - TemporaryVisualEffect_RebuildVisualComponents
 
 ---
 

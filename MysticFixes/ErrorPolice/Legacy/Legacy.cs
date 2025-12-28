@@ -359,7 +359,6 @@
                 c.Emit(OpCodes.Dup);
                 c.EmitOpImplicit();
                 c.Emit(OpCodes.Brtrue, getSceneDefLabel);
-
                 c.Emit(OpCodes.Pop);
                 c.Emit<string>(OpCodes.Ldsfld, nameof(string.Empty));
                 c.Emit(OpCodes.Br, compareLabel);

@@ -7,6 +7,7 @@ using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using RoR2.Items;
 using RoR2.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,7 +27,7 @@ namespace MiscFixes.ErrorPolice
         {
             if (!__instance.light)
             {
-                Log.Error(__instance.name + " does not have a light! Fix this in the prefab!");
+                Log.Error(Util.BuildPrefabTransformPath(__instance.transform.root, __instance.transform, false, true) + " does not have a light! Fix this in the prefab!");
                 __instance.enabled = false;
             }
         }
@@ -106,8 +107,20 @@ namespace MiscFixes.ErrorPolice
             __result = LocalUserManager.GetFirstLocalUser()?.currentNetworkUser;
             return false;
         }
+
+        [HarmonyPatch(typeof(PseudoCharacterMotor), nameof(PseudoCharacterMotor.velocityAuthority), MethodType.Setter)]
+        [HarmonyFinalizer]
+        public static Exception PseudoCharacterMotor_setVelocityAuthority(Exception __exception)
+        {
+            if (__exception is NotImplementedException nie)
+            {
+                Log.Error(nie);
+                return null;
+            }
+            return __exception;
+        }
     }
-    
+
     [HarmonyPatch]
     internal class FixNullRefs
     {
@@ -141,6 +154,146 @@ namespace MiscFixes.ErrorPolice
             else Log.PatchFail(il);
         }
 
+
+        [HarmonyPatch(typeof(CharacterDeathBehavior), nameof(CharacterDeathBehavior.OnDeath))]
+        [HarmonyILManipulator]
+        public static void CharacterDeathBehavior_OnDeath(ILContext il)
+        {
+            /*  IL_003d: ldelem.ref
+		        IL_003e: newobj instance void EntityStates.Idle::.ctor()
+		        IL_0043: callvirt instance void RoR2.EntityStateMachine::SetNextState(class EntityStates.EntityState)*/
+
+            var c = new ILCursor(il);
+            Instruction nullBranch = null;
+
+            if (!c.TryGotoNext(MoveType.Before,
+                    x => x.MatchNewobj(out _),
+                    x => x.MatchCallOrCallvirt<EntityStateMachine>(nameof(EntityStateMachine.SetNextState)),
+                    x => x.MatchAny(out nullBranch)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.EmitNullConditional(c.Next, nullBranch);
+        }
+
+        /// <summary>
+        /// Skip null display instances
+        /// </summary>
+        [HarmonyPatch(typeof(ModelSkinController), nameof(ModelSkinController.ApplySkinAsync), MethodType.Enumerator)]
+        [HarmonyILManipulator]
+        public static void ModelSkinController_ApplySkinAsync(ILContext il)
+        {
+            /*
+	IL_0052: ldloc.1
+	IL_0053: call instance void RoR2.ModelSkinController::UnloadCurrentlyLoadedSkinAssets()*/
+
+            var c = new ILCursor(il);
+
+            int loc = 0;
+            if (!c.TryGotoNext(MoveType.AfterLabel,
+                    x => x.MatchLdloc(out loc),
+                    x => x.MatchCallOrCallvirt<ModelSkinController>(nameof(ModelSkinController.UnloadCurrentlyLoadedSkinAssets))
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            var hasSkins = il.DefineLabel(c.Next);
+
+            c.Emit(OpCodes.Ldloc, loc);
+            c.EmitDelegate<Func<ModelSkinController, bool>>((mdlSkins) => mdlSkins.skins.Length > 0);
+            c.Emit(OpCodes.Brtrue, hasSkins);
+            c.Emit(OpCodes.Ldc_I4_0);
+            c.Emit(OpCodes.Ret);
+
+        }
+
+        /// <summary>
+        /// Skip null display instances
+        /// </summary>
+        [HarmonyPatch(typeof(CharacterBody), nameof(CharacterBody.OnSkillActivated))]
+        [HarmonyILManipulator]
+        public static void CharacterBody_OnSkillActivated(ILContext il)
+        {
+            /*
+	IL_005b: ldarg.0
+	IL_005c: call instance class RoR2.Inventory RoR2.CharacterBody::get_inventory()
+	IL_0061: ldsfld class RoR2.ItemDef RoR2.DLC2Content/Items::IncreasePrimaryDamage
+	IL_0066: callvirt instance int32 RoR2.Inventory::GetItemCountEffective(class RoR2.ItemDef)
+	IL_006b: ldc.i4.0
+	IL_006c: ble.s IL_00c1*/
+
+            var c = new ILCursor(il);
+
+            ILLabel nullBranch = null;
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(CharacterBody), nameof(CharacterBody.inventory))
+                )) && c.Clone().TryGotoNext(
+                    x => x.MatchBle(out nullBranch)
+                ))
+            {
+                c.EmitNullConditional(c.Next, nullBranch);
+                return;
+            }
+            Log.PatchFail(il);
+        }
+
+        /// <summary>
+        /// Skip null display instances
+        /// </summary>
+        [HarmonyPatch(typeof(JumpDamageStrikeBodyBehavior), nameof(JumpDamageStrikeBodyBehavior.UpdateDisplayInstances))]
+        [HarmonyILManipulator]
+        public static void JumpDamageStrikeBodyBehavior_UpdateDisplayInstances(ILContext il)
+        {
+            /*  IL_0015: ldarg.1
+			    IL_0016: callvirt instance void [UnityEngine.CoreModule]UnityEngine.GameObject::SetActive(bool)*/
+
+            var c = new ILCursor(il);
+            Instruction nullBranch = null;
+
+            if (!c.TryGotoNext(MoveType.Before,
+                    x => x.MatchLdarg(1),
+                    x => x.MatchCallOrCallvirt<GameObject>(nameof(GameObject.SetActive)),
+                    x => x.MatchAny(out nullBranch)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            c.EmitNullConditional(c.Next, nullBranch);
+        }
+
+        /// <summary>
+        /// null array elements ig, nullcheck all cuz its not super commonly called
+        /// RoR2.TemporaryVisualEffect.RebuildVisualComponents() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0057)
+        /// RoR2.TemporaryVisualEffect.OnDestroy() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
+        /// </summary>
+        [HarmonyPatch(typeof(TemporaryVisualEffect), nameof(TemporaryVisualEffect.RebuildVisualComponents))]
+        [HarmonyILManipulator]
+        public static void TemporaryVisualEffect_RebuildVisualComponents(ILContext il)
+        {
+            /*  IL_001c: ldelem.ref
+		        IL_001d: ldc.i4.1
+		        IL_001e: callvirt instance void [UnityEngine.CoreModule]UnityEngine.Behaviour::set_enabled(bool)*/
+
+            var c = new ILCursor(il);
+            Instruction nullBranch = null;
+
+            while (c.TryGotoNext(MoveType.Before,
+                    x => x.MatchLdcI4(out _),
+                    x => x.MatchCallOrCallvirt(AccessTools.PropertySetter(typeof(Behaviour), nameof(Behaviour.enabled))),
+                    x => x.MatchAny(out nullBranch)
+                ))
+            {
+                c.EmitNullConditional(c.Next, nullBranch);
+                c.Goto(nullBranch, MoveType.After);
+            }
+        }
+
         /// <summary>
         /// Filter null HurtBox from HurtBoxGroup, e.g. Golden Dieback's hanging mushrooms.
         /// </summary>
@@ -167,14 +320,6 @@ namespace MiscFixes.ErrorPolice
 
                 return hurtBoxes;
             });
-        }
-
-        [HarmonyPatch(typeof(PseudoCharacterMotor), nameof(PseudoCharacterMotor.velocityAuthority), MethodType.Setter)]
-        [HarmonyFinalizer]
-        public static Exception PseudoCharacterMotor_setVelocityAuthority(Exception __exception)
-        {
-            Log.Error(__exception);
-            return null;
         }
     }
 
@@ -266,36 +411,6 @@ namespace MiscFixes.ErrorPolice
         {
             if (!__instance.originalMaterial && __instance.componentReference && __instance.ValidateOverlay())
                 __instance.componentReference.CopyDataFromPrefabToInstance();
-        }
-
-        /// <summary>
-        /// null array elements ig, nullcheck all cuz its not super commonly called
-        /// RoR2.TemporaryVisualEffect.RebuildVisualComponents() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0057)
-        /// RoR2.TemporaryVisualEffect.OnDestroy() (at<c0d9c70405a04cceacc72f65157d1ebd>:IL_0000)
-        /// </summary>
-        //[HarmonyPatch(typeof(TemporaryVisualEffect), nameof(TemporaryVisualEffect.RebuildVisualComponents))]
-        //[HarmonyILManipulator]
-        public static void TemporaryVisualEffect_RebuildVisualComponents(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            Instruction instr = null;
-            while (c.TryGotoNext(MoveType.Before,
-                    x => x.MatchLdelemRef(),
-                    x => x.MatchLdcI4(out _),
-                    x => x.MatchCallOrCallvirt(AccessTools.PropertyGetter(typeof(Behaviour), nameof(Behaviour.enabled))),
-                    x => x.MatchAny(out instr)
-                ))
-            {
-                var setEnabledLabel = c.DefineLabel();
-                c.Index++;
-                c.Emit(OpCodes.Dup);
-                c.EmitOpImplicit();
-                c.Emit(OpCodes.Brfalse_S, instr);
-                c.Emit(OpCodes.Pop);
-                c.Emit(OpCodes.Br_S, setEnabledLabel);
-                c.MarkLabel(setEnabledLabel);
-            }
         }
     }
 }
