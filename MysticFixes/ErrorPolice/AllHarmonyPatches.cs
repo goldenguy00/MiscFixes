@@ -21,17 +21,6 @@ namespace MiscFixes.ErrorPolice
     [HarmonyPatch]
     internal class FixGameplay
     {
-        [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.OnEnable))]
-        [HarmonyPrefix]
-        public static void Ugh(FlickerLight __instance)
-        {
-            if (!__instance.light)
-            {
-                Log.Error(Util.BuildPrefabTransformPath(__instance.transform.root, __instance.transform, false, true) + " does not have a light! Fix this in the prefab!");
-                __instance.enabled = false;
-            }
-        }
-
         /// <summary>
         /// Halcyonite Shrine is able to drain 0 gold and will softlock itself.
         /// If the scaled gold cost is less than 1, it gets truncated to 0 (mostly for modded scalings)
@@ -107,6 +96,108 @@ namespace MiscFixes.ErrorPolice
             __result = LocalUserManager.GetFirstLocalUser()?.currentNetworkUser;
             return false;
         }
+    }
+
+    [HarmonyPatch]
+    internal class FixNullRefs
+    {
+        [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.HighlightEquipentDisplay))]
+        [HarmonyILManipulator]
+        public static void CharacterModel_HighlightEquipentDisplay(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            /*
+	// EquipmentDef equipmentDef = EquipmentCatalog.GetEquipmentDef(equipmentIndex);
+	IL_000a: ldarg.1
+	IL_000b: call class RoR2.EquipmentDef RoR2.EquipmentCatalog::GetEquipmentDef(valuetype RoR2.EquipmentIndex)
+	IL_0010: stloc.0*/
+
+            int defLoc = 0;
+            Instruction retInstr = null;
+            if (!c.TryGotoNext(
+                    x => x.MatchBeq(out _),
+                    x => x.MatchAny(out retInstr)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+            
+            if (!c.TryGotoNext(
+                    x => x.MatchLdarg(out _),
+                    x => x.MatchCallOrCallvirt(typeof(EquipmentCatalog), nameof(EquipmentCatalog.GetEquipmentDef)),
+                    x => x.MatchStloc(out defLoc)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Emit(OpCodes.Ldloc, defLoc);
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brfalse, retInstr);
+        }
+
+        [HarmonyPatch(typeof(AttackSpeedPerNearbyCollider), nameof(AttackSpeedPerNearbyCollider.ReconcileBuffCount))]
+        [HarmonyILManipulator]
+        public static void AttackSpeedPerNearbyCollider_ReconcileBuffCount(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            /*// int num = this.body.GetBuffCount(buffIndex);
+	IL_0013: ldarg.0
+	IL_0014: ldfld class RoR2.CharacterBody RoR2.AttackSpeedPerNearbyCollider::body
+	IL_0019: ldloc.0
+	IL_001a: callvirt instance int32 RoR2.CharacterBody::GetBuffCount(valuetype RoR2.BuffIndex)
+	IL_001f: stloc.1*/
+            Instruction retInstr = null;
+            if (!c.TryGotoNext(
+                    x => x.MatchCallOrCallvirt(out _),
+                    x => x.MatchBrtrue(out _),
+                    x => x.MatchAny(out retInstr)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldfld, AccessTools.Field(typeof(AttackSpeedPerNearbyCollider), nameof(AttackSpeedPerNearbyCollider.body)));
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brfalse, retInstr);
+        }
+
+        [HarmonyPatch(typeof(BuffWard), nameof(BuffWard.BuffTeam))]
+        [HarmonyILManipulator]
+        public static void BuffWard_BuffTeam(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            /*		// foreach (TeamComponent recipient in recipients)
+		    IL_001d: br IL_01ba
+		    // loop start (head: IL_01ba)
+			IL_0022: ldloc.0
+			IL_0023: callvirt instance !0 class [netstandard]System.Collections.Generic.IEnumerator`1<class RoR2.TeamComponent>::get_Current()
+			IL_0028: stloc.1*/
+
+            ILLabel continueLabel = null;
+            int targetLoc = 0;
+            if (!c.TryGotoNext(MoveType.After,
+                    x => x.MatchBr(out continueLabel),
+                    x => x.MatchLdloc(out _),
+                    x => x.MatchCallvirt(out _),
+                    x => x.MatchStloc(out targetLoc)
+                ))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.Emit(OpCodes.Ldloc, targetLoc);
+            c.EmitOpImplicit();
+            c.Emit(OpCodes.Brfalse, continueLabel);
+        }
 
         [HarmonyPatch(typeof(PseudoCharacterMotor), nameof(PseudoCharacterMotor.velocityAuthority), MethodType.Setter)]
         [HarmonyFinalizer]
@@ -119,11 +210,18 @@ namespace MiscFixes.ErrorPolice
             }
             return __exception;
         }
-    }
 
-    [HarmonyPatch]
-    internal class FixNullRefs
-    {
+        [HarmonyPatch(typeof(FlickerLight), nameof(FlickerLight.OnEnable))]
+        [HarmonyPrefix]
+        public static void Ugh(FlickerLight __instance)
+        {
+            if (!__instance.light)
+            {
+                Log.Error(Util.BuildPrefabTransformPath(__instance.transform.root, __instance.transform, false, true) + " does not have a light! Fix this in the prefab!");
+                __instance.enabled = false;
+            }
+        }
+
         /// <summary>
         /// nullchecking modelLocator and subsequent transforms with ?. is bad don't do it
         /// only ok for prefabs

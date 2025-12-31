@@ -1,10 +1,11 @@
-﻿using MiscFixes.Modules;
+﻿using System.Linq;
+using MiscFixes.Modules;
 using RoR2;
 using RoR2.UI;
 using RoR2BepInExPack.GameAssetPaths.Version_1_39_0;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace MiscFixes.ErrorPolice
 {
@@ -177,5 +178,24 @@ namespace MiscFixes.ErrorPolice
             var originalSkinParamsRef = Addressables.LoadAssetAsync<SkinDefParams>(RoR2_Base_Brother.skinBrotherBodyDefault_params_asset).WaitForCompletion();
             PersistentOverlay.Init(brotherGlassBodyRef, originalSkinRef, originalSkinParamsRef);
         }
+
+        /// <summary>
+        /// Prevent Sale Star's pickup from complaining about its collider's settings.
+        /// </summary>
+        public static void FixSaleStarCollider()
+        {
+            var objRef = Addressables.LoadAssetAsync<GameObject>(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab).WaitForCompletion();
+            var collider = objRef?.transform.Find("SaleStar")?.GetComponent<MeshCollider>();
+            if (collider == null || collider.convex)
+            {
+                Log.PatchFail("collider of SaleStar");
+            }
+            else
+            {
+                collider.convex = true;
+            }
+        }
+
+
     }
 }

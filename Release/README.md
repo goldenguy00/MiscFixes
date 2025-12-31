@@ -11,6 +11,7 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 - Fixes common Henry based character creation errors
 - Fixes overscaled burn particles - **thanks to Nuxlar**
 - Restores backwards compatibilty for pre-SotS temporary overlays
+- Fixes prefab issue with salestar
 - <>
 - Prevents Unity Explorer from nuking the EventSystem
 - Prevents Void Seeds from being tricked by Schrodinger's cat
@@ -21,6 +22,9 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 - Filters out null vehicleIdleStateMachines on CharacterBodies
 - <>
 - Null checks
+    - BuffWard_BuffTeam
+    - AttackSpeedPerNearbyCollider_ReconcileBuffCount
+    - CharacterModel_HighlightEquipentDisplay
     - CharacterDeathBehavior_OnDeath
     - ModelSkinController_ApplySkinAsync
     - CharacterBody_OnSkillActivated

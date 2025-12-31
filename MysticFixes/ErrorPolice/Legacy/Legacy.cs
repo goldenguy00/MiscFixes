@@ -88,29 +88,6 @@
             };
         }
 
-        /// <summary>
-        /// Prevent Sale Star's pickup from complaining about its collider's settings.
-        /// </summary>
-        public static void FixSaleStarCollider()
-        {
-            var objRef = new AssetReferenceGameObject(RoR2_DLC2_Items_LowerPricedChests.PickupSaleStar_prefab);
-            Utils.PreloadAsset(objRef).Completed += delegate (AsyncOperationHandle<GameObject> objHandle)
-            {
-                var collider = objHandle.Result.transform.Find("SaleStar")?.GetComponent<MeshCollider>();
-                if (collider == null || collider.convex)
-                {
-                    Log.PatchFail("collider of SaleStar");
-                }
-                else
-                {
-                    collider.convex = true;
-                    Log.Debug("SaleStar Collider done");
-                }
-                Utils.UnloadAsset(objRef);
-            };
-        }
-
-
         private static void FixVermin()
         {
             var spawnPrefab = Addressables.LoadAssetAsync<GameObject>(RoR2_DLC1_Vermin.VerminSpawn_prefab).WaitForCompletion();

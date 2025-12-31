@@ -1,3 +1,10 @@
+## 1.5.7
+- Restored salestar fix
+- Null checks
+    - BuffWard_BuffTeam
+    - AttackSpeedPerNearbyCollider_ReconcileBuffCount
+    - CharacterModel_HighlightEquipentDisplay
+
 ## 1.5.6
 - Null checks
     - CharacterDeathBehavior_OnDeath
