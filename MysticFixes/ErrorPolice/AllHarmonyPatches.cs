@@ -8,6 +8,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using RoR2.Items;
+using RoR2.Projectile;
 using RoR2.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -101,6 +102,50 @@ namespace MiscFixes.ErrorPolice
     [HarmonyPatch]
     internal class FixNullRefs
     {
+        /// <summary>
+        /// Nullchecking CharacterBody.mainHurtBox from the projectile target.
+        /// Caused with Operator when spamming m2 with missile and cleanup drones,
+        /// since the cleanup drone destroys the model immediately.
+        /// </summary>
+        [HarmonyPatch(typeof(ProjectileManager), nameof(ProjectileManager.InitializeProjectile))]
+        [HarmonyILManipulator]
+        public static void ProjectileManager_InitializeProjectile(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            /*
+	// CharacterBody component8 = fireProjectileInfo.target.GetComponent<CharacterBody>();
+	IL_00c5: ldarg.1
+	IL_00c6: ldfld class [UnityEngine.CoreModule]UnityEngine.GameObject RoR2.Projectile.FireProjectileInfo::target
+	IL_00cb: callvirt instance !!0 [UnityEngine.CoreModule]UnityEngine.GameObject::GetComponent<class RoR2.CharacterBody>()
+	IL_00d0: stloc.s 7
+	// component4.target = (component8 ? component8.mainHurtBox.transform : fireProjectileInfo.target.transform);
+	IL_00d2: ldloc.s 4
+	IL_00d4: ldloc.s 7*/
+
+            var characterBodyVarIndex = -1;
+            if (!c.TryGotoNext(
+                    x => x.MatchLdarg(1),
+                    x => x.MatchLdfld<FireProjectileInfo>(nameof(FireProjectileInfo.target)),
+                    x => x.MatchCallOrCallvirt<GameObject>(nameof(GameObject.GetComponent)),
+                    x => x.MatchStloc(out characterBodyVarIndex))
+                || !c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdloc(characterBodyVarIndex)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            c.EmitDelegate<Func<CharacterBody, CharacterBody>>(cb => cb && cb.mainHurtBox ? cb : null);
+        }
+
+        /// <summary>
+        /// Nullchecking the passenger who can be killed in midflight
+        /// </summary>
+        [HarmonyPatch(typeof(ThrownObjectProjectileController), nameof(ThrownObjectProjectileController.CalculatePassengerFinalPosition))]
+        [HarmonyPrefix]
+        public static bool ThrownObjectProjectileController_CalculatePassengerFinalPosition(ThrownObjectProjectileController __instance) => __instance.passenger;
+
         [HarmonyPatch(typeof(CharacterModel), nameof(CharacterModel.HighlightEquipentDisplay))]
         [HarmonyILManipulator]
         public static void CharacterModel_HighlightEquipentDisplay(ILContext il)
