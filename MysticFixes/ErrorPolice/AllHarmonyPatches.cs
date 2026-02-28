@@ -67,6 +67,7 @@ namespace MiscFixes.ErrorPolice
         }
 
         [HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.OnInventoryChanged))]
+        [HarmonyILManipulator]
         private static void CharacterMaster_OnInventoryChanged(ILContext il)
         {
             ILCursor c = new ILCursor(il);

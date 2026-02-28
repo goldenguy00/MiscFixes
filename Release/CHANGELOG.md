@@ -1,3 +1,6 @@
+## 1.5.9
+- Oops
+
 ## 1.5.8
 - Added fix for luck being reset for a frame on inventory changed (thanks Gorakh)
 - Add null checks for InitializeProjectile and CalculatePassengerFinalPosition

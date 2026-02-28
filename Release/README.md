@@ -12,6 +12,11 @@ Note that these changes are NOT intended to modify the vanilla gameplay experien
 - Fixes overscaled burn particles - **thanks to Nuxlar**
 - Restores backwards compatibilty for pre-SotS temporary overlays
 - Fixes prefab issue with salestar
+- Added fix for luck being reset for a frame on inventory changed (thanks Gorakh)
+- Add null checks for InitializeProjectile and CalculatePassengerFinalPosition
+- Added Meridian log spam fix
+- Added elder lemurian log spam fix
+- Added virmin spawn vfx position fix
 - <>
 - Prevents Unity Explorer from nuking the EventSystem
 - Prevents Void Seeds from being tricked by Schrodinger's cat
