@@ -3,25 +3,6 @@
 
 
         /// <summary>
-        /// Disable a pointless ESM that spams stuff to the console.
-        /// </summary>
-        //[HarmonyPatch(typeof(MeridianEventTriggerInteraction), nameof(MeridianEventTriggerInteraction.Awake))]
-        //[HarmonyPrefix]
-        public static void MeridianEventTriggerInteraction_Awake(MeridianEventTriggerInteraction __instance)
-        {
-            var esm = EntityStateMachine.FindByCustomName(__instance.gameObject, "");
-            if (esm != null && esm.initialStateType.stateType == typeof(TestState1))
-            {
-                esm.initialStateType = new SerializableEntityStateType(typeof(Uninitialized));
-                esm.enabled = false;
-            }
-            else
-            {
-                Log.PatchFail("Meridian Test ESM");
-            }
-        }
-
-        /// <summary>
         /// something on sundered grove throws an error here periodically
         /// </summary>
         //[HarmonyPatch(typeof(RouletteChestController.Idle), nameof(RouletteChestController.Idle.OnEnter))]
@@ -52,52 +33,6 @@
                 });
             }
             else Log.PatchFail(il);
-        }
-
-        /// <summary>
-        /// Fix two Elder Lemurian footstep events to play sound and not spam Layer Index -1.
-        /// </summary>
-        public static void FixElderLemurianFootstepEvents()
-        {
-            var animRef = new AssetReferenceT<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller);
-            Utils.PreloadAsset(animRef).Completed += delegate (AsyncOperationHandle<RuntimeAnimatorController> animHandle)
-            {
-                var anim = animHandle.Result;
-                PatchClip(4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
-                PatchClip(12, "LemurianBruiserArmature|Death", 2, "MouthMuzzle", "MuzzleMouth");
-
-                Log.Debug("Elder lemurian footsteps done");
-
-                void PatchClip(int clipIndex, string clipName, int eventIndex, string oldEventString, string newEventString)
-                {
-                    if (anim.animationClips.Length > clipIndex && anim.animationClips[clipIndex].name == clipName)
-                    {
-                        var clip = anim.animationClips[clipIndex];
-                        if (clip.events.Length > eventIndex && clip.events[eventIndex].stringParameter == oldEventString)
-                        {
-                            var events = clip.events;
-                            events[eventIndex].stringParameter = newEventString;
-                            clip.events = events;
-                            return;
-                        }
-                    }
-                    Log.PatchFail(anim.name + " - " + clipName);
-                }
-
-                Utils.UnloadAsset(animRef);
-            };
-        }
-
-        private static void FixVermin()
-        {
-            var spawnPrefab = Addressables.LoadAssetAsync<GameObject>(RoR2_DLC1_Vermin.VerminSpawn_prefab).WaitForCompletion();
-            if (spawnPrefab && spawnPrefab.TryGetComponent<EffectComponent>(out var ec) && ec.positionAtReferencedTransform == false)
-            {
-                ec.positionAtReferencedTransform = true;
-                return;
-            }
-
-            Log.PatchFail("Vermin spawn effect");
         }
 
         [HarmonyPatch(typeof(MinionOwnership.MinionGroup), nameof(MinionOwnership.MinionGroup.AddMinion))]

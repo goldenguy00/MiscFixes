@@ -1,3 +1,10 @@
+## 1.5.8
+- Added fix for luck being reset for a frame on inventory changed (thanks Gorakh)
+- Add null checks for InitializeProjectile and CalculatePassengerFinalPosition
+- Re-added Meridian log spam fix
+- Re-added elder lemurian log spam fix
+- Re-added virmin spawn vfx position fix
+
 ## 1.5.7
 - Restored salestar fix
 - Null checks

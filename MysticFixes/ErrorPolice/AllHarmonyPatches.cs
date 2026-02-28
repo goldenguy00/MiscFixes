@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using EntityStates;
 using EntityStates.LunarExploderMonster;
 using HarmonyLib;
 using HG;
@@ -10,6 +9,8 @@ using RoR2;
 using RoR2.Items;
 using RoR2.Projectile;
 using RoR2.UI;
+using System;
+using System.Collections.ObjectModel;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -63,6 +64,50 @@ namespace MiscFixes.ErrorPolice
                     count++;
             }
             return count;
+        }
+
+        [HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.OnInventoryChanged))]
+        private static void CharacterMaster_OnInventoryChanged(ILContext il)
+        {
+            ILCursor c = new ILCursor(il);
+
+            Instruction afterSetLuckInstruction = null;
+            if (!c.TryGotoNext(MoveType.AfterLabel,
+                              x => x.MatchLdarg(0),
+                              x => x.MatchLdcR4(out _),
+                              x => x.MatchCallOrCallvirt<CharacterMaster>("set_" + nameof(CharacterMaster.luck)),
+                              x => x.MatchAny(out afterSetLuckInstruction)))
+            {
+                Log.PatchFail(il);
+                return;
+            }
+
+            ILLabel skipSetLuckLabel = c.DefineLabel();
+
+            c.Emit(OpCodes.Br, skipSetLuckLabel);
+
+            c.Goto(afterSetLuckInstruction, MoveType.Before);
+            c.MarkLabel(skipSetLuckLabel);
+        }
+
+
+        /// <summary>
+        /// Disable a pointless ESM that spams stuff to the console.
+        /// </summary>
+        [HarmonyPatch(typeof(MeridianEventTriggerInteraction), nameof(MeridianEventTriggerInteraction.Awake))]
+        [HarmonyPrefix]
+        public static void MeridianEventTriggerInteraction_Awake(MeridianEventTriggerInteraction __instance)
+        {
+            var esm = EntityStateMachine.FindByCustomName(__instance.gameObject, "");
+            if (esm?.initialStateType.stateType == typeof(TestState1))
+            {
+                esm.initialStateType = new SerializableEntityStateType(typeof(Uninitialized));
+                esm.enabled = false;
+            }
+            else
+            {
+                Log.PatchFail("Meridian Test ESM");
+            }
         }
     }
 

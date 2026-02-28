@@ -1,11 +1,10 @@
-﻿using System.Linq;
-using MiscFixes.Modules;
+﻿using MiscFixes.Modules;
 using RoR2;
 using RoR2.UI;
 using RoR2BepInExPack.GameAssetPaths.Version_1_39_0;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace MiscFixes.ErrorPolice
 {
@@ -13,11 +12,13 @@ namespace MiscFixes.ErrorPolice
     {
         internal static void Init()
         {
+            BodyCatalog.availability.CallWhenAvailable(FixBodies);
+
             MoreHudChildLocEntries();
             FixHenry();
             FixGlassMithrixMaterials();
-
-            BodyCatalog.availability.CallWhenAvailable(FixBodies);
+            FixVermin();
+            FixElderLemurianFootstepEvents();
         }
 
         private static void FixBodies()
@@ -196,6 +197,48 @@ namespace MiscFixes.ErrorPolice
             }
         }
 
+        /// <summary>
+        /// Fix two Elder Lemurian footstep events to play sound and not spam Layer Index -1.
+        /// </summary>
+        public static void FixElderLemurianFootstepEvents()
+        {
+            var anim = Addressables.LoadAssetAsync<RuntimeAnimatorController>(RoR2_Base_Lemurian.animLemurianBruiser_controller).WaitForCompletion();
+            if (!anim)
+            {
+                Log.PatchFail("Elder lem footsteps");
+                return;
+            }
 
+            PatchClip(4, "LemurianBruiserArmature|RunRight", 1, "", "FootR");
+            PatchClip(12, "LemurianBruiserArmature|Death", 2, "MouthMuzzle", "MuzzleMouth");
+
+            void PatchClip(int clipIndex, string clipName, int eventIndex, string oldEventString, string newEventString)
+            {
+                if (anim.animationClips.Length > clipIndex && anim.animationClips[clipIndex].name == clipName)
+                {
+                    var clip = anim.animationClips[clipIndex];
+                    if (clip.events.Length > eventIndex && clip.events[eventIndex].stringParameter == oldEventString)
+                    {
+                        var events = clip.events;
+                        events[eventIndex].stringParameter = newEventString;
+                        clip.events = events;
+                        return;
+                    }
+                }
+                Log.PatchFail(anim.name + " - " + clipName);
+            }
+        }
+
+        private static void FixVermin()
+        {
+            var spawnPrefab = Addressables.LoadAssetAsync<GameObject>(RoR2_DLC1_Vermin.VerminSpawn_prefab).WaitForCompletion();
+            if (spawnPrefab && spawnPrefab.TryGetComponent<EffectComponent>(out var ec) && ec.positionAtReferencedTransform == false)
+            {
+                ec.positionAtReferencedTransform = true;
+                return;
+            }
+
+            Log.PatchFail("Vermin spawn effect");
+        }
     }
 }
