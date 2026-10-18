@@ -1,3 +1,9 @@
+## 1.6.1
+- Removed temp DLC4 item drop fix
+
+## 1.6.0
+- Temp DLC4 item drop fix
+
 ## 1.5.9
 - Oops
 

@@ -1,18 +1,19 @@
-﻿using SYS = System;
+﻿using BepInEx;
+using BepInEx.Bootstrap;
+using BepInEx.Configuration;
+using HG;
+using HG.GeneralSerializer;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using RoR2;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using BepInEx;
-using BepInEx.Configuration;
-using HG.GeneralSerializer;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
-using HG;
+using SYS = System;
 
 namespace MiscFixes.Modules
 {
@@ -87,7 +88,7 @@ namespace MiscFixes.Modules
             return _sb.Take().Replace("'", string.Empty);
         }
 
-        private static bool GetModMetaDataSafe(this Assembly assembly, out string guid, out string name)
+        private static void GetModMetaDataSafe(this Assembly assembly, out string guid, out string name)
         {
             guid = "";
             name = "";
@@ -99,12 +100,11 @@ namespace MiscFixes.Modules
                 {
                     guid = customAttribute.GUID;
                     name = customAttribute.Name;
-                    return true;
+                    return;
                 }
             }
 
             Log.Error("Unable to associate config assembly " + assembly.FullName);
-            return false;
         }
 
         // https://haacked.com/archive/2012/07/23/get-all-types-in-an-assembly.aspx/
@@ -244,6 +244,40 @@ namespace MiscFixes.Modules
 
         #region RoO
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        public static void InitRoO(string description, Sprite icon = null)
+        {
+            if (MiscFixesPlugin.RooInstalled)
+            {
+                Assembly.GetCallingAssembly().GetModMetaDataSafe(out var modGuid, out var modName);
+                InitRoOInternal(modGuid, modName, description, icon);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private static void InitRoOInternal(string modGuid, string modName, string description, Sprite icon = null)
+        {
+            try
+            {
+                RiskOfOptions.ModSettingsManager.SetModDescription(description, modGuid, modName);
+
+                if (icon == null)
+                {
+                    var dirName = System.IO.Path.GetDirectoryName(Chainloader.PluginInfos[modGuid].Location);
+                    var iconStream = System.IO.File.ReadAllBytes(System.IO.Path.Combine(dirName, "icon.png"));
+                    var tex = new Texture2D(256, 256);
+                    tex.LoadImage(iconStream);
+                    icon = Sprite.Create(tex, new Rect(0, 0, 256, 256), new Vector2(0.5f, 0.5f));
+                }
+
+                RiskOfOptions.ModSettingsManager.SetModIcon(icon, modGuid, modName);
+            }
+            catch (SYS.Exception e)
+            {
+                Log.Debug(e.ToString());
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static void TryRegisterOption<T>(this ConfigEntry<T> entry, bool restartRequired = false, string modGuid = null, string modName = null)
         {
             if (modGuid is null && modName is null)
@@ -287,7 +321,7 @@ namespace MiscFixes.Modules
             {
                 var config = new RiskOfOptions.OptionConfigs.IntSliderConfig
                 {
-                    formatString = "{0:0.00}",
+                    formatString = "{0:0}",
                     restartRequired = restartRequired,
                 };
 
@@ -350,9 +384,11 @@ namespace MiscFixes.Modules
         #region Unity Objects
 
         /// <summary> Use HG.EnsureComponent instead</summary>
+        [SYS.Obsolete]
         public static T GetOrAddComponent<T>(this GameObject obj) where T : Component => obj.EnsureComponent<T>();
 
         /// <summary> Use HG.EnsureComponent instead</summary>
+        [SYS.Obsolete]
         public static T GetOrAddComponent<T>(this Component obj) where T : Component => obj.EnsureComponent<T>();
 
         public static void TryDestroyComponent<T>(this GameObject obj) where T : Component

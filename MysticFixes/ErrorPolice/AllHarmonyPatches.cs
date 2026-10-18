@@ -6,12 +6,15 @@ using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using RoR2.ContentManagement;
 using RoR2.Items;
 using RoR2.Projectile;
 using RoR2.UI;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
 /// <summary>
@@ -65,32 +68,6 @@ namespace MiscFixes.ErrorPolice
             }
             return count;
         }
-
-        [HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.OnInventoryChanged))]
-        [HarmonyILManipulator]
-        private static void CharacterMaster_OnInventoryChanged(ILContext il)
-        {
-            ILCursor c = new ILCursor(il);
-
-            Instruction afterSetLuckInstruction = null;
-            if (!c.TryGotoNext(MoveType.AfterLabel,
-                              x => x.MatchLdarg(0),
-                              x => x.MatchLdcR4(out _),
-                              x => x.MatchCallOrCallvirt<CharacterMaster>("set_" + nameof(CharacterMaster.luck)),
-                              x => x.MatchAny(out afterSetLuckInstruction)))
-            {
-                Log.PatchFail(il);
-                return;
-            }
-
-            ILLabel skipSetLuckLabel = c.DefineLabel();
-
-            c.Emit(OpCodes.Br, skipSetLuckLabel);
-
-            c.Goto(afterSetLuckInstruction, MoveType.Before);
-            c.MarkLabel(skipSetLuckLabel);
-        }
-
 
         /// <summary>
         /// Disable a pointless ESM that spams stuff to the console.

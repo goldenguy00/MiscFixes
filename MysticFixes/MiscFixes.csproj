@@ -25,6 +25,9 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+	  <Reference Include="AsyncManagement">
+	    <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\AsyncManagement.dll</HintPath>
+	  </Reference>
 	  <Reference Include="Facepunch.Steamworks">
 	    <HintPath>libs\Facepunch.Steamworks.dll</HintPath>
 	  </Reference>
