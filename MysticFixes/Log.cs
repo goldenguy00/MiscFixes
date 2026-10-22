@@ -14,9 +14,9 @@ namespace MiscFixes
 
         internal static void Debug(object data)
         {
-#if DEBUG
+//#if DEBUG
             _logSource.LogDebug(data);
-#endif
+//#endif
         }
         internal static void Error(object data) => _logSource.LogError(data);
         internal static void Fatal(object data) => _logSource.LogFatal(data);

@@ -437,7 +437,7 @@ namespace MiscFixes.Modules
                 try
                 {
                     info.SetValue(obj, info.GetValue(other));
-                    Log.Info($"Set field {info.Name} to value of {info.GetValue(obj)}");
+                    Log.Debug($"Set field {info.Name} to value of {info.GetValue(obj)}");
                 }
                 catch (SYS.Exception e) { Log.Warning(e); }
             }
@@ -455,7 +455,7 @@ namespace MiscFixes.Modules
                 try
                 {
                     info.SetValue(obj, info.GetValue(other));
-                    Log.Info($"Set property {info.Name} to value of {info.GetValue(obj)}");
+                    Log.Debug($"Set property {info.Name} to value of {info.GetValue(obj)}");
                 }
                 catch (SYS.Exception e) { Log.Warning(e); }   // In case of NotImplementedException being thrown.
                                                                // For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.

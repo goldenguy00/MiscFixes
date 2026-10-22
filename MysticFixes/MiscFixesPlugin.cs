@@ -1,14 +1,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Permissions;
 using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using MiscFixes.ErrorPolice;
-using MiscFixes.Modules;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete

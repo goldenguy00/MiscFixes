@@ -1,7 +1,7 @@
 ﻿using MiscFixes.Modules;
 using RoR2;
 using RoR2.UI;
-using RoR2BepInExPack.GameAssetPaths.Version_1_39_0;
+using RoR2BepInExPack.GameAssetPathsBetter;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -19,6 +19,13 @@ namespace MiscFixes.ErrorPolice
             FixGlassMithrixMaterials();
             FixVermin();
             FixElderLemurianFootstepEvents();
+            FixSound();
+        }
+
+        private static void FixSound()
+        {
+            var prefab = Addressables.LoadAssetAsync<GameObject>(RoR2_Base_Nullifier.NullifyStack3Effect_prefab).WaitForCompletion();
+            prefab.GetComponent<AkEvent>().data.WwiseObjectReference = Addressables.LoadAssetAsync<WwiseEventReference>(Wwise.EC9EE972_04BD_422F_B7D9_FF6197F89D8C_asset).WaitForCompletion();
         }
 
         private static void FixBodies()

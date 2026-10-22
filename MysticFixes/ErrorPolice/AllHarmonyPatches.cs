@@ -6,15 +6,12 @@ using MiscFixes.Modules;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
-using RoR2.ContentManagement;
 using RoR2.Items;
 using RoR2.Projectile;
 using RoR2.UI;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
 
 /// <summary>
@@ -26,6 +23,10 @@ namespace MiscFixes.ErrorPolice
     [HarmonyPatch]
     internal class FixGameplay
     {
+        [HarmonyPatch(typeof(SetStateOnHurt), nameof(SetStateOnHurt.GetModifiedDuration))]
+        [HarmonyPrefix]
+        public static bool SetStateOnHurt_GetModifiedDuration(SetStateOnHurt __instance) => __instance.buffDurationControllers != null;
+
         /// <summary>
         /// Halcyonite Shrine is able to drain 0 gold and will softlock itself.
         /// If the scaled gold cost is less than 1, it gets truncated to 0 (mostly for modded scalings)
