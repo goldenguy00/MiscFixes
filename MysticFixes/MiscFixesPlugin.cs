@@ -17,12 +17,13 @@ using MiscFixes.ErrorPolice;
 namespace MiscFixes
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
+    [BepInDependency(RoR2BepInExPack.RoR2BepInExPack.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     public class MiscFixesPlugin : BaseUnityPlugin
     {
         public const string PluginGUID = $"_{PluginAuthor}.{PluginName}";
         public const string PluginAuthor = "score";
         public const string PluginName = "MiscFixes";
-        public const string PluginVersion = "1.6.1";
+        public const string PluginVersion = "1.6.2";
 
         internal static bool RooInstalled => Chainloader.PluginInfos.ContainsKey("com.rune580.riskofoptions");
 

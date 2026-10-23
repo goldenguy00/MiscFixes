@@ -1,3 +1,7 @@
+## 1.6.2
+- Fixed persistent sound bug
+- Fixed NRE with SetStateOnHurt
+
 ## 1.6.1
 - Removed temp DLC4 item drop fix
 
