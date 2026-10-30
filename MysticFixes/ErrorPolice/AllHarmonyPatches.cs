@@ -28,6 +28,57 @@ namespace MiscFixes.ErrorPolice
         public static bool SetStateOnHurt_GetModifiedDuration(SetStateOnHurt __instance) => __instance.buffDurationControllers != null;
 
         /// <summary>
+        /// Team War Cry walks every object in the scene to find its own team, then calls
+        /// GetComponent on each result without checking it:
+        ///
+        ///     TeamComponent[] array = UnityEngine.Object.FindObjectsOfType&lt;TeamComponent&gt;();
+        ///     ...
+        ///     array[i].GetComponent&lt;CharacterBody&gt;().AddTimedBuff(...);
+        ///
+        /// FindObjectsOfType is a full scene walk, and a TeamComponent on anything that is not
+        /// a character - a barrel, a turret - has no CharacterBody, so the loop throws partway
+        /// through and the rest of the team never gets the buff.
+        ///
+        /// Both go away by using the per-team list the game already keeps and the body
+        /// TeamComponent already holds. Noticeable with Bottled Chaos or Gesture of the
+        /// Drowned, which fire equipment far more often than this was written for.
+        /// </summary>
+        [HarmonyPatch(typeof(EquipmentSlot), "FireTeamWarCry")]
+        [HarmonyPrefix]
+        public static bool EquipmentSlot_FireTeamWarCry(EquipmentSlot __instance, ref bool __result)
+        {
+            var self = __instance.characterBody;
+            if (!self)
+            {
+                __result = false;
+                return false;
+            }
+
+            Util.PlaySound("Play_teamWarCry_activate", self.gameObject);
+
+            var effectData = new EffectData { origin = self.corePosition };
+            effectData.SetNetworkedObjectReference(self.gameObject);
+            EffectManager.SpawnEffect(LegacyResourcesAPI.Load<GameObject>("Prefabs/Effects/TeamWarCryActivation"), effectData, true);
+
+            self.AddTimedBuff(RoR2Content.Buffs.TeamWarCry, 7f);
+
+            var team = self.teamComponent;
+            if (team)
+            {
+                var members = TeamComponent.GetTeamMembers(team.teamIndex);
+                for (int i = 0; i < members.Count; i++)
+                {
+                    var body = members[i] ? members[i].body : null;
+                    if (body)
+                        body.AddTimedBuff(RoR2Content.Buffs.TeamWarCry, 7f);
+                }
+            }
+
+            __result = true;
+            return false;
+        }
+
+        /// <summary>
         /// Halcyonite Shrine is able to drain 0 gold and will softlock itself.
         /// If the scaled gold cost is less than 1, it gets truncated to 0 (mostly for modded scalings)
         /// </summary>
@@ -126,6 +177,19 @@ namespace MiscFixes.ErrorPolice
     [HarmonyPatch]
     internal class FixNullRefs
     {
+        /// <summary>
+        /// Newly Hatched Zoea dereferences body.master every FixedUpdate with no check, so a
+        /// body that has lost its master throws sixty times a second until it is cleaned up.
+        /// Was the single largest source of exceptions in a three hour run - 1,021 of 2,388.
+        ///
+        /// The tick exists to spawn a deployable for the master to own, so there is nothing
+        /// worth doing without one.
+        /// </summary>
+        [HarmonyPatch(typeof(VoidMegaCrabItemBehavior), "FixedUpdate")]
+        [HarmonyPrefix]
+        public static bool VoidMegaCrabItemBehavior_FixedUpdate(VoidMegaCrabItemBehavior __instance)
+            => __instance.body && __instance.body.master;
+
         /// <summary>
         /// Nullchecking CharacterBody.mainHurtBox from the projectile target.
         /// Caused with Operator when spamming m2 with missile and cleanup drones,
