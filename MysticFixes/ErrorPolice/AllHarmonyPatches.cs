@@ -191,6 +191,34 @@ namespace MiscFixes.ErrorPolice
             => __instance.body && __instance.body.master;
 
         /// <summary>
+        /// The tether follows alliesToRapture[0], which RaptureAlliesServer nulls once that ally
+        /// is dead or gone, and its "End" child can be missing. Either throws before the state
+        /// marks the allies killed or advances, so it throws every tick and never leaves.
+        /// Dropping the tether early is what the state does itself once the rapture ends.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.Totem.SacrificeSuccess), nameof(EntityStates.Totem.SacrificeSuccess.FixedUpdate))]
+        [HarmonyPrefix]
+        public static void SacrificeSuccess_FixedUpdate(EntityStates.Totem.SacrificeSuccess __instance)
+        {
+            if (!__instance.tetherEffectInstance)
+                return;
+
+            var allies = __instance.alliesToRapture;
+            if (__instance.tetherEffectEndTransform && __instance.tetherRootTransform
+                && allies != null && allies.Length > 0 && allies[0])
+                return;
+
+            // Unity's null, not C#'s: a pooled helper can be destroyed without being null.
+            if (__instance.tetherEffectInstance_efh)
+                __instance.tetherEffectInstance_efh.ReturnToPoolOrDestroyInstance(ref __instance.tetherEffectInstance);
+            else
+                UnityEngine.Object.Destroy(__instance.tetherEffectInstance);
+            __instance.tetherEffectInstance = null;
+            __instance.tetherEffectInstance_efh = null;
+            __instance.tetherEffectEndTransform = null;
+        }
+
+        /// <summary>
         /// Nullchecking CharacterBody.mainHurtBox from the projectile target.
         /// Caused with Operator when spamming m2 with missile and cleanup drones,
         /// since the cleanup drone destroys the model immediately.
