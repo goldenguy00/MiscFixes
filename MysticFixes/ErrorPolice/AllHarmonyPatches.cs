@@ -219,6 +219,87 @@ namespace MiscFixes.ErrorPolice
         }
 
         /// <summary>
+        /// An Engineer turret carrying Unstable Transmitter loses its master, and with it its
+        /// inventory, while the body still plays its death state. Update reads the inventory
+        /// every frame: 616 exceptions in one run.
+        /// </summary>
+        [HarmonyPatch(typeof(TeleportOnLowHealthBehavior), nameof(TeleportOnLowHealthBehavior.Update))]
+        [HarmonyPrefix]
+        public static bool TeleportOnLowHealthBehavior_Update(TeleportOnLowHealthBehavior __instance)
+            => __instance.characterBody && __instance.characterBody.inventory;
+
+        /// <summary>
+        /// Same dying turret: the last line unsubscribes from body.master, which is already gone.
+        /// Everything before it has run, so only that throw is dropped.
+        /// </summary>
+        [HarmonyPatch(typeof(BarrageOnBossBehaviour), nameof(BarrageOnBossBehaviour.OnDisable))]
+        [HarmonyFinalizer]
+        public static Exception BarrageOnBossBehaviour_OnDisable(BarrageOnBossBehaviour __instance, Exception __exception)
+            => __exception is NullReferenceException && !(__instance.body && __instance.body.master) ? null : __exception;
+
+        /// <summary>
+        /// The bead model is parented to the body it sits on and is destroyed with it, while the
+        /// attachment keeps running and reads modelObject every frame (and on every hit it counts).
+        /// </summary>
+        [HarmonyPatch(typeof(AffixBeadAttachment), nameof(AffixBeadAttachment.Update))]
+        [HarmonyPrefix]
+        public static bool AffixBeadAttachment_Update(AffixBeadAttachment __instance)
+            => __instance.networkedBodyAttachment == null || __instance.initialCooldownTimer > 0f || __instance.modelObject;
+
+        [HarmonyPatch(typeof(AffixBeadAttachment), nameof(AffixBeadAttachment.UpdateVFX))]
+        [HarmonyPrefix]
+        public static bool AffixBeadAttachment_UpdateVFX(AffixBeadAttachment __instance) => __instance.modelObject;
+
+        /// <summary>
+        /// A body with no team (TeamIndex.None, -1) indexes the per-team pools with -1.
+        /// Deregister then cannot know which pool it went in, so it is taken out of all of them.
+        /// </summary>
+        [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.Register))]
+        [HarmonyPrefix]
+        public static bool SharedSufferingManager_Register(SharedSufferingManager __instance, CharacterBody body)
+            => body && body.teamComponent && (uint)body.teamComponent.teamIndex < (uint)__instance.afflictedBodyPools.Length;
+
+        [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.Deregister))]
+        [HarmonyPrefix]
+        public static bool SharedSufferingManager_Deregister(SharedSufferingManager __instance, CharacterBody body)
+        {
+            if (body && body.teamComponent && (uint)body.teamComponent.teamIndex < (uint)__instance.afflictedBodyPools.Length)
+                return true;
+            foreach (var pool in __instance.afflictedBodyPools)
+                pool?.Remove(body);
+            return false;
+        }
+
+        [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.SendToDamagePool))]
+        [HarmonyPrefix]
+        public static bool SharedSufferingManager_SendToDamagePool(SharedSufferingManager __instance, DamageReport damageReport)
+            => (uint)damageReport.victimTeamIndex < (uint)__instance.damagePools.Length;
+
+        /// <summary>
+        /// The block filter (Enforcer's shield) raycasts against both hurtboxes' colliders without
+        /// checking either still exists. A missing one cannot block anything.
+        /// </summary>
+        [HarmonyPatch(typeof(HurtBox), nameof(HurtBox.SimpleColliderBlockFilter))]
+        [HarmonyPrefix]
+        public static bool HurtBox_SimpleColliderBlockFilter(ref HurtBox.HurtBoxAttackHitProcessorArgs damageProcessorArgs, HurtBox processorHurtBox, ref bool __result)
+        {
+            if (processorHurtBox && processorHurtBox.collider
+                && damageProcessorArgs.hitHurtBox && damageProcessorArgs.hitHurtBox.collider)
+                return true;
+            __result = false;
+            return false;
+        }
+
+        /// <summary>
+        /// Using an equipment rebuilds the Cursed Book's spells, then resets a state machine on
+        /// an attachment that is not there yet. The rebuild has already happened by then.
+        /// </summary>
+        [HarmonyPatch(typeof(CursedBookBodyBehavior), nameof(CursedBookBodyBehavior.OnInventoryChanged))]
+        [HarmonyFinalizer]
+        public static Exception CursedBookBodyBehavior_OnInventoryChanged(CursedBookBodyBehavior __instance, Exception __exception)
+            => __exception is NullReferenceException && !__instance.currentAttachment.stateMachine ? null : __exception;
+
+        /// <summary>
         /// Nullchecking CharacterBody.mainHurtBox from the projectile target.
         /// Caused with Operator when spamming m2 with missile and cleanup drones,
         /// since the cleanup drone destroys the model immediately.
