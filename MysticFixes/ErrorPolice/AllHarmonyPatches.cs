@@ -28,6 +28,45 @@ namespace MiscFixes.ErrorPolice
         public static bool SetStateOnHurt_GetModifiedDuration(SetStateOnHurt __instance) => __instance.buffDurationControllers != null;
 
         /// <summary>
+        /// Team War Cry throws on any TeamComponent without a CharacterBody, so the rest of the team misses the buff.
+        /// Uses the per-team list instead of a full scene search.
+        /// </summary>
+        [HarmonyPatch(typeof(EquipmentSlot), "FireTeamWarCry")]
+        [HarmonyPrefix]
+        public static bool EquipmentSlot_FireTeamWarCry(EquipmentSlot __instance, ref bool __result)
+        {
+            var self = __instance.characterBody;
+            if (!self)
+            {
+                __result = false;
+                return false;
+            }
+
+            Util.PlaySound("Play_teamWarCry_activate", self.gameObject);
+
+            var effectData = new EffectData { origin = self.corePosition };
+            effectData.SetNetworkedObjectReference(self.gameObject);
+            EffectManager.SpawnEffect(LegacyResourcesAPI.Load<GameObject>("Prefabs/Effects/TeamWarCryActivation"), effectData, true);
+
+            self.AddTimedBuff(RoR2Content.Buffs.TeamWarCry, 7f);
+
+            var team = self.teamComponent;
+            if (team)
+            {
+                var members = TeamComponent.GetTeamMembers(team.teamIndex);
+                for (int i = 0; i < members.Count; i++)
+                {
+                    var body = members[i] ? members[i].body : null;
+                    if (body)
+                        body.AddTimedBuff(RoR2Content.Buffs.TeamWarCry, 7f);
+                }
+            }
+
+            __result = true;
+            return false;
+        }
+
+        /// <summary>
         /// Halcyonite Shrine is able to drain 0 gold and will softlock itself.
         /// If the scaled gold cost is less than 1, it gets truncated to 0 (mostly for modded scalings)
         /// </summary>
@@ -126,6 +165,112 @@ namespace MiscFixes.ErrorPolice
     [HarmonyPatch]
     internal class FixNullRefs
     {
+        /// <summary>
+        /// Nullchecking body.master, which can be gone while the body is still alive.
+        /// </summary>
+        [HarmonyPatch(typeof(VoidMegaCrabItemBehavior), "FixedUpdate")]
+        [HarmonyPrefix]
+        public static bool VoidMegaCrabItemBehavior_FixedUpdate(VoidMegaCrabItemBehavior __instance)
+            => __instance.body && __instance.body.master;
+
+        /// <summary>
+        /// Drop the tether once its ally or end transform is gone, otherwise the state throws every tick and never exits.
+        /// </summary>
+        [HarmonyPatch(typeof(EntityStates.Totem.SacrificeSuccess), nameof(EntityStates.Totem.SacrificeSuccess.FixedUpdate))]
+        [HarmonyPrefix]
+        public static void SacrificeSuccess_FixedUpdate(EntityStates.Totem.SacrificeSuccess __instance)
+        {
+            if (!__instance.tetherEffectInstance)
+                return;
+
+            var allies = __instance.alliesToRapture;
+            if (__instance.tetherEffectEndTransform && __instance.tetherRootTransform
+                && allies != null && allies.Length > 0 && allies[0])
+                return;
+
+            if (__instance.tetherEffectInstance_efh)
+                __instance.tetherEffectInstance_efh.ReturnToPoolOrDestroyInstance(ref __instance.tetherEffectInstance);
+            else
+                UnityEngine.Object.Destroy(__instance.tetherEffectInstance);
+            __instance.tetherEffectInstance = null;
+            __instance.tetherEffectInstance_efh = null;
+            __instance.tetherEffectEndTransform = null;
+        }
+
+        /// <summary>
+        /// Nullchecking the inventory, which a dying Engineer turret no longer has.
+        /// </summary>
+        [HarmonyPatch(typeof(TeleportOnLowHealthBehavior), nameof(TeleportOnLowHealthBehavior.Update))]
+        [HarmonyPrefix]
+        public static bool TeleportOnLowHealthBehavior_Update(TeleportOnLowHealthBehavior __instance)
+            => __instance.characterBody && __instance.characterBody.inventory;
+
+        /// <summary>
+        /// The last line unsubscribes from body.master, which a dying Engineer turret no longer has.
+        /// </summary>
+        [HarmonyPatch(typeof(BarrageOnBossBehaviour), nameof(BarrageOnBossBehaviour.OnDisable))]
+        [HarmonyFinalizer]
+        public static Exception BarrageOnBossBehaviour_OnDisable(BarrageOnBossBehaviour __instance, Exception __exception)
+            => __exception is NullReferenceException && !(__instance.body && __instance.body.master) ? null : __exception;
+
+        /// <summary>
+        /// The bead model is destroyed along with the body it is attached to.
+        /// </summary>
+        [HarmonyPatch(typeof(AffixBeadAttachment), nameof(AffixBeadAttachment.Update))]
+        [HarmonyPrefix]
+        public static bool AffixBeadAttachment_Update(AffixBeadAttachment __instance)
+            => __instance.networkedBodyAttachment == null || __instance.initialCooldownTimer > 0f || __instance.modelObject;
+
+        [HarmonyPatch(typeof(AffixBeadAttachment), nameof(AffixBeadAttachment.UpdateVFX))]
+        [HarmonyPrefix]
+        public static bool AffixBeadAttachment_UpdateVFX(AffixBeadAttachment __instance) => __instance.modelObject;
+
+        /// <summary>
+        /// Bodies with TeamIndex.None index the team pools with -1.
+        /// </summary>
+        [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.Register))]
+        [HarmonyPrefix]
+        public static bool SharedSufferingManager_Register(SharedSufferingManager __instance, CharacterBody body)
+            => body && body.teamComponent && (uint)body.teamComponent.teamIndex < (uint)__instance.afflictedBodyPools.Length;
+
+        [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.Deregister))]
+        [HarmonyPrefix]
+        public static bool SharedSufferingManager_Deregister(SharedSufferingManager __instance, CharacterBody body)
+        {
+            if (body && body.teamComponent && (uint)body.teamComponent.teamIndex < (uint)__instance.afflictedBodyPools.Length)
+                return true;
+            foreach (var pool in __instance.afflictedBodyPools)
+                pool?.Remove(body);
+            return false;
+        }
+
+        [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.SendToDamagePool))]
+        [HarmonyPrefix]
+        public static bool SharedSufferingManager_SendToDamagePool(SharedSufferingManager __instance, DamageReport damageReport)
+            => (uint)damageReport.victimTeamIndex < (uint)__instance.damagePools.Length;
+
+        /// <summary>
+        /// Nullchecking hurtbox colliders that no longer exist.
+        /// </summary>
+        [HarmonyPatch(typeof(HurtBox), nameof(HurtBox.SimpleColliderBlockFilter))]
+        [HarmonyPrefix]
+        public static bool HurtBox_SimpleColliderBlockFilter(ref HurtBox.HurtBoxAttackHitProcessorArgs damageProcessorArgs, HurtBox processorHurtBox, ref bool __result)
+        {
+            if (processorHurtBox && processorHurtBox.collider
+                && damageProcessorArgs.hitHurtBox && damageProcessorArgs.hitHurtBox.collider)
+                return true;
+            __result = false;
+            return false;
+        }
+
+        /// <summary>
+        /// The state machine can be missing when the inventory changes, after the spells were already rebuilt.
+        /// </summary>
+        [HarmonyPatch(typeof(CursedBookBodyBehavior), nameof(CursedBookBodyBehavior.OnInventoryChanged))]
+        [HarmonyFinalizer]
+        public static Exception CursedBookBodyBehavior_OnInventoryChanged(CursedBookBodyBehavior __instance, Exception __exception)
+            => __exception is NullReferenceException && !__instance.currentAttachment.stateMachine ? null : __exception;
+
         /// <summary>
         /// Nullchecking CharacterBody.mainHurtBox from the projectile target.
         /// Caused with Operator when spamming m2 with missile and cleanup drones,
