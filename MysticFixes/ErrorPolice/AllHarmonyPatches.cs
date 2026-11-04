@@ -28,20 +28,8 @@ namespace MiscFixes.ErrorPolice
         public static bool SetStateOnHurt_GetModifiedDuration(SetStateOnHurt __instance) => __instance.buffDurationControllers != null;
 
         /// <summary>
-        /// Team War Cry walks every object in the scene to find its own team, then calls
-        /// GetComponent on each result without checking it:
-        ///
-        ///     TeamComponent[] array = UnityEngine.Object.FindObjectsOfType&lt;TeamComponent&gt;();
-        ///     ...
-        ///     array[i].GetComponent&lt;CharacterBody&gt;().AddTimedBuff(...);
-        ///
-        /// FindObjectsOfType is a full scene walk, and a TeamComponent on anything that is not
-        /// a character - a barrel, a turret - has no CharacterBody, so the loop throws partway
-        /// through and the rest of the team never gets the buff.
-        ///
-        /// Both go away by using the per-team list the game already keeps and the body
-        /// TeamComponent already holds. Noticeable with Bottled Chaos or Gesture of the
-        /// Drowned, which fire equipment far more often than this was written for.
+        /// Team War Cry throws on any TeamComponent without a CharacterBody, so the rest of the team misses the buff.
+        /// Uses the per-team list instead of a full scene search.
         /// </summary>
         [HarmonyPatch(typeof(EquipmentSlot), "FireTeamWarCry")]
         [HarmonyPrefix]
@@ -178,12 +166,7 @@ namespace MiscFixes.ErrorPolice
     internal class FixNullRefs
     {
         /// <summary>
-        /// Newly Hatched Zoea dereferences body.master every FixedUpdate with no check, so a
-        /// body that has lost its master throws sixty times a second until it is cleaned up.
-        /// Was the single largest source of exceptions in a three hour run - 1,021 of 2,388.
-        ///
-        /// The tick exists to spawn a deployable for the master to own, so there is nothing
-        /// worth doing without one.
+        /// Nullchecking body.master, which can be gone while the body is still alive.
         /// </summary>
         [HarmonyPatch(typeof(VoidMegaCrabItemBehavior), "FixedUpdate")]
         [HarmonyPrefix]
@@ -191,10 +174,7 @@ namespace MiscFixes.ErrorPolice
             => __instance.body && __instance.body.master;
 
         /// <summary>
-        /// The tether follows alliesToRapture[0], which RaptureAlliesServer nulls once that ally
-        /// is dead or gone, and its "End" child can be missing. Either throws before the state
-        /// marks the allies killed or advances, so it throws every tick and never leaves.
-        /// Dropping the tether early is what the state does itself once the rapture ends.
+        /// Drop the tether once its ally or end transform is gone, otherwise the state throws every tick and never exits.
         /// </summary>
         [HarmonyPatch(typeof(EntityStates.Totem.SacrificeSuccess), nameof(EntityStates.Totem.SacrificeSuccess.FixedUpdate))]
         [HarmonyPrefix]
@@ -208,7 +188,6 @@ namespace MiscFixes.ErrorPolice
                 && allies != null && allies.Length > 0 && allies[0])
                 return;
 
-            // Unity's null, not C#'s: a pooled helper can be destroyed without being null.
             if (__instance.tetherEffectInstance_efh)
                 __instance.tetherEffectInstance_efh.ReturnToPoolOrDestroyInstance(ref __instance.tetherEffectInstance);
             else
@@ -219,9 +198,7 @@ namespace MiscFixes.ErrorPolice
         }
 
         /// <summary>
-        /// An Engineer turret carrying Unstable Transmitter loses its master, and with it its
-        /// inventory, while the body still plays its death state. Update reads the inventory
-        /// every frame: 616 exceptions in one run.
+        /// Nullchecking the inventory, which a dying Engineer turret no longer has.
         /// </summary>
         [HarmonyPatch(typeof(TeleportOnLowHealthBehavior), nameof(TeleportOnLowHealthBehavior.Update))]
         [HarmonyPrefix]
@@ -229,8 +206,7 @@ namespace MiscFixes.ErrorPolice
             => __instance.characterBody && __instance.characterBody.inventory;
 
         /// <summary>
-        /// Same dying turret: the last line unsubscribes from body.master, which is already gone.
-        /// Everything before it has run, so only that throw is dropped.
+        /// The last line unsubscribes from body.master, which a dying Engineer turret no longer has.
         /// </summary>
         [HarmonyPatch(typeof(BarrageOnBossBehaviour), nameof(BarrageOnBossBehaviour.OnDisable))]
         [HarmonyFinalizer]
@@ -238,8 +214,7 @@ namespace MiscFixes.ErrorPolice
             => __exception is NullReferenceException && !(__instance.body && __instance.body.master) ? null : __exception;
 
         /// <summary>
-        /// The bead model is parented to the body it sits on and is destroyed with it, while the
-        /// attachment keeps running and reads modelObject every frame (and on every hit it counts).
+        /// The bead model is destroyed along with the body it is attached to.
         /// </summary>
         [HarmonyPatch(typeof(AffixBeadAttachment), nameof(AffixBeadAttachment.Update))]
         [HarmonyPrefix]
@@ -251,8 +226,7 @@ namespace MiscFixes.ErrorPolice
         public static bool AffixBeadAttachment_UpdateVFX(AffixBeadAttachment __instance) => __instance.modelObject;
 
         /// <summary>
-        /// A body with no team (TeamIndex.None, -1) indexes the per-team pools with -1.
-        /// Deregister then cannot know which pool it went in, so it is taken out of all of them.
+        /// Bodies with TeamIndex.None index the team pools with -1.
         /// </summary>
         [HarmonyPatch(typeof(SharedSufferingManager), nameof(SharedSufferingManager.Register))]
         [HarmonyPrefix]
@@ -276,8 +250,7 @@ namespace MiscFixes.ErrorPolice
             => (uint)damageReport.victimTeamIndex < (uint)__instance.damagePools.Length;
 
         /// <summary>
-        /// The block filter (Enforcer's shield) raycasts against both hurtboxes' colliders without
-        /// checking either still exists. A missing one cannot block anything.
+        /// Nullchecking hurtbox colliders that no longer exist.
         /// </summary>
         [HarmonyPatch(typeof(HurtBox), nameof(HurtBox.SimpleColliderBlockFilter))]
         [HarmonyPrefix]
@@ -291,8 +264,7 @@ namespace MiscFixes.ErrorPolice
         }
 
         /// <summary>
-        /// Using an equipment rebuilds the Cursed Book's spells, then resets a state machine on
-        /// an attachment that is not there yet. The rebuild has already happened by then.
+        /// The state machine can be missing when the inventory changes, after the spells were already rebuilt.
         /// </summary>
         [HarmonyPatch(typeof(CursedBookBodyBehavior), nameof(CursedBookBodyBehavior.OnInventoryChanged))]
         [HarmonyFinalizer]
