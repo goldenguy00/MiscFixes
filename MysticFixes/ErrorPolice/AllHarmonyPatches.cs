@@ -506,17 +506,19 @@ namespace MiscFixes.ErrorPolice
 			IL_02af: ldc.i4.1
 			IL_02b0: ble.s IL_02de	
 			*/
-	
+			int invLocalIdx = -1;
 			var c = new ILCursor(il);
 			if (!c.TryGotoNext(
-				x => x.MatchLdLoc(6),
-				x => x.MatchCallvirt(typeof(EquipmentSlot), "get_accessibleEquipmentSetCount") // looks fucked up. 👍
+				x => x.MatchLdLoc(out invLocalIdx),
+				x => x.MatchCallvirt(AccessTools.PropertyGetter(typeof(Inventory), nameof(Inventory.accessibleEquipmentSetCount)))
+				// thank chinchi for making this readable
 			) {
 				Log.PatchFail(il); // i trust it works
 				return;
 			}
 			c.Index -= 2; // go before
-			c.EmitLdLoc(6);
+			c.EmitLdLoc(invLocalIdx);
+			c.Emit(OpCodes.OpImplicit);
 			c.EmitBrfalse(retLabel);
 		}
     }
