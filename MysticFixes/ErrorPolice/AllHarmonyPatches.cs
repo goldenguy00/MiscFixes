@@ -488,6 +488,39 @@ namespace MiscFixes.ErrorPolice
                 return hurtBoxes;
             });
         }
+
+		/// <summary>
+		/// fixes a NRE caused by a character having an EquipmentSlot while not having a valid Inventory.
+		/// discovered due to an interaction from HIFUVariants.
+		/// the method assumes immediately prior that loc6 can be null, but does not assume so afterwards.
+		/// </summary>
+		[HarmonyPatch(typeof(EquipmentSlot), nameof(EquipmentSlot.MyFixedUpdate))]
+		[HarmonyILManipulator]
+		public static void EquipSlot_MFU_InvNullCheck(ILContext il, MethodBase orig, ILLabel retLabel) {
+
+			/*
+			+ ldloc.s 6
+			+ brfalse retLabel
+			IL_02a8: ldloc.s 6 // of type `Inventory?`
+			IL_02aa: callvirt instance uint8 RoR2.Inventory::get_accessibleEquipmentSetCount() // guess who didn't check for null
+			IL_02af: ldc.i4.1
+			IL_02b0: ble.s IL_02de	
+			*/
+			int invLocalIdx = -1;
+			var c = new ILCursor(il);
+			if (!c.TryGotoNext(
+				x => x.MatchLdLoc(out invLocalIdx),
+				x => x.MatchCallvirt(AccessTools.PropertyGetter(typeof(Inventory), nameof(Inventory.accessibleEquipmentSetCount)))
+				// thank chinchi for making this readable
+			) {
+				Log.PatchFail(il); // i trust it works
+				return;
+			}
+			c.Index -= 2; // go before
+			c.EmitLdLoc(invLocalIdx);
+			c.Emit(OpCodes.OpImplicit);
+			c.EmitBrfalse(retLabel);
+		}
     }
 
     [HarmonyPatch]
