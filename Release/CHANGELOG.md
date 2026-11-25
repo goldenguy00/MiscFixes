@@ -1,3 +1,60 @@
+## Unreleased
+- Merged base game fixes from BaseGameFixes:
+    - **Defective Unit** - death state no longer throws when its model is already gone (e.g. Void Fields wave ending).
+    - **Void Barnacle** - spawn no longer tries to spawn a null muzzle flash effect.
+    - **Dream Demon** - projectile no longer throws on destroyed growth renderers.
+    - **RigidbodySoundOnImpact** - no longer throws when a collision happens before `Start`.
+    - **SetStateOnHurt** - freeze/stun no longer throws when applied before `Start` (duration modifiers are still respected).
+    - **Drone Tech** - drone command targeting no longer throws when aiming at a chest.
+    - **SpecialObjectAttributes** - no longer throws in `Start` when a prefab has missing objects in its collision/detach lists.
+    - **Scene loading (multiplayer)** - a scene object destroyed during spawning no longer stops the rest of the scene from being spawned for clients.
+    - **Wandering Vagrant** - Jelly Barrage no longer throws every tick when the Vagrant has no model.
+    - **Wake mission** - leaving the cursed book state no longer throws when the scene is unloading.
+    - **Footsteps** - bodies with footstep dust enabled but no dust prefab no longer throw on spawn.
+    - **Void Fields spawns** - monsters no longer spawn inside the bubble of the cell you're charging.
+    - **Void Fields cells** - objects running the null ward states without a `SphereZone` no longer throw on start.
+    - **EnemyDetection** - no longer throws when touching a hurtbox that has no health component/body.
+    - **Interactable locks** - unlocking no longer stops partway when one of the locked interactables was destroyed.
+    - **Aurelionite's Blessing** - taking damage with no attacker (e.g. Shared Suffering) no longer throws.
+    - **Director cards** - null director cards are dropped instead of breaking the stage's spawn pool (and with it the teleporter boss).
+    - **Teleporter boss** - no longer throws when the stage has no monster cards at all.
+    - **Lynx totem** - summoned Lynx no longer throw when the totem owner has no master.
+    - **Inspect panel** - no longer throws when shown from a panel with no event system, or for items with no name/description/lore token (e.g. Starstorm 2's trader and shard panel).
+    - **Animation effects** - animation events with no effect assigned no longer log `Unable to SpawnEffect`.
+    - **Artifact achievements** - a mod's "obtain artifact" achievement for a disabled artifact no longer breaks profile loading (e.g. Expedition).
+    - **Void Fields cells** - an active cell no longer throws every frame (or on exit) when the run ends while it's charging.
+    - **Collective elites** - removing the share buff from destroyed bodies no longer throws in other mods' buff hooks (e.g. Classic Items Returns' Hit List).
+    - **Stage spawn pool** - monster pool categories with nothing available (e.g. a family event with no available families) are no longer picked, which aborted building the stage's monsters and interactables.
+    - **Interactable spawning** - cards with 0 weight are no longer picked, which threw and stopped the rest of the stage's interactables from spawning.
+    - **Chained kills** - on-kill effects that kill more enemies (Gasoline and modded equivalents) no longer overflow the stack and crash the game in big modpacks; procs past a few levels deep run right after instead of nested.
+    - **Solus Heart** - attack and teleport states no longer throw when the heart has no target silhouette.
+    - **Solus Heart** - the death fall no longer throws when its offering master is gone.
+    - **Light cookies** - lights with a custom render texture cookie no longer throw when disabled/destroyed after the texture was unloaded.
+    - **Stage spawn pool** - stages with no available monster category at all no longer throw while building cards; they get no monster cards but still spawn their interactables.
+    - **Shrine of Combat** - no longer throws on stages without monster cards.
+    - **Alloy Hunter** - its spawn no longer throws when the enemy it kills has no master.
+    - **Vehicle seats** - entering/leaving a seat (e.g. Rising Tides' Aquamarine bubble) no longer throws on destroyed lights/renderers, which left ejected passengers without collisions and hurtboxes.
+    - **Point sounds** - sounds played while a scene unloads no longer throw on destroyed pooled emitters.
+    - **Character animations** - bodies whose animator was destroyed no longer throw every frame.
+    - **Duplicator** - dying bodies whose master is already gone no longer throw when updating temp item decay.
+    - **Model panels** - no longer throw every frame without an event system.
+    - **Hallowed Cauldron** - no longer throws every frame on clients while draining items, and finishes properly if the player who started it leaves.
+    - **Geode portal tracker** - no longer throws every frame after the run ends.
+    - **Equipment** - bodies whose master is gone (e.g. on the game over screen) no longer throw every frame when trying to use equipment.
+    - **Drifter vault** - opening a vault bag chest while any player is dead no longer throws, which also cut the chest's opening short.
+    - **Solus Amalgamator** - its flamethrower turret no longer throws when its target dies mid-attack.
+    - **Vulture fight** - no longer throws on clients when it starts.
+    - **Tracers and orb effects** - effects spawned outside the effect pool no longer log `Tracer: No owning pool set` / `OrbEffect: No owning pool set`.
+    - **Friendly fire checks** - attacks no longer throw when hitting a health component without a body or team.
+    - **Caustic Pheromones** - the aura no longer throws when destroyed before it found its owner's team.
+    - **Shield blocking** - bullets no longer throw against blocking shields when the hit has no hurtbox.
+    - **Mithrix** - phase 2 death pizzas no longer throw (and fail to fire) when the add was killed by a drone or anything else without a character direction.
+    - **Scene transitions** - minions with Spare Drone Parts and wandering AI no longer throw when they start before the new stage is set up.
+    - **Viewables** - mod content with no required entitlement no longer throws when checking for new logbook/character entries.
+    - **Log noise** - silences `Could not find target object ... RpcOnHitGroundSFX` warnings, `Could not register ... no NetworkIdentity` and `has multiple NetworkIdentity components` messages, `Attempting to fix...` item/tier messages, `GetItemDef returned null`, `PopulateTypeFields issues` for vanilla content, `Animator.GotoState: State could not be found`, `Invalid Layer Index '-1'`, `DeductCooldown`, `GenericPool: ReleasePools called on non-empty pool`, `Particle System is trying to spawn on a mesh with zero surface area`, `Sub-emitters may not use stop actions`.
+
+score is a hero
+
 ## 1.6.2
 - Fixed persistent sound bug
 - Fixed NRE with SetStateOnHurt
